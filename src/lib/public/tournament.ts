@@ -49,7 +49,12 @@ export async function getPublicTournament(
 
   if (error || !data) return null
 
-  // TODO(slice zonas): poblar courts desde la vista de canchas por torneo.
-  // Antes de publicar zonas no hay canchas "en juego".
-  return { ...data, courts: [] }
+  // Canchas "en juego": las asignadas a partidos de zonas publicadas (vista
+  // segura por torneo). Antes de publicar zonas, devuelve [].
+  const { data: courts } = await supabase
+    .from('public_court_view')
+    .select('id, name, type')
+    .eq('tournament_id', id)
+
+  return { ...data, courts: courts ?? [] }
 }

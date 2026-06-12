@@ -187,11 +187,40 @@ export interface Database {
         }
         Relationships: []
       }
+      public_pair_view: {
+        Row: {
+          id: string
+          tournament_id: string
+          status: PairStatus
+          player1_id: string
+          player2_id: string
+          player1_name: string
+          player2_name: string
+        }
+        Relationships: []
+      }
+      public_court_view: {
+        Row: {
+          id: string
+          name: string
+          type: CourtType
+          tournament_id: string
+        }
+        Relationships: []
+      }
     }
     Functions: {
       owns_tournament: {
         Args: { t_id: string }
         Returns: boolean
+      }
+      generate_zones: {
+        Args: { p_tournament_id: string; p_num_zones: number }
+        Returns: undefined
+      }
+      move_pair_to_zone: {
+        Args: { p_pair_id: string; p_target_zone_id: string }
+        Returns: undefined
       }
       register_pair: {
         Args: {

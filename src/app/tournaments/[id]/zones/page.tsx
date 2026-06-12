@@ -1,0 +1,182 @@
+import Link from 'next/link'
+import { notFound, redirect } from 'next/navigation'
+import type { Metadata } from 'next'
+import { createClient } from '@/lib/supabase/server'
+import { OrganizerHeader } from '@/components/organizer/organizer-header'
+import { canManageZones } from '@/lib/domain/tournament'
+import {
+  ZoneManager,
+  type ZoneView,
+} from '@/components/zones/zone-manager'
+
+export const metadata: Metadata = { title: 'Zonas y partidos — Matchpoint' }
+
+export default async function ZonesPage({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
+  const { id } = await params
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const [{ data: organizer }, { data: tournament }] = await Promise.all([
+    supabase
+      .from('organizers')
+      .select('establishment_name')
+      .eq('id', user.id)
+      .single(),
+    supabase
+      .from('tournaments')
+      .select('id, name, status')
+      .eq('id', id)
+      .single(),
+  ])
+  if (!tournament) notFound()
+
+  // Parejas aceptadas (las que entran al sorteo de zonas) + canchas + zonas.
+  const [{ data: acceptedPairs }, { data: courts }, { data: zones }] =
+    await Promise.all([
+      supabase
+        .from('pairs')
+        .select('id, player1_id, player2_id')
+        .eq('tournament_id', id)
+        .eq('status', 'accepted'),
+      supabase
+        .from('courts')
+        .select('id, name, type')
+        .eq('organizer_id', user.id)
+        .order('name', { ascending: true }),
+      supabase
+        .from('zones')
+        .select('id, name, is_published')
+        .eq('tournament_id', id)
+        .order('name', { ascending: true }),
+    ])
+
+  const zoneList = zones ?? []
+  const zoneIds = zoneList.map((z) => z.id)
+
+  const [{ data: zonePairs }, { data: matches }] = await Promise.all([
+    zoneIds.length
+      ? supabase
+          .from('zone_pairs')
+          .select('zone_id, pair_id')
+          .in('zone_id', zoneIds)
+      : Promise.resolve({ data: [] as { zone_id: string; pair_id: string }[] }),
+    zoneIds.length
+      ? supabase
+          .from('matches')
+          .select('id, zone_id, round, court_id, team1_pair_id, team2_pair_id')
+          .in('zone_id', zoneIds)
+          .order('round', { ascending: true })
+      : Promise.resolve({
+          data: [] as {
+            id: string
+            zone_id: string | null
+            round: number
+            court_id: string | null
+            team1_pair_id: string
+            team2_pair_id: string
+          }[],
+        }),
+  ])
+
+  // Nombres de jugadores de todas las parejas aceptadas → etiqueta por pareja.
+  const accepted = acceptedPairs ?? []
+  const playerIds = accepted.flatMap((p) => [p.player1_id, p.player2_id])
+  const { data: players } = playerIds.length
+    ? await supabase
+        .from('players')
+        .select('id, full_name')
+        .in('id', playerIds)
+    : { data: [] as { id: string; full_name: string }[] }
+
+  const playerName = new Map((players ?? []).map((p) => [p.id, p.full_name]))
+  const pairLabel = new Map(
+    accepted.map((p) => [
+      p.id,
+      `${shortName(playerName.get(p.player1_id))} / ${shortName(
+        playerName.get(p.player2_id)
+      )}`,
+    ])
+  )
+
+  // Ensambla la vista por zona.
+  const zoneViews: ZoneView[] = zoneList.map((z) => ({
+    id: z.id,
+    name: z.name,
+    isPublished: z.is_published,
+    pairs: (zonePairs ?? [])
+      .filter((zp) => zp.zone_id === z.id)
+      .map((zp) => ({
+        pairId: zp.pair_id,
+        label: pairLabel.get(zp.pair_id) ?? '—',
+      })),
+    matches: (matches ?? [])
+      .filter((m) => m.zone_id === z.id)
+      .map((m) => ({
+        id: m.id,
+        round: m.round,
+        courtId: m.court_id,
+        team1Label: pairLabel.get(m.team1_pair_id) ?? '—',
+        team2Label: pairLabel.get(m.team2_pair_id) ?? '—',
+      })),
+  }))
+
+  const anyPublished = zoneList.some((z) => z.is_published)
+  const ready = canManageZones(tournament.status)
+
+  return (
+    <div className="relative z-[2] mx-auto w-full max-w-4xl px-5 py-8 sm:px-8">
+      <OrganizerHeader establishmentName={organizer?.establishment_name} />
+
+      <section className="mt-10">
+        <Link
+          href={`/tournaments/${tournament.id}`}
+          className="text-sm text-muted-foreground hover:text-foreground"
+        >
+          ← Volver al torneo
+        </Link>
+        <h1 className="font-display mt-4 text-[clamp(2rem,6vw,3.5rem)] text-foreground">
+          Zonas y partidos
+        </h1>
+        <p className="mt-2 text-sm text-muted-foreground">{tournament.name}</p>
+
+        <div className="mt-8">
+          {!ready && zoneViews.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-border bg-card/20 p-10 text-center">
+              <p className="text-foreground">
+                Las zonas se habilitan al cerrar la inscripción.
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Cuando el torneo pase a “Inscripción cerrada” vas a poder
+                sortear las zonas y generar los partidos.
+              </p>
+            </div>
+          ) : (
+            <ZoneManager
+              tournamentId={tournament.id}
+              zones={zoneViews}
+              courts={courts ?? []}
+              acceptedCount={accepted.length}
+              canManage={ready && !anyPublished}
+              published={anyPublished}
+            />
+          )}
+        </div>
+      </section>
+    </div>
+  )
+}
+
+/** "Juan Pérez" → "Juan P." para etiquetas compactas de pareja. */
+function shortName(full: string | undefined): string {
+  if (!full) return '—'
+  const [first, ...rest] = full.trim().split(/\s+/)
+  if (rest.length === 0) return first
+  return `${first} ${rest[rest.length - 1][0]}.`
+}

@@ -37,9 +37,13 @@ npm run db:apply # aplica migraciones SQL pendientes vía Supabase Management AP
 
 ## Estado de implementación (v1)
 Slices completados (build + lint + e2e OK): **Fundación, Auth de Organizer, Canchas, Torneos**
-(CRUD + ciclo de vida), **Inscripciones** (alta pública + accept/reject/remove + consulta por token).
-**Próximo slice: Zonas y partidos** (generación al azar + round-robin, editable antes de publicar,
-cancha opcional por partido). El detalle granular por slice vive en la memoria del asistente.
+(CRUD + ciclo de vida), **Inscripciones** (alta pública + accept/reject/remove + consulta por token),
+**Zonas y partidos** (generación al azar + round-robin vía RPC, reasignación de parejas y cancha
+opcional por partido editables antes de publicar, vista pública en `/t/[id]/zones`).
+**v1 MVP funcionalmente completo.** Pendiente conocido: apertura automática de inscripción
+(`registration_opens_at`) requiere un job programado (Supabase cron) — hoy la apertura es manual.
+Próximo foco sugerido: v2 (resultados/scoring + standings de zona + bracket). El detalle granular
+por slice vive en la memoria del asistente.
 
 ## Convenciones de implementación (v1)
 > No revertir sin discusión; reflejan decisiones ya validadas en código y verificadas e2e.

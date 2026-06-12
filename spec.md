@@ -174,7 +174,7 @@ created_at      timestamp
 | Crear / editar / avanzar estado / eliminar torneo | `src/app/tournaments/actions.ts` |
 | CRUD de canchas | `src/app/courts/actions.ts` |
 | Aceptar / rechazar / remover inscripción | `src/app/tournaments/[id]/registrations/actions.ts` (remove vía RPC `remove_pair`) |
-| Generar / editar / publicar zonas y partidos, asignar cancha | (próximo slice) `src/app/tournaments/[id]/zones/actions.ts` |
+| Generar / editar / publicar zonas y partidos, asignar cancha | `src/app/tournaments/[id]/zones/actions.ts` (generar/reasignar vía RPCs `generate_zones`/`move_pair_to_zone`; publicar/asignar cancha por update con RLS) |
 
 ### Superficie pública — Vistas seguras + RPCs (server-side con admin client)
 | Operación | Implementación |
@@ -182,7 +182,7 @@ created_at      timestamp
 | Info pública del torneo (+ conteos de parejas) | vista `public_tournament_view` (anon) — `src/lib/public/tournament.ts` |
 | Inscripción de pareja | RPC `register_pair` (SECURITY DEFINER, atómica, valida estado+cupo) vía admin client — `src/app/t/[tournamentId]/actions.ts` |
 | Consulta de estado por token | lookup en `pairs` por `lookup_token` vía admin client — `src/lib/public/inscription.ts` |
-| Zonas y partidos públicos | (próximo slice) vistas `public_pair_view` / `public_court_view` + `zones`/`matches` con RLS pública por `is_published` |
+| Zonas y partidos públicos | vistas `public_pair_view` / `public_court_view` + `zones`/`zone_pairs`/`matches` con RLS pública por `is_published` — `src/lib/public/zones.ts` |
 
 > **Pendiente — apertura automática de inscripción** (`registration_opens_at`): requiere un job
 > programado (Supabase scheduled function / cron). Documentado como TODO; hoy la apertura es manual.
@@ -245,23 +245,23 @@ created_at      timestamp
 - [x] La pareja puede consultar su estado en `/inscription/[token]`
 - [x] La página muestra: nombre del torneo, nombres de ambos jugadores, estado actual
 
-### Generación de zonas
-- [ ] El sistema distribuye aleatoriamente las parejas aceptadas en zonas equilibradas
-- [ ] El organizer puede reasignar parejas entre zonas antes de publicar
-- [ ] Al generar zonas, el sistema crea partidos en formato round-robin (todas las parejas de la zona juegan entre sí)
-- [ ] El organizer puede modificar los partidos generados manualmente antes de publicar
-- [ ] Las zonas permanecen ocultas hasta que el organizer las publica
-- [ ] Una vez publicadas, no se pueden modificar
+### Generación de zonas ✅
+- [x] El sistema distribuye aleatoriamente las parejas aceptadas en zonas equilibradas
+- [x] El organizer puede reasignar parejas entre zonas antes de publicar
+- [x] Al generar zonas, el sistema crea partidos en formato round-robin (todas las parejas de la zona juegan entre sí)
+- [x] El organizer puede modificar los partidos generados (reasignación de parejas regenera los partidos de las zonas afectadas) antes de publicar
+- [x] Las zonas permanecen ocultas hasta que el organizer las publica
+- [x] Una vez publicadas, no se pueden modificar (la regeneración/reasignación quedan bloqueadas)
 
-### Asignación de canchas a partidos
-- [ ] El organizer puede asignar una cancha de su establecimiento a cada partido
-- [ ] La asignación es opcional por partido
-- [ ] La cancha asignada puede cambiarse en cualquier momento
+### Asignación de canchas a partidos ✅
+- [x] El organizer puede asignar una cancha de su establecimiento a cada partido
+- [x] La asignación es opcional por partido
+- [x] La cancha asignada puede cambiarse en cualquier momento (incluso con las zonas publicadas)
 
-### Vista pública de zonas
-- [ ] Una vez publicadas, cualquier persona puede ver las zonas en `/t/[id]/zones`
-- [ ] Se muestran las parejas de cada zona y los partidos generados con cancha asignada (si tiene)
-- [ ] Si las zonas no están publicadas, la ruta devuelve un mensaje de no disponible
+### Vista pública de zonas ✅
+- [x] Una vez publicadas, cualquier persona puede ver las zonas en `/t/[id]/zones`
+- [x] Se muestran las parejas de cada zona y los partidos generados con cancha asignada (si tiene)
+- [x] Si las zonas no están publicadas, la ruta devuelve un mensaje de no disponible
 
 ---
 

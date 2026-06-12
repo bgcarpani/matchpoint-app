@@ -40,14 +40,21 @@ export default async function TournamentDetailPage({
 
   if (!t) notFound()
 
-  const { count: requestedCount } = await supabase
-    .from('pairs')
-    .select('id', { count: 'exact', head: true })
-    .eq('tournament_id', t.id)
-    .in('status', ['pending', 'accepted'])
+  const [{ count: requestedCount }, { count: zonesCount }] = await Promise.all([
+    supabase
+      .from('pairs')
+      .select('id', { count: 'exact', head: true })
+      .eq('tournament_id', t.id)
+      .in('status', ['pending', 'accepted']),
+    supabase
+      .from('zones')
+      .select('id', { count: 'exact', head: true })
+      .eq('tournament_id', t.id),
+  ])
 
   const isDraft = t.status === 'draft'
   const zonesReady = canManageZones(t.status)
+  const hasZones = (zonesCount ?? 0) > 0
 
   return (
     <div className="relative z-[2] mx-auto w-full max-w-4xl px-5 py-8 sm:px-8">
@@ -142,14 +149,33 @@ export default async function TournamentDetailPage({
               </p>
             </Link>
           )}
-          <SectionPlaceholder
-            title="Zonas y partidos"
-            note={
-              zonesReady
-                ? 'Disponible al cerrar la inscripción. (Próximo slice)'
-                : 'Se habilita cuando la inscripción esté cerrada.'
-            }
-          />
+          {zonesReady || hasZones ? (
+            <Link
+              href={`/tournaments/${t.id}/zones`}
+              className="group rounded-2xl border border-border bg-card/40 p-6 transition-colors hover:border-volt/50"
+            >
+              <div className="flex items-baseline justify-between gap-4">
+                <h3 className="font-display text-lg text-foreground">
+                  Zonas y partidos
+                </h3>
+                {hasZones && (
+                  <span className="font-display text-2xl text-volt tnum">
+                    {zonesCount}
+                  </span>
+                )}
+              </div>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {hasZones
+                  ? 'Gestionar zonas, partidos y canchas →'
+                  : 'Sortear zonas y generar partidos →'}
+              </p>
+            </Link>
+          ) : (
+            <SectionPlaceholder
+              title="Zonas y partidos"
+              note="Se habilita cuando la inscripción esté cerrada."
+            />
+          )}
         </div>
       </section>
     </div>
