@@ -161,52 +161,31 @@ created_at      timestamp
 
 ---
 
-## API Routes
+## Acceso a datos (implementación v1)
 
-### Auth
-Manejada por Supabase Auth. No requiere API routes propias.
+> **Nota de arquitectura.** El diseño REST (`/api/*`) que listaba originalmente esta sección se
+> reemplazó por **Server Actions** (área autenticada) + **Vistas seguras y RPCs** (superficie
+> pública). Se documenta el mecanismo real. Ver detalle de convenciones en `CLAUDE.md`.
+> Auth la maneja Supabase Auth (sin rutas propias).
 
-### Tournaments
-```
-GET    /api/tournaments                           lista torneos del organizer autenticado
-POST   /api/tournaments                           crea torneo
-GET    /api/tournaments/[id]                      obtiene torneo
-PATCH  /api/tournaments/[id]                      actualiza torneo o avanza su estado
-DELETE /api/tournaments/[id]                      elimina torneo (solo en draft)
-```
+### Área del organizer — Server Actions (`requireUser()` + RLS + `revalidatePath`)
+| Operación | Implementación |
+|---|---|
+| Crear / editar / avanzar estado / eliminar torneo | `src/app/tournaments/actions.ts` |
+| CRUD de canchas | `src/app/courts/actions.ts` |
+| Aceptar / rechazar / remover inscripción | `src/app/tournaments/[id]/registrations/actions.ts` (remove vía RPC `remove_pair`) |
+| Generar / editar / publicar zonas y partidos, asignar cancha | (próximo slice) `src/app/tournaments/[id]/zones/actions.ts` |
 
-### Courts
-```
-GET    /api/courts                                lista canchas del organizer autenticado
-POST   /api/courts                                crea cancha
-PATCH  /api/courts/[id]                           actualiza cancha
-DELETE /api/courts/[id]                           elimina cancha
-```
+### Superficie pública — Vistas seguras + RPCs (server-side con admin client)
+| Operación | Implementación |
+|---|---|
+| Info pública del torneo (+ conteos de parejas) | vista `public_tournament_view` (anon) — `src/lib/public/tournament.ts` |
+| Inscripción de pareja | RPC `register_pair` (SECURITY DEFINER, atómica, valida estado+cupo) vía admin client — `src/app/t/[tournamentId]/actions.ts` |
+| Consulta de estado por token | lookup en `pairs` por `lookup_token` vía admin client — `src/lib/public/inscription.ts` |
+| Zonas y partidos públicos | (próximo slice) vistas `public_pair_view` / `public_court_view` + `zones`/`matches` con RLS pública por `is_published` |
 
-### Registrations (Pairs)
-```
-GET    /api/tournaments/[id]/registrations        lista inscripciones de parejas
-PATCH  /api/tournaments/[id]/registrations/[pid]  acepta o rechaza inscripción de pareja
-DELETE /api/tournaments/[id]/registrations/[pid]  remueve pareja del torneo
-```
-
-### Zones
-```
-GET    /api/tournaments/[id]/zones                obtiene zonas con sus parejas y partidos
-POST   /api/tournaments/[id]/zones/generate       genera zonas al azar y crea partidos round-robin
-PATCH  /api/tournaments/[id]/zones                actualiza asignación de parejas a zonas
-PATCH  /api/tournaments/[id]/zones/matches        actualiza partidos manualmente (modificación post-generación)
-POST   /api/tournaments/[id]/zones/publish        publica todas las zonas
-PATCH  /api/matches/[matchId]/court               asigna o cambia cancha a un partido
-```
-
-### Público (sin autenticación)
-```
-GET    /api/public/tournaments/[id]               info pública del torneo
-POST   /api/public/tournaments/[id]/register      pareja envía solicitud de inscripción
-GET    /api/public/inscription/[token]            consulta estado de inscripción por token
-GET    /api/public/tournaments/[id]/zones         zonas y partidos (solo si publicadas)
-```
+> **Pendiente — apertura automática de inscripción** (`registration_opens_at`): requiere un job
+> programado (Supabase scheduled function / cron). Documentado como TODO; hoy la apertura es manual.
 
 ---
 
@@ -231,40 +210,40 @@ GET    /api/public/tournaments/[id]/zones         zonas y partidos (solo si publ
 
 ## Criterios de aceptación por feature
 
-### Autenticación de Organizer
-- [ ] El organizer puede registrarse con email, contraseña y nombre del establecimiento
-- [ ] El organizer puede iniciar y cerrar sesión
-- [ ] Las rutas del área de organizer redirigen a `/login` si no hay sesión activa
+### Autenticación de Organizer ✅
+- [x] El organizer puede registrarse con email, contraseña y nombre del establecimiento
+- [x] El organizer puede iniciar y cerrar sesión
+- [x] Las rutas del área de organizer redirigen a `/login` si no hay sesión activa
 
-### Gestión de canchas
-- [ ] El organizer puede crear canchas con nombre y tipo (al aire libre / techada)
-- [ ] El organizer puede editar y eliminar canchas
-- [ ] Las canchas eliminadas no afectan partidos ya asignados
+### Gestión de canchas ✅
+- [x] El organizer puede crear canchas con nombre y tipo (al aire libre / techada)
+- [x] El organizer puede editar y eliminar canchas
+- [x] Las canchas eliminadas no afectan partidos ya asignados
 
-### Creación de torneo
-- [ ] El torneo se crea en estado `draft`
-- [ ] El selector de categoría diferencia entre individual (1ra–8va) y suma (número libre)
-- [ ] El género es campo requerido
-- [ ] Los cupos de solicitud deben ser mayores o iguales a los cupos de torneo (ambos en parejas)
-- [ ] Se puede configurar apertura automática de inscripción con fecha/hora o dejarla en manual
+### Creación de torneo ✅
+- [x] El torneo se crea en estado `draft`
+- [x] El selector de categoría diferencia entre individual (1ra–8va) y suma (número libre)
+- [x] El género es campo requerido
+- [x] Los cupos de solicitud deben ser mayores o iguales a los cupos de torneo (ambos en parejas)
+- [x] Se puede configurar apertura automática de inscripción con fecha/hora o dejarla en manual
 
 ### Ciclo de vida del torneo
-- [ ] El organizer puede avanzar el estado del torneo manualmente en cada transición permitida
-- [ ] La apertura automática de inscripción se ejecuta en la fecha/hora configurada
-- [ ] No es posible retroceder un estado
+- [x] El organizer puede avanzar el estado del torneo manualmente en cada transición permitida
+- [ ] La apertura automática de inscripción se ejecuta en la fecha/hora configurada *(pendiente: requiere job programado)*
+- [x] No es posible retroceder un estado
 
-### Gestión de inscripciones
-- [ ] Los jugadores pueden enviar solicitud de pareja desde la página pública del torneo
-- [ ] El formulario requiere nombre + (email o teléfono) para cada integrante; DNI es opcional
-- [ ] Al enviar, el sistema genera un `lookup_token` único para la pareja y lo muestra
-- [ ] No se aceptan solicitudes cuando se alcanzó `max_pair_requests`
-- [ ] El organizer puede aceptar o rechazar cada solicitud de pareja
-- [ ] No se pueden aceptar más parejas que `max_pairs`
-- [ ] El organizer puede remover parejas aceptadas en cualquier momento
+### Gestión de inscripciones ✅
+- [x] Los jugadores pueden enviar solicitud de pareja desde la página pública del torneo
+- [x] El formulario requiere nombre + (email o teléfono) para cada integrante; DNI es opcional
+- [x] Al enviar, el sistema genera un `lookup_token` único para la pareja y lo muestra
+- [x] No se aceptan solicitudes cuando se alcanzó `max_pair_requests`
+- [x] El organizer puede aceptar o rechazar cada solicitud de pareja
+- [x] No se pueden aceptar más parejas que `max_pairs`
+- [x] El organizer puede remover parejas aceptadas en cualquier momento
 
-### Consulta de estado (sin login)
-- [ ] La pareja puede consultar su estado en `/inscription/[token]`
-- [ ] La página muestra: nombre del torneo, nombres de ambos jugadores, estado actual
+### Consulta de estado (sin login) ✅
+- [x] La pareja puede consultar su estado en `/inscription/[token]`
+- [x] La página muestra: nombre del torneo, nombres de ambos jugadores, estado actual
 
 ### Generación de zonas
 - [ ] El sistema distribuye aleatoriamente las parejas aceptadas en zonas equilibradas

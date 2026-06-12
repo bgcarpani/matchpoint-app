@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import type { TournamentStatus } from '@/lib/types/database'
 import { STATUS_LABELS } from '@/lib/domain/tournament'
+import { registerPair } from '@/app/t/[tournamentId]/actions'
 
 interface PlayerInput {
   full_name: string
@@ -22,6 +23,7 @@ interface Props {
 }
 
 export function PairRegistrationForm({
+  tournamentId,
   canRegister,
   status,
   requestsFull,
@@ -34,6 +36,7 @@ export function PairRegistrationForm({
   const [error, setError] = useState<string | null>(null)
   const [token, setToken] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  const [pending, startTransition] = useTransition()
 
   function update(i: 0 | 1, field: keyof PlayerInput, value: string) {
     setPlayers((prev) => {
@@ -61,10 +64,18 @@ export function PairRegistrationForm({
       return
     }
     setError(null)
-    // TODO(slice inscripción): POST a /api/public/tournaments/[id]/register
-    // (admin client server-side) y usar el lookup_token devuelto.
-    // Por ahora generamos un token de previsualización.
-    setToken(crypto.randomUUID())
+    startTransition(async () => {
+      const res = await registerPair({
+        tournament_id: tournamentId,
+        player1: players[0],
+        player2: players[1],
+      })
+      if ('error' in res) {
+        setError(res.error)
+        return
+      }
+      setToken(res.token)
+    })
   }
 
   if (token) {
@@ -86,7 +97,11 @@ export function PairRegistrationForm({
           <button
             type="button"
             onClick={() => {
-              navigator.clipboard?.writeText(link)
+              const url =
+                typeof window !== 'undefined'
+                  ? `${window.location.origin}${link}`
+                  : link
+              navigator.clipboard?.writeText(url)
               setCopied(true)
               setTimeout(() => setCopied(false), 1500)
             }}
@@ -95,10 +110,12 @@ export function PairRegistrationForm({
             {copied ? 'Copiado' : 'Copiar'}
           </button>
         </div>
-        <p className="mt-4 text-xs text-muted-foreground">
-          Vista previa — la inscripción se conectará al backend en el próximo
-          slice.
-        </p>
+        <a
+          href={link}
+          className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-volt hover:underline"
+        >
+          Ver estado de la inscripción →
+        </a>
       </div>
     )
   }
@@ -178,9 +195,10 @@ export function PairRegistrationForm({
 
       <button
         type="submit"
-        className="font-display mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-volt px-5 py-3.5 text-base text-volt-foreground transition-transform active:scale-[0.98] hover:brightness-105"
+        disabled={pending}
+        className="font-display mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-volt px-5 py-3.5 text-base text-volt-foreground transition-transform active:scale-[0.98] hover:brightness-105 disabled:opacity-60"
       >
-        Enviar solicitud →
+        {pending ? 'Enviando…' : 'Enviar solicitud →'}
       </button>
     </form>
   )

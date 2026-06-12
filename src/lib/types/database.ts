@@ -167,11 +167,49 @@ export interface Database {
         Relationships: []
       }
     }
-    Views: Record<never, never>
+    Views: {
+      public_tournament_view: {
+        Row: {
+          id: string
+          name: string
+          status: TournamentStatus
+          category_type: CategoryType
+          category_value: string
+          gender: Gender
+          tournament_date: string
+          registration_opens_at: string | null
+          max_pairs: number
+          max_pair_requests: number
+          establishment_name: string
+          accepted_pairs: number
+          requested_pairs: number
+          zones_published: boolean
+        }
+        Relationships: []
+      }
+    }
     Functions: {
       owns_tournament: {
         Args: { t_id: string }
         Returns: boolean
+      }
+      register_pair: {
+        Args: {
+          p_tournament_id: string
+          p1_full_name: string
+          p1_email: string
+          p1_phone: string
+          p1_dni: string
+          p2_full_name: string
+          p2_email: string
+          p2_phone: string
+          p2_dni: string
+        }
+        Returns: string
+      }
+      remove_pair: {
+        Args: { p_pair_id: string }
+        Returns: undefined
       }
     }
     Enums: {

@@ -40,6 +40,12 @@ export default async function TournamentDetailPage({
 
   if (!t) notFound()
 
+  const { count: requestedCount } = await supabase
+    .from('pairs')
+    .select('id', { count: 'exact', head: true })
+    .eq('tournament_id', t.id)
+    .in('status', ['pending', 'accepted'])
+
   const isDraft = t.status === 'draft'
   const zonesReady = canManageZones(t.status)
 
@@ -108,12 +114,34 @@ export default async function TournamentDetailPage({
           </dl>
         </div>
 
-        {/* Próximos slices */}
+        {/* Gestión */}
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <SectionPlaceholder
-            title="Inscripciones"
-            note="Aceptar o rechazar parejas. (Próximo slice)"
-          />
+          {isDraft ? (
+            <SectionPlaceholder
+              title="Inscripciones"
+              note="Se habilitan al publicar el torneo y abrir la inscripción."
+            />
+          ) : (
+            <Link
+              href={`/tournaments/${t.id}/registrations`}
+              className="group rounded-2xl border border-border bg-card/40 p-6 transition-colors hover:border-volt/50"
+            >
+              <div className="flex items-baseline justify-between gap-4">
+                <h3 className="font-display text-lg text-foreground">
+                  Inscripciones
+                </h3>
+                <span className="font-display text-2xl text-volt tnum">
+                  {requestedCount ?? 0}
+                  <span className="text-muted-foreground">
+                    /{t.max_pair_requests}
+                  </span>
+                </span>
+              </div>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Aceptar o rechazar parejas →
+              </p>
+            </Link>
+          )}
           <SectionPlaceholder
             title="Zonas y partidos"
             note={

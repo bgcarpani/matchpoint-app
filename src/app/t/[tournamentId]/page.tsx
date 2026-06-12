@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import { getPublicTournament } from '@/lib/mock/tournament'
+import { getPublicTournament } from '@/lib/public/tournament'
 import {
   CATEGORY_TYPE_LABELS,
   GENDER_LABELS,
