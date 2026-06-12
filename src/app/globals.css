@@ -1,26 +1,189 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-volt: var(--volt);
+  --color-volt-foreground: var(--volt-foreground);
+  --color-court-line: var(--court-line);
+  --font-sans: var(--font-archivo);
+  --font-mono: var(--font-mono-stack);
+  --font-display: var(--font-archivo);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/*
+ * Volt Court — tema oscuro atlético.
+ * bg #0A0E0A · ink #F2F4EC · acento volt #CCFF00.
+ * Dark por defecto: los tokens viven en :root y se replican en .dark para
+ * que los componentes shadcn que usan la variante dark resuelvan igual.
+ */
+:root,
+.dark {
+  --background: #0a0e0a;
+  --foreground: #f2f4ec;
+  --card: #10150e;
+  --card-foreground: #f2f4ec;
+  --popover: #10150e;
+  --popover-foreground: #f2f4ec;
+  --primary: #ccff00;
+  --primary-foreground: #0a0e0a;
+  --secondary: #181f15;
+  --secondary-foreground: #f2f4ec;
+  --muted: #151b13;
+  --muted-foreground: #8b9783;
+  --accent: #1c2616;
+  --accent-foreground: #ccff00;
+  --destructive: #ff5747;
+  --border: rgba(242, 244, 236, 0.1);
+  --input: rgba(242, 244, 236, 0.14);
+  --ring: #ccff00;
+
+  --volt: #ccff00;
+  --volt-foreground: #0a0e0a;
+  --court-line: rgba(242, 244, 236, 0.07);
+
+  --chart-1: #ccff00;
+  --chart-2: #8b9783;
+  --chart-3: #4f5a45;
+  --chart-4: #2c3325;
+  --chart-5: #1c2616;
+
+  --radius: 0.5rem;
+
+  --sidebar: #10150e;
+  --sidebar-foreground: #f2f4ec;
+  --sidebar-primary: #ccff00;
+  --sidebar-primary-foreground: #0a0e0a;
+  --sidebar-accent: #1c2616;
+  --sidebar-accent-foreground: #ccff00;
+  --sidebar-border: rgba(242, 244, 236, 0.1);
+  --sidebar-ring: #ccff00;
+
+  --font-mono-stack: ui-monospace, "SFMono-Regular", "Menlo", monospace;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "ss01", "cv01";
+  }
+  html {
+    @apply font-sans;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection {
+    background: var(--volt);
+    color: var(--volt-foreground);
+  }
+  /* Números tabulares para marcadores/cupos */
+  .tnum {
+    font-variant-numeric: tabular-nums;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer utilities {
+  /* Tipografía display: Archivo expandido, pesado, uppercase tight */
+  .font-display {
+    font-family: var(--font-archivo), sans-serif;
+    font-stretch: 125%;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+    line-height: 0.9;
+  }
+  .font-condensed {
+    font-stretch: 88%;
+  }
+
+  /* Capa de grano sutil para dar textura al fondo oscuro */
+  .grain::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0.04;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* Líneas de cancha tenues como patrón de fondo */
+  .court-grid {
+    background-image:
+      linear-gradient(to right, var(--court-line) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--court-line) 1px, transparent 1px);
+    background-size: 64px 64px;
+  }
+}
+
+/* Reveal escalonado en carga */
+@keyframes reveal-up {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes grow-x {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.reveal {
+  opacity: 0;
+  animation: reveal-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    animation: none;
+    opacity: 1;
+  }
 }
