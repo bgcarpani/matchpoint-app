@@ -65,20 +65,121 @@ npm run seed:registrations -- <tournament-id> [num-pairs]
 ## Estructura del proyecto
 
 ```
-src/
-├── app/               # App Router + páginas
-│   ├── (auth)/        # Área de login/registro
-│   ├── dashboard/     # Dashboard del organizador
-│   ├── courts/        # Gestión de canchas
-│   ├── tournaments/   # CRUD y gestión de torneos
-│   └── t/            # Área pública de torneo
-├── components/        # Componentes reutilizables
-├── lib/
-│   ├── supabase/     # Clientes (client, server, admin)
-│   ├── domain/       # Lógica de negocio
-│   ├── validation/   # Esquemas zod
-│   └── types/        # Tipos TypeScript
-└── proxy.ts          # Middleware de autenticación
+matchpoint-app/
+│
+├── src/                                    ┌─────────────────────────────────┐
+│   │                                       │  FRONTEND LAYER                 │
+│   ├── app/                  # App Router  │  Next.js Pages & Layouts        │
+│   │   ├── (auth)/           # Login/Signup
+│   │   ├── dashboard/        # Organizer Dashboard
+│   │   ├── courts/           # Court Management
+│   │   ├── tournaments/      # Tournament CRUD
+│   │   │   ├── [id]/
+│   │   │   │   ├── edit/
+│   │   │   │   ├── zones/    # Zone Management
+│   │   │   │   ├── registrations/
+│   │   │   │   └── page.tsx
+│   │   │   └── new/
+│   │   ├── t/[tournamentId]/ # Public Tournament Area
+│   │   │   ├── zones/
+│   │   │   └── page.tsx
+│   │   ├── inscription/[token]/ # Public Registration Check
+│   │   ├── layout.tsx
+│   │   ├── proxy.ts          # Auth Middleware
+│   │   └── globals.css       # Theme & Global Styles
+│   │                                       │
+│   ├── components/           # Reusable UI  │  COMPONENT LAYER
+│   │   ├── ui/               # Base UI (button, calendar, spinner)
+│   │   ├── form/             # Form Fields (text, date, segmented)
+│   │   ├── auth/             # Auth Components (sign-out)
+│   │   ├── courts/           # Court Components
+│   │   ├── tournaments/      # Tournament Components
+│   │   ├── zones/            # Zone Management Components
+│   │   ├── public/           # Public Area Components
+│   │   │   ├── pair-registration-form
+│   │   │   └── inscription-status-card
+│   │   └── organizer/        # Organizer Header
+│   │                                       │
+│   ├── lib/                  # Business Logic └─────────────────────────────────┘
+│   │   ├── supabase/
+│   │   │   ├── client.ts     # Browser client (anon key)
+│   │   │   ├── server.ts     # SSR client (cookies)
+│   │   │   ├── admin.ts      # Service role (server-only)
+│   │   │   ├── auth.ts       # Auth helpers
+│   │   │   └── proxy.ts      # Middleware logic
+│   │   │
+│   │   ├── domain/           # Business logic functions
+│   │   │   ├── court.ts
+│   │   │   ├── tournament.ts
+│   │   │   ├── zone.ts
+│   │   │   └── pair.ts
+│   │   │
+│   │   ├── public/           # Public API logic
+│   │   │   ├── tournament.ts
+│   │   │   ├── zones.ts
+│   │   │   └── inscription.ts
+│   │   │
+│   │   ├── validation/       # Zod schemas
+│   │   │   ├── auth.ts
+│   │   │   ├── court.ts
+│   │   │   ├── tournament.ts
+│   │   │   └── registration.ts
+│   │   │
+│   │   ├── types/
+│   │   │   └── database.ts   # TypeScript types from DB
+│   │   │
+│   │   ├── utils.ts          # Utility functions
+│   │   └── format.ts         # Formatting helpers
+│   │
+│   └── proxy.ts              # Authentication Middleware
+│
+├── supabase/
+│   └── migrations/           # SQL migration files
+│
+├── scripts/
+│   └── apply-migrations.mjs  # DB migration runner
+│
+├── public/                   # Static assets
+│
+├── .next/                    # Build output (not in repo)
+├── node_modules/             # Dependencies (not in repo)
+│
+├── CLAUDE.md                 # Development guide
+├── spec.md                   # v1 Technical Spec
+├── spec-v2.md                # v2 Technical Spec
+├── functional-doc.md         # Functional Analysis
+├── README.md                 # This file
+├── package.json
+├── tsconfig.json
+├── next.config.ts
+├── tailwind.config.ts
+└── eslint.config.mjs
+
+┌─────────────────────────────────────────┐
+│  DATA LAYER (Supabase PostgreSQL)       │
+├─────────────────────────────────────────┤
+│ Tables:                                 │
+│  • organizer, court                     │
+│  • tournament, zone, match              │
+│  • pair, player                         │
+│  • registration                         │
+│                                         │
+│ Views (Public):                         │
+│  • public_tournament_view                │
+│  • public_pair_view                      │
+│  • public_court_view                     │
+│  • public_organizer_view                 │
+│                                         │
+│ Functions:                              │
+│  • register_pair (SECURITY DEFINER)      │
+│  • remove_pair (SECURITY DEFINER)        │
+│  • owns_tournament (RLS helper)          │
+│  • zone generation (round-robin RPC)     │
+│                                         │
+│ Security:                               │
+│  • RLS enabled on all tables             │
+│  • Role-based access (anon/auth)         │
+└─────────────────────────────────────────┘
 ```
 
 ## Características implementadas (v1 — MVP)
@@ -101,14 +202,59 @@ src/
 - ✅ Consulta de estado por token único (sin autenticación)
 - ✅ Visualización de zonas y partidos (una vez publicados)
 
-## Interfaz y experiencia de usuario
+## Flujo de uso de la aplicación
 
-- **Tema**: Azul deportivo profesional (#3B82F6) sobre azul noche. Colores token-based en `globals.css` para cambios parejos en toda la app.
-- **Calendar date picker**: Calendario interactivo con popover para seleccionar fechas (fecha del torneo y apertura automática de inscripción). Captions en español (Intl), fechas pasadas deshabilitadas.
-- **Loading states**: Spinners visuales en navegación para feedback inmediato durante transiciones de rutas.
-- **Share registration link**: Panel en detalle del torneo con URL copiable, botón "Abrir página pública", y mensajes contextuales sobre estado de inscripción (abierta/cerrada con horarios si está configurada apertura automática).
-- **Labels claros**: Botones del ciclo de vida muestran acciones ("Publicar", "Abrir inscripción", "Cerrar inscripción") en lugar de destinos.
-- **Responsive**: Diseño adaptable a móvil y desktop (grid escalable, padding proporcional).
+```mermaid
+graph TD
+    A["🏠 Landing"] -->|Click 'Ingresa'| B["Login"]
+    A -->|Organizer nuevo?| C["Register"]
+    C -->|Registrarse| B
+    B -->|Autenticado| D["📊 Dashboard del Organizador"]
+    
+    D -->|Crear/Editar| E["⚙️ Gestión de Canchas"]
+    E -->|Guardar| D
+    
+    D -->|Crear torneo| F["🏆 Crear Torneo"]
+    F -->|Nombre, categoría, género, cupos, fechas| G["Detalle del Torneo"]
+    G -->|Editar| F
+    G -->|Borrador| H{Ciclo de Vida}
+    
+    H -->|Publicar| I["Publicado"]
+    I -->|Abrir inscripción| J["Inscripción Abierta"]
+    J -->|Cerrar inscripción| K["Inscripción Cerrada"]
+    K -->|Iniciar| L["En Curso"]
+    L -->|Finalizar| M["Finalizado"]
+    
+    G -->|Gestionar inscripciones| N["📋 Inscripciones"]
+    N -->|Ver solicitudes| O["Aceptar/Rechazar Parejas"]
+    O -->|Actualizar| N
+    
+    G -->|Generar zonas| P["🎯 Zonas de Competencia"]
+    P -->|Random + Round-Robin RPC| Q["Zonas Generadas"]
+    Q -->|Editar manualmente| R["Asignar parejas a zonas"]
+    R -->|Asignar canchas| S["Partidos listos"]
+    S -->|Publicar torneo| I
+    
+    I -->|Compartir link| T["🌐 Página Pública del Torneo"]
+    T -->|Ver info| U["Nombre, fechas, categoría"]
+    U -->|Inscribirse| V["📝 Formulario de Inscripción Pública"]
+    V -->|DNI, nombres, categorías| W["Pareja registrada"]
+    W -->|Obtener token| X["Buscar estado por token"]
+    
+    J -->|Acceso público| T
+    P -->|Publicadas zonas| Y["📍 Ver Zonas y Partidos Públicos"]
+    Y -->|Round-robin de zona| Z["Calendario de partidos"]
+    Z -->|Ver detalles| AA["Hora, cancha, rival"]
+    
+    N -->|Aceptar inscripción| AB["Pareja confirmada"]
+    O -->|Rechazar| AC["Pareja no aceptada"]
+    
+    M -->|Fin| AD["Historial en perfil futuro v4"]
+```
+
+**Flujo de roles principales:**
+- **Organizer**: Login → Crear/editar torneos → Gestionar canchas → Procesar inscripciones → Generar zonas → Publicar
+- **Pareja (público)**: Ver torneo publicado → Inscribirse → Consultar estado por token → Ver zonas y partidos
 
 ## Convenciones de implementación
 
