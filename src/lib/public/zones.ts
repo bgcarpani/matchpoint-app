@@ -6,7 +6,7 @@
  * `public_pair_view` / `public_court_view` (sin PII ni lookup_token).
  */
 import { createClient } from '@/lib/supabase/server'
-import type { ScoringMode } from '@/lib/types/database'
+import type { MatchFormat, ScoringMode } from '@/lib/types/database'
 import { formatResult } from '@/lib/domain/match'
 import type { StandingRow } from '@/lib/domain/zone'
 
@@ -24,6 +24,7 @@ export interface PublicZoneMatch {
 export interface PublicZoneView {
   id: string
   name: string
+  matchFormat: MatchFormat
   standingsFrozen: boolean
   standings: StandingRow[]
   pairs: { pairId: string; label: string }[]
@@ -42,7 +43,7 @@ export async function getPublicZones(
   // La RLS *_select_public limita a zonas publicadas del torneo.
   const { data: zones } = await supabase
     .from('zones')
-    .select('id, name, standings_frozen')
+    .select('id, name, match_format, standings_frozen')
     .eq('tournament_id', tournamentId)
     .order('name', { ascending: true })
 
@@ -106,6 +107,7 @@ export async function getPublicZones(
   return zones.map((z) => ({
     id: z.id,
     name: z.name,
+    matchFormat: z.match_format,
     standingsFrozen: z.standings_frozen,
     standings: (zonePairs ?? [])
       .filter((zp) => zp.zone_id === z.id)

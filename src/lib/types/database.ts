@@ -284,8 +284,20 @@ export interface Database {
         Args: { p_pair_id: string; p_target_zone_id: string }
         Returns: undefined
       }
+      generate_zone_matches: {
+        Args: { p_zone_id: string; p_format: MatchFormat }
+        Returns: undefined
+      }
+      generate_next_zone_round: {
+        Args: { p_zone_id: string }
+        Returns: undefined
+      }
       freeze_zone_standings: {
         Args: { p_zone_id: string }
+        Returns: undefined
+      }
+      freeze_manual_standings: {
+        Args: { p_zone_id: string; p_pair_ids: string[] }
         Returns: undefined
       }
       reopen_zone_standings: {

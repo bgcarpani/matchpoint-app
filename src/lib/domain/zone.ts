@@ -2,6 +2,27 @@
  * Reglas de dominio de zonas y partidos (spec.md "Gestión de zonas").
  * Fuente única de verdad compartida por server actions y UI.
  */
+import type { MatchFormat } from '@/lib/types/database'
+
+/** Etiquetas es-AR de cada formato de partido por zona (Feature 4, v2). */
+export const MATCH_FORMAT_LABELS: Record<MatchFormat, string> = {
+  round_robin: 'Todos contra todos',
+  winner_vs_loser: 'Ganador vs perdedor',
+  manual: 'Manual',
+}
+
+/** Descripción corta de cada formato para el selector. */
+export const MATCH_FORMAT_HINTS: Record<MatchFormat, string> = {
+  round_robin: 'Round-robin: cada pareja juega contra todas las demás.',
+  winner_vs_loser:
+    'Zona de 4: ronda 1, luego ganador-vs-ganador (1º/2º) y perdedor-vs-perdedor (3º/4º).',
+  manual: 'Vos armás los partidos y fijás las posiciones a mano.',
+}
+
+/** winner_vs_loser sólo aplica a zonas de exactamente 4 parejas. */
+export function supportsWinnerVsLoser(pairCount: number): boolean {
+  return pairCount === 4
+}
 
 /** Sugerencia de cantidad de zonas: ~4 parejas por zona, mínimo 1. */
 export function suggestZoneCount(acceptedPairs: number): number {
@@ -29,6 +50,18 @@ export const ZONE_ERROR_LABELS: Record<string, string> = {
   NO_MATCHES: 'La zona no tiene partidos para cerrar posiciones.',
   MATCHES_PENDING:
     'Cargá el resultado de todos los partidos antes de cerrar las posiciones.',
+  WVL_NEEDS_4:
+    'El formato ganador-vs-perdedor necesita exactamente 4 parejas en la zona.',
+  WRONG_FORMAT: 'La operación no corresponde al formato de esta zona.',
+  ROUND1_PENDING:
+    'Cargá el resultado de los dos partidos de la ronda 1 antes de generar la ronda 2.',
+  ROUND2_PLAYED:
+    'La ronda 2 ya tiene resultados. Borralos antes de regenerarla.',
+  ROUND2_PENDING:
+    'Generá la ronda 2 y cargá sus resultados antes de cerrar las posiciones.',
+  USE_MANUAL_FREEZE: 'Esta zona es manual: fijá las posiciones a mano.',
+  MANUAL_POSITIONS_INVALID:
+    'Las posiciones cargadas no son válidas (deben cubrir todas las parejas, sin repetir).',
 }
 
 /**

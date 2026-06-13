@@ -105,11 +105,21 @@ export default async function PublicZonesPage({
                     Sin partidos.
                   </li>
                 )}
-                {zone.matches.map((m) => (
+                {zone.matches.map((m, i) => {
+                  const prev = zone.matches[i - 1]
+                  const showRoundHeader =
+                    zone.matchFormat === 'winner_vs_loser' &&
+                    (!prev || prev.round !== m.round)
+                  return (
                   <li
                     key={m.id}
                     className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-secondary px-3 py-2 text-sm"
                   >
+                    {showRoundHeader && (
+                      <p className="w-full text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                        Ronda {m.round}
+                      </p>
+                    )}
                     <span className="text-foreground">
                       <span
                         className={m.winner === 'team1' ? 'font-semibold' : ''}
@@ -136,7 +146,8 @@ export default async function PublicZonesPage({
                       )}
                     </span>
                   </li>
-                ))}
+                  )
+                })}
               </ul>
             </article>
           ))}

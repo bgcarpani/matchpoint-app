@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { requireUser } from '@/lib/supabase/auth'
 import { zoneErrorLabel } from '@/lib/domain/zone'
 import { computeResult, type RecordResultInput } from '@/lib/domain/match'
+import type { MatchFormat } from '@/lib/types/database'
 
 export type ActionResult = { error: string } | { ok: true }
 
@@ -45,6 +46,139 @@ export async function movePair(
     p_target_zone_id: targetZoneId,
   })
   if (error) return { error: zoneErrorLabel(error.message) }
+
+  revalidate(tournamentId)
+  return { ok: true }
+}
+
+/**
+ * (Re)genera los partidos de UNA zona con el formato elegido (round_robin /
+ * winner_vs_loser / manual). Reemplaza los partidos existentes de la zona y
+ * reinicia sus posiciones. Sólo antes de publicar.
+ */
+export async function regenerateZoneMatches(
+  tournamentId: string,
+  zoneId: string,
+  format: MatchFormat
+): Promise<ActionResult> {
+  const { supabase } = await requireUser()
+  const { error } = await supabase.rpc('generate_zone_matches', {
+    p_zone_id: zoneId,
+    p_format: format,
+  })
+  if (error) return { error: zoneErrorLabel(error.message) }
+
+  revalidate(tournamentId)
+  return { ok: true }
+}
+
+/**
+ * Genera la ronda 2 de una zona winner_vs_loser a partir de los resultados de la
+ * ronda 1 (ganador-vs-ganador y perdedor-vs-perdedor). Requiere el torneo en
+ * curso con los dos partidos de ronda 1 cargados.
+ */
+export async function generateNextRound(
+  tournamentId: string,
+  zoneId: string
+): Promise<ActionResult> {
+  const { supabase } = await requireUser()
+  const { error } = await supabase.rpc('generate_next_zone_round', {
+    p_zone_id: zoneId,
+  })
+  if (error) return { error: zoneErrorLabel(error.message) }
+
+  revalidate(tournamentId)
+  return { ok: true }
+}
+
+/**
+ * Agrega un partido a una zona MANUAL (antes de publicar). Valida que la zona
+ * sea manual y no publicada, y que ambas parejas pertenezcan a la zona (la RLS
+ * matches_all_owner protege la fila; este chequeo evita partidos inconsistentes).
+ */
+export async function addManualMatch(
+  tournamentId: string,
+  zoneId: string,
+  team1PairId: string,
+  team2PairId: string
+): Promise<ActionResult> {
+  if (team1PairId === team2PairId)
+    return { error: 'Una pareja no puede jugar contra sí misma.' }
+
+  const { supabase } = await requireUser()
+
+  const { data: zone } = await supabase
+    .from('zones')
+    .select('tournament_id, match_format, is_published')
+    .eq('id', zoneId)
+    .single()
+  if (!zone || zone.tournament_id !== tournamentId)
+    return { error: 'No se encontró la zona.' }
+  if (zone.is_published)
+    return { error: 'Las zonas publicadas no se pueden modificar.' }
+  if (zone.match_format !== 'manual')
+    return { error: 'Sólo se agregan partidos en zonas de formato manual.' }
+
+  const { data: zonePairs } = await supabase
+    .from('zone_pairs')
+    .select('pair_id')
+    .eq('zone_id', zoneId)
+    .in('pair_id', [team1PairId, team2PairId])
+  if (!zonePairs || zonePairs.length !== 2)
+    return { error: 'Ambas parejas tienen que ser de esta zona.' }
+
+  const { data: last } = await supabase
+    .from('matches')
+    .select('round')
+    .eq('zone_id', zoneId)
+    .order('round', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  const nextRound = (last?.round ?? 0) + 1
+
+  const { error } = await supabase.from('matches').insert({
+    zone_id: zoneId,
+    round: nextRound,
+    team1_pair_id: team1PairId,
+    team2_pair_id: team2PairId,
+  })
+  if (error) return { error: 'No se pudo agregar el partido.' }
+
+  revalidate(tournamentId)
+  return { ok: true }
+}
+
+/**
+ * Borra un partido de una zona MANUAL (antes de publicar). Valida que la zona
+ * sea manual y no publicada antes de borrar.
+ */
+export async function removeManualMatch(
+  tournamentId: string,
+  matchId: string
+): Promise<ActionResult> {
+  const { supabase } = await requireUser()
+
+  const { data: match } = await supabase
+    .from('matches')
+    .select('zone_id')
+    .eq('id', matchId)
+    .single()
+  if (!match || !match.zone_id) return { error: 'No se encontró el partido.' }
+
+  const { data: zone } = await supabase
+    .from('zones')
+    .select('tournament_id, match_format, is_published')
+    .eq('id', match.zone_id)
+    .single()
+  if (!zone || zone.tournament_id !== tournamentId)
+    return { error: 'No se encontró la zona.' }
+  if (zone.is_published)
+    return { error: 'Las zonas publicadas no se pueden modificar.' }
+  if (zone.match_format !== 'manual')
+    return { error: 'Sólo se borran partidos en zonas de formato manual.' }
+
+  const { error } = await supabase.from('matches').delete().eq('id', matchId)
+  if (error) return { error: 'No se pudo borrar el partido.' }
 
   revalidate(tournamentId)
   return { ok: true }
@@ -190,6 +324,27 @@ export async function freezeZoneStandings(
   const { supabase } = await requireUser()
   const { error } = await supabase.rpc('freeze_zone_standings', {
     p_zone_id: zoneId,
+  })
+  if (error) return { error: zoneErrorLabel(error.message) }
+
+  revalidate(tournamentId)
+  return { ok: true }
+}
+
+/**
+ * Cierra las posiciones de una zona MANUAL con el orden fijado por el organizador.
+ * `pairIds` es el orden final (índice 0 = 1º puesto). Exige todos los partidos
+ * de la zona en `finished` y que el orden cubra todas las parejas sin repetir.
+ */
+export async function freezeManualStandings(
+  tournamentId: string,
+  zoneId: string,
+  pairIds: string[]
+): Promise<ActionResult> {
+  const { supabase } = await requireUser()
+  const { error } = await supabase.rpc('freeze_manual_standings', {
+    p_zone_id: zoneId,
+    p_pair_ids: pairIds,
   })
   if (error) return { error: zoneErrorLabel(error.message) }
 

@@ -52,7 +52,7 @@ export default async function ZonesPage({
         .order('name', { ascending: true }),
       supabase
         .from('zones')
-        .select('id, name, is_published, standings_frozen')
+        .select('id, name, is_published, match_format, standings_frozen')
         .eq('tournament_id', id)
         .order('name', { ascending: true }),
     ])
@@ -152,6 +152,7 @@ export default async function ZonesPage({
     id: z.id,
     name: z.name,
     isPublished: z.is_published,
+    matchFormat: z.match_format,
     standingsFrozen: z.standings_frozen,
     standings: (zonePairs ?? [])
       .filter((zp) => zp.zone_id === z.id)
