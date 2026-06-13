@@ -81,15 +81,14 @@ export default async function PublicTournamentPage({
             <Tag accent>{categoryLabel}</Tag>
             <Divider />
             <Tag>{GENDER_LABELS[t.gender]}</Tag>
-            <Divider />
-            <Tag>{CATEGORY_TYPE_LABELS[t.category_type]}</Tag>
           </div>
         </div>
       </section>
 
-      {/* Cupos / stats strip */}
+      {/* Cupos / stats strip. La cantidad de solicitudes recibidas no se expone
+          públicamente (no incentivar a "llenar" o colapsar los cupos). */}
       <section
-        className="reveal mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3"
+        className="reveal mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2"
         style={{ animationDelay: '280ms' }}
       >
         <StatCard
@@ -97,13 +96,6 @@ export default async function PublicTournamentPage({
           value={t.accepted_pairs}
           total={t.max_pairs}
           unit="parejas"
-          bar
-        />
-        <StatCard
-          label="Solicitudes"
-          value={t.requested_pairs}
-          total={t.max_pair_requests}
-          unit="recibidas"
           bar
         />
         <StatCard label="Canchas" value={t.courts.length} unit="en juego" />
@@ -166,12 +158,11 @@ export default async function PublicTournamentPage({
             canRegister={canRegister}
             status={t.status}
             requestsFull={requestsFull}
-            slotsLeft={Math.max(t.max_pair_requests - t.requested_pairs, 0)}
           />
         </div>
       </section>
 
-      <footer className="mt-16 border-t border-border pt-6 text-xs text-muted-foreground">
+      <footer className="mt-16 border-t border-border pt-6 text-center text-xs text-muted-foreground">
         Al inscribirte recibís un enlace privado para seguir el estado de tu
         solicitud sin necesidad de cuenta.
       </footer>

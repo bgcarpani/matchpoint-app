@@ -1,6 +1,10 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+/* Estilos base del calendario: importados acá (sin capa) ANTES de nuestros
+ * overrides para que el tema gane la cascada. Si se importa desde el componente
+ * cargan después y pisan el tema (se ve roto). */
+@import "react-day-picker/style.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -50,8 +54,10 @@
 }
 
 /*
- * Court Blue — tema oscuro deportivo.
- * bg #0B0F17 · ink #EAEEF5 · acento azul #3B82F6.
+ * Court Blue — tema deportivo azul noche profundo, con halo.
+ * bg #0B1220 · ink #ECF0F7 · acento azul #3B82F6.
+ * Fondo azul noche profundo + un halo radial azul sutil (ver `.glow` abajo) para
+ * un look premium e intencional, manteniendo la paleta azul.
  * Dark por defecto: los tokens viven en :root y se replican en .dark para
  * que los componentes shadcn que usan la variante dark resuelvan igual.
  * Nota: el token de acento se sigue llamando `--volt` por compatibilidad con
@@ -59,23 +65,23 @@
  */
 :root,
 .dark {
-  --background: #0b0f17;
-  --foreground: #eaeef5;
-  --card: #131a26;
-  --card-foreground: #eaeef5;
-  --popover: #131a26;
-  --popover-foreground: #eaeef5;
+  --background: #0b1220;
+  --foreground: #ecf0f7;
+  --card: #131c30;
+  --card-foreground: #ecf0f7;
+  --popover: #131c30;
+  --popover-foreground: #ecf0f7;
   --primary: #3b82f6;
   --primary-foreground: #ffffff;
-  --secondary: #1a2433;
-  --secondary-foreground: #eaeef5;
-  --muted: #151c28;
-  --muted-foreground: #8a93a6;
-  --accent: #1c2a3f;
-  --accent-foreground: #3b82f6;
+  --secondary: #1c2a44;
+  --secondary-foreground: #ecf0f7;
+  --muted: #16223a;
+  --muted-foreground: #9aa6bd;
+  --accent: #213251;
+  --accent-foreground: #60a5fa;
   --destructive: #f4524a;
-  --border: rgba(234, 238, 245, 0.1);
-  --input: rgba(234, 238, 245, 0.14);
+  --border: rgba(234, 238, 245, 0.11);
+  --input: rgba(234, 238, 245, 0.15);
   --ring: #3b82f6;
 
   --volt: #3b82f6;
@@ -90,13 +96,13 @@
 
   --radius: 0.5rem;
 
-  --sidebar: #131a26;
-  --sidebar-foreground: #eaeef5;
+  --sidebar: #131c30;
+  --sidebar-foreground: #ecf0f7;
   --sidebar-primary: #3b82f6;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #1c2a3f;
-  --sidebar-accent-foreground: #3b82f6;
-  --sidebar-border: rgba(234, 238, 245, 0.1);
+  --sidebar-accent: #213251;
+  --sidebar-accent-foreground: #60a5fa;
+  --sidebar-border: rgba(234, 238, 245, 0.11);
   --sidebar-ring: #3b82f6;
 
   --font-mono-stack: ui-monospace, "SFMono-Regular", "Menlo", monospace;
@@ -138,6 +144,23 @@
     font-stretch: 88%;
   }
 
+  /* Halo radial azul: glow sutil desde arriba para dar profundidad al fondo.
+     Capa fija detrás del contenido (z-0), por encima del fondo sólido. */
+  .glow::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(
+        120% 75% at 50% -12%,
+        rgba(59, 130, 246, 0.2),
+        rgba(59, 130, 246, 0.05) 38%,
+        transparent 62%
+      );
+  }
+
   /* Capa de grano sutil para dar textura al fondo oscuro */
   .grain::before {
     content: "";
@@ -158,9 +181,9 @@
   }
 }
 
-/* react-day-picker (calendario) adaptado al tema oscuro Volt */
-@layer components {
-  .rdp-root {
+/* react-day-picker (calendario) adaptado al tema. Sin @layer a propósito: deben
+ * ganarle en la cascada a los estilos base de la librería (que son no-capados). */
+.rdp-root {
     --rdp-accent-color: var(--volt);
     --rdp-accent-background-color: var(--accent);
     --rdp-font-family: inherit;
@@ -217,7 +240,6 @@
   .rdp-button_next:hover {
     background: var(--accent);
   }
-}
 
 /* Reveal escalonado en carga */
 @keyframes reveal-up {

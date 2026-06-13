@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { Popover } from '@base-ui/react/popover'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { CalendarDays } from 'lucide-react'
 import { Calendar } from '@/components/ui/calendar'
 import { formatDate } from '@/lib/format'
@@ -23,9 +23,13 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
   )
 }
 
+const PANEL_WIDTH = 288 // ancho aprox del calendario, para clampear al viewport
+
 /**
- * Campo de fecha con calendario visual (popover). Maneja un valor controlado
- * 'YYYY-MM-DD' | '' — pensado para estado local en el form (no RHF), igual que
+ * Campo de fecha con calendario visual. El panel se monta vía portal directo a
+ * `document.body` con `position: fixed` y z-index alto: así no queda detrás de
+ * otros controles ni pierde los clicks (problema que tenía el Popover de base-ui).
+ * Maneja un valor controlado 'YYYY-MM-DD' | '' — estado local (no RHF), igual que
  * el CategorySelector, para no chocar con el React Compiler.
  */
 export function DateField({
@@ -44,33 +48,101 @@ export function DateField({
   fromToday?: boolean
 }) {
   const [open, setOpen] = useState(false)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
   const selected = value ? new Date(`${value}T00:00:00`) : undefined
+
+  // Posicionamiento imperativo: escribimos top/left en el nodo del panel sin
+  // pasar por estado (el React Compiler prohíbe setState síncrono en effects).
+  const place = useCallback(() => {
+    const el = triggerRef.current
+    const panel = panelRef.current
+    if (!el || !panel) return
+    const r = el.getBoundingClientRect()
+    const maxLeft = window.innerWidth - PANEL_WIDTH - 8
+    const left = Math.max(8, Math.min(r.left, maxLeft))
+    // Si no entra abajo, lo abrimos hacia arriba.
+    const below = r.bottom + 8
+    const wantsAbove = below + 340 > window.innerHeight
+    const top = wantsAbove ? Math.max(8, r.top - 340) : below
+    panel.style.top = `${top}px`
+    panel.style.left = `${left}px`
+    panel.style.visibility = 'visible'
+  }, [])
+
+  // Posicionar al abrir y mantener pegado al trigger en scroll/resize.
+  useEffect(() => {
+    if (!open) return
+    place()
+    const onMove = () => place()
+    window.addEventListener('resize', onMove)
+    window.addEventListener('scroll', onMove, true)
+    return () => {
+      window.removeEventListener('resize', onMove)
+      window.removeEventListener('scroll', onMove, true)
+    }
+  }, [open, place])
+
+  // Cerrar con Escape o click afuera.
+  useEffect(() => {
+    if (!open) return
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    function onDown(e: MouseEvent) {
+      const t = e.target as Node
+      if (panelRef.current?.contains(t) || triggerRef.current?.contains(t)) return
+      setOpen(false)
+    }
+    document.addEventListener('keydown', onKey)
+    document.addEventListener('mousedown', onDown)
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      document.removeEventListener('mousedown', onDown)
+    }
+  }, [open])
 
   return (
     <div>
       <FieldLabel>{label}</FieldLabel>
-      <Popover.Root open={open} onOpenChange={setOpen}>
-        <Popover.Trigger render={<button type="button" />} className={triggerClass}>
-          <span className={value ? 'text-foreground' : 'text-muted-foreground'}>
-            {value ? formatDate(value) : placeholder}
-          </span>
-          <CalendarDays className="size-4 shrink-0 text-muted-foreground" />
-        </Popover.Trigger>
-        <Popover.Portal>
-          <Popover.Positioner sideOffset={8} align="start">
-            <Popover.Popup className="z-50 rounded-xl border border-border bg-popover p-3 text-popover-foreground shadow-2xl outline-none">
-              <Calendar
-                selected={selected}
-                fromToday={fromToday}
-                onSelect={(d) => {
-                  onChange(d ? toYMD(d) : '')
-                  setOpen(false)
-                }}
-              />
-            </Popover.Popup>
-          </Popover.Positioner>
-        </Popover.Portal>
-      </Popover.Root>
+      <button
+        ref={triggerRef}
+        type="button"
+        className={triggerClass}
+        onClick={() => setOpen((o) => !o)}
+      >
+        <span className={value ? 'text-foreground' : 'text-muted-foreground'}>
+          {value ? formatDate(value) : placeholder}
+        </span>
+        <CalendarDays className="size-4 shrink-0 text-muted-foreground" />
+      </button>
+
+      {open &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div
+            ref={panelRef}
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              zIndex: 100,
+              visibility: 'hidden',
+            }}
+            className="rounded-xl border border-border bg-popover p-3 text-popover-foreground shadow-2xl outline-none"
+          >
+            <Calendar
+              selected={selected}
+              fromToday={fromToday}
+              onSelect={(d) => {
+                onChange(d ? toYMD(d) : '')
+                setOpen(false)
+              }}
+            />
+          </div>,
+          document.body
+        )}
+
       {error && <p className="mt-1.5 text-xs text-destructive">{error}</p>}
     </div>
   )

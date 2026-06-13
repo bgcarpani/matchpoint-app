@@ -146,7 +146,7 @@ Las transiciones son unidireccionales.
 
 ## Próximas versiones
 
-- **v2**: Scores, resultados y bracket (eliminación directa)
+- **v2** (especificada en `spec-v2.md`): calendario público del organizador + QR, anti-duplicado de inscripción por email, resultados/scoring de partidos, standings de zona, bracket (eliminación directa) y seguimiento en vivo (Realtime)
 - **v3**: Notificaciones y transmisión en vivo
 - **v4**: Login y perfiles de jugador con estadísticas y rankings
 - **v5**: Gestión avanzada de disponibilidad de canchas y pagos
@@ -164,4 +164,5 @@ SUPABASE_SERVICE_ROLE_KEY=<clave-privada>
 
 - `CLAUDE.md` — Instrucciones detalladas para desarrollo
 - `spec.md` — Especificación técnica de v1
+- `spec-v2.md` — Especificación técnica de v2
 - `functional-doc.md` — Análisis funcional completo

@@ -37,6 +37,15 @@ export function canManageZones(status: TournamentStatus): boolean {
   return status === 'registration_closed' || status === 'in_progress'
 }
 
+/**
+ * Las inscripciones (aceptar / rechazar / remover) sólo se gestionan antes de
+ * que el torneo arranque. Una vez "En curso" o "Finalizado" quedan congeladas:
+ * las parejas ya están sorteadas en zonas y no deben cambiar.
+ */
+export function canManageRegistrations(status: TournamentStatus): boolean {
+  return status !== 'in_progress' && status !== 'finished'
+}
+
 // --- Categorías ---
 export const INDIVIDUAL_CATEGORIES = [
   '1ra',

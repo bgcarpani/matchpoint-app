@@ -10,6 +10,7 @@ Las primeras versiones son organizer-first.
 ## Documentos de referencia
 - `functional-doc.md` — análisis funcional completo (todas las versiones)
 - `spec.md` — especificación detallada de implementación de v1
+- `spec-v2.md` — especificación de implementación de v2 (en construcción)
 
 ## Stack
 - Next.js 16 (App Router) + TypeScript
@@ -46,8 +47,9 @@ Slices completados (build + lint + e2e OK): **Fundación, Auth de Organizer, Can
 opcional por partido editables antes de publicar, vista pública en `/t/[id]/zones`).
 **v1 MVP funcionalmente completo.** Pendiente conocido: apertura automática de inscripción
 (`registration_opens_at`) requiere un job programado (Supabase cron) — hoy la apertura es manual.
-Próximo foco sugerido: v2 (resultados/scoring + standings de zona + bracket). El detalle granular
-por slice vive en la memoria del asistente.
+Próximo foco: v2 — **especificada en `spec-v2.md`** (calendario público + QR, anti-duplicado por
+email, resultados/scoring, standings de zona, formatos de partido, bracket y Realtime). El detalle
+granular por slice vive en la memoria del asistente.
 
 ## Convenciones de implementación (v1)
 > No revertir sin discusión; reflejan decisiones ya validadas en código y verificadas e2e.
@@ -96,8 +98,10 @@ por slice vive en la memoria del asistente.
   `src/components/form/date-field.tsx`.
 - **Loading states**: `loading.tsx` en rutas pesadas (dashboard, `/t/[id]`, `/tournaments/[id]`) con
   spinner desde `src/components/ui/spinner.tsx`. Feedback inmediato en navegación.
-- **Tema (branding)**: azul deportivo (`--volt: #3B82F6`) sobre azul noche (#0B0F17). Tokens en
-  `globals.css` (--background, --foreground, --accent, etc.). Cambio de paleta = actualizar variables CSS.
+- **Tema (branding)**: azul deportivo (`--volt: #3B82F6`) sobre azul noche profundo
+  (`--background: #0B1220`) + halo radial azul (clase `.glow` en `<body>`, capa fija z-0 detrás del
+  contenido — por eso cada página usa `relative z-[2]`). Tokens en `globals.css` (--background,
+  --foreground, --accent, etc.). Cambio de paleta = actualizar variables CSS.
 
 ## Entidades clave (v1)
 - **Organizer**: dueño de establecimiento, tiene login, crea y gestiona torneos

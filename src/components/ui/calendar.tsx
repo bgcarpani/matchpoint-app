@@ -1,7 +1,8 @@
 'use client'
 
 import { DayPicker } from 'react-day-picker'
-import 'react-day-picker/style.css'
+// Los estilos base de react-day-picker se importan en globals.css (antes de los
+// overrides del tema) para que la cascada resuelva a favor del tema.
 
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 

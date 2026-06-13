@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation'
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { OrganizerHeader } from '@/components/organizer/organizer-header'
+import { canManageRegistrations } from '@/lib/domain/tournament'
 import {
   RegistrationTable,
   type RegistrationRow,
@@ -98,8 +99,18 @@ export default async function RegistrationsPage({
           />
         </div>
 
+        {!canManageRegistrations(tournament.status) && (
+          <p className="mt-6 rounded-xl border border-border bg-card/40 px-4 py-3 text-sm text-muted-foreground">
+            El torneo está {tournament.status === 'finished' ? 'finalizado' : 'en curso'}: las
+            inscripciones quedaron congeladas y no se pueden modificar.
+          </p>
+        )}
+
         <div className="mt-8">
-          <RegistrationTable rows={rows} />
+          <RegistrationTable
+            rows={rows}
+            locked={!canManageRegistrations(tournament.status)}
+          />
         </div>
       </section>
     </div>

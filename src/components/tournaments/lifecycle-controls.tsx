@@ -6,11 +6,7 @@ import {
   advanceTournamentStatus,
   deleteTournament,
 } from '@/app/tournaments/actions'
-import {
-  nextStatus,
-  STATUS_LABELS,
-  ADVANCE_ACTION_LABELS,
-} from '@/lib/domain/tournament'
+import { nextStatus, ADVANCE_ACTION_LABELS } from '@/lib/domain/tournament'
 import { Button } from '@/components/ui/button'
 import type { TournamentStatus } from '@/lib/types/database'
 
@@ -30,7 +26,7 @@ export function LifecycleControls({
     if (!next) return
     if (
       !confirm(
-        `¿Avanzar a "${STATUS_LABELS[next]}"? Las transiciones no se pueden revertir.`
+        `¿${ADVANCE_ACTION_LABELS[status]}? Las transiciones no se pueden revertir.`
       )
     )
       return

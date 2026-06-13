@@ -64,9 +64,20 @@ Las versiones siguientes se lanzan en base a la necesidad de los organizadores y
 ### Fase de zonas — Americano con parejas fijas
 - Las parejas de cada zona juegan entre sí en formato round-robin (todas contra todas)
 - Las parejas son fijas durante todo el torneo
-- Se acumulan puntos por pareja en cada partido
-- Los resultados de cada partido se registran (configuración de scoring a definir: sets, games o puntos)
+- Se acumulan puntos por pareja en cada partido (victoria = 2, derrota = 0)
+- Scoring **configurable por torneo**: por defecto a games (1 set a 6/7) — el caso más común — con la
+  excepción de best of 3 sets. Detalle en `spec-v2.md` → Feature 3.
 - Al finalizar la fase, la posición de cada pareja dentro de la zona define quién clasifica y en qué lugar entra al bracket
+
+#### Formato de partidos de zona — elección del organizador
+En v1 los partidos de zona se generan siempre en round-robin. En v2, al generar los partidos
+de cada zona, el organizador elige el formato (resuelve el caso real de que no siempre se juega
+todos-contra-todos):
+- **Round-robin** (todos contra todos): N·(N−1)/2 partidos por zona — el comportamiento de v1.
+- **Ganador vs perdedor** (americano / progresivo): menos partidos por zona (ej. 4 partidos, 2 por
+  equipo en una zona de 4). La segunda ronda empareja ganadores con ganadores y perdedores con
+  perdedores. **Depende de los resultados** de la ronda previa, por eso vive en v2 (junto al scoring).
+- **Manual**: el organizador arma los partidos a mano (agregar / quitar / editar parejas y cancha).
 
 ### Fase de llaves — Eliminación directa
 - Las parejas clasificadas se ubican en el bracket según su posición en la zona
@@ -77,6 +88,17 @@ Las versiones siguientes se lanzan en base a la necesidad de los organizadores y
 - El seguimiento (visualización de bracket y posiciones en tiempo real) es opcional por torneo
 - El organizador puede preferir gestión manual en su cancha
 - Requiere Supabase Realtime para actualizaciones en vivo
+
+### Refinamientos adicionales v2 (independientes del motor de resultados)
+- **Calendario público del organizador**: cada organizador tiene una URL estática por establecimiento
+  (slug corto no adivinable, ej. `/o/x7k2qp`) pensada para generar un **QR imprimible** y pegarlo en la
+  pared. Quien lo escanea ve, sin login, los torneos vigentes del momento (publicados y no finalizados)
+  y entra a inscribirse en cada uno. La URL es estable; el contenido cambia solo.
+- **Anti-duplicado de inscripción por email**: no se puede enviar una nueva solicitud a un torneo si
+  el email de alguno de los dos jugadores ya tiene una solicitud **pendiente o aceptada** en ese
+  mismo torneo. Las rechazadas no bloquean (pueden re-inscribirse).
+
+> Detalle de implementación de ambos en `spec-v2.md`.
 
 ---
 

@@ -19,7 +19,6 @@ interface Props {
   canRegister: boolean
   status: TournamentStatus
   requestsFull: boolean
-  slotsLeft: number
 }
 
 export function PairRegistrationForm({
@@ -27,7 +26,6 @@ export function PairRegistrationForm({
   canRegister,
   status,
   requestsFull,
-  slotsLeft,
 }: Props) {
   const [players, setPlayers] = useState<[PlayerInput, PlayerInput]>([
     { ...emptyPlayer },
@@ -138,12 +136,7 @@ export function PairRegistrationForm({
       onSubmit={onSubmit}
       className="rounded-2xl border border-border bg-card/40 p-6 sm:p-8"
     >
-      <div className="flex items-center justify-between">
-        <SectionTitle>Inscribir pareja</SectionTitle>
-        <span className="text-xs text-muted-foreground tnum">
-          {slotsLeft} cupos
-        </span>
-      </div>
+      <SectionTitle>Inscribir pareja</SectionTitle>
 
       {[0, 1].map((i) => (
         <fieldset key={i} className="mt-6">

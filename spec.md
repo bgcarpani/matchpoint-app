@@ -122,7 +122,10 @@ created_at      timestamp
 - La unidad de inscripción es la pareja — un jugador completa los datos de ambos integrantes
 - Una pareja solo puede tener una inscripción activa por torneo
 - El organizador solo puede aceptar o rechazar solicitudes enviadas por los jugadores
-- El organizador puede remover parejas aceptadas en cualquier momento
+- El organizador puede aceptar / rechazar / remover parejas mientras el torneo **no** haya
+  arrancado. Una vez `in_progress` (En curso) o `finished` (Finalizado) las inscripciones
+  quedan **congeladas**: ya están sorteadas en zonas y no se pueden modificar (validado en
+  la server action y reflejado en la UI, que oculta las acciones)
 - Al registrarse, el sistema genera un `lookup_token` único asignado a la pareja
 
 ### Zonas
@@ -133,6 +136,20 @@ created_at      timestamp
 - Los partidos generados pueden modificarse manualmente por el organizador antes de publicar las zonas
 - Una vez publicadas, las zonas son visibles públicamente y no pueden modificarse
 - La asignación de cancha a cada partido es opcional y puede editarse en cualquier momento
+- **v1: el único formato de partidos es round-robin (todos contra todos).**
+
+> **Formatos de partido — diferido a v2.** Pedido de organizadores: a veces una zona no se
+> juega todos-contra-todos (6 partidos para 4 parejas) sino en menos partidos (ej. 4, dos por
+> equipo), con un esquema tipo "ganador vs perdedor". Darle al organizador la **elección del
+> formato** al generar los partidos de cada zona:
+>   1. **Round-robin** (todos contra todos) — el actual.
+>   2. **Ganador vs perdedor** (americano/progresivo, ej. 4 partidos / 2 por equipo): la segunda
+>      ronda empareja ganadores con ganadores y perdedores con perdedores.
+>   3. **Manual** — el organizador arma los partidos a mano (agregar / quitar / editar).
+>
+> Se difiere a v2 **porque el modo "ganador vs perdedor" depende de los resultados** (saber quién
+> ganó la primera ronda para armar la segunda), y el scoring de partidos recién llega en v2. Se
+> implementa junto con resultados/standings.
 
 ---
 

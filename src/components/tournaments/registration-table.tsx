@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import type { PairStatus } from '@/lib/types/database'
 import { PAIR_STATUS_LABELS } from '@/lib/domain/pair'
@@ -31,7 +31,46 @@ const STATUS_PILL: Record<PairStatus, string> = {
   rejected: 'border border-destructive/40 text-destructive',
 }
 
-export function RegistrationTable({ rows }: { rows: RegistrationRow[] }) {
+// Orden de visualización: pendientes primero (lo accionable), luego aceptadas,
+// por último rechazadas.
+const STATUS_ORDER: Record<PairStatus, number> = {
+  pending: 0,
+  accepted: 1,
+  rejected: 2,
+}
+
+type Filter = 'all' | PairStatus
+
+const FILTERS: { value: Filter; label: string }[] = [
+  { value: 'all', label: 'Todas' },
+  { value: 'pending', label: 'Pendientes' },
+  { value: 'accepted', label: 'Aceptadas' },
+  { value: 'rejected', label: 'Rechazadas' },
+]
+
+export function RegistrationTable({
+  rows,
+  locked = false,
+}: {
+  rows: RegistrationRow[]
+  locked?: boolean
+}) {
+  const [filter, setFilter] = useState<Filter>('all')
+
+  const counts = useMemo(() => {
+    const c = { all: rows.length, pending: 0, accepted: 0, rejected: 0 }
+    for (const r of rows) c[r.status]++
+    return c
+  }, [rows])
+
+  const visible = useMemo(() => {
+    const filtered =
+      filter === 'all' ? rows : rows.filter((r) => r.status === filter)
+    return [...filtered].sort(
+      (a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status]
+    )
+  }, [rows, filter])
+
   if (rows.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-border bg-card/30 p-10 text-center">
@@ -45,15 +84,52 @@ export function RegistrationTable({ rows }: { rows: RegistrationRow[] }) {
   }
 
   return (
-    <ul className="space-y-3">
-      {rows.map((row) => (
-        <RegistrationItem key={row.id} row={row} />
-      ))}
-    </ul>
+    <div>
+      <div className="flex flex-wrap gap-2">
+        {FILTERS.map((f) => {
+          const active = filter === f.value
+          return (
+            <button
+              key={f.value}
+              type="button"
+              onClick={() => setFilter(f.value)}
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.1em] transition-colors ${
+                active
+                  ? 'bg-volt text-volt-foreground'
+                  : 'border border-border text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {f.label}
+              <span className={active ? 'opacity-80' : 'text-foreground/70'}>
+                {counts[f.value]}
+              </span>
+            </button>
+          )
+        })}
+      </div>
+
+      {visible.length === 0 ? (
+        <p className="mt-6 rounded-xl border border-dashed border-border bg-card/20 p-6 text-center text-sm text-muted-foreground">
+          No hay solicitudes en este estado.
+        </p>
+      ) : (
+        <ul className="mt-4 space-y-2">
+          {visible.map((row) => (
+            <RegistrationItem key={row.id} row={row} locked={locked} />
+          ))}
+        </ul>
+      )}
+    </div>
   )
 }
 
-function RegistrationItem({ row }: { row: RegistrationRow }) {
+function RegistrationItem({
+  row,
+  locked,
+}: {
+  row: RegistrationRow
+  locked: boolean
+}) {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
@@ -75,20 +151,21 @@ function RegistrationItem({ row }: { row: RegistrationRow }) {
   }
 
   return (
-    <li className="rounded-2xl border border-border bg-card/40 p-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="grid flex-1 gap-3 sm:grid-cols-2">
+    <li className="rounded-xl border border-border bg-card/40 px-4 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <div className="grid flex-1 gap-x-6 gap-y-1 sm:grid-cols-2">
           <PlayerCell n={1} p={row.player1} />
           <PlayerCell n={2} p={row.player2} />
         </div>
         <span
-          className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] ${STATUS_PILL[row.status]}`}
+          className={`inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.12em] ${STATUS_PILL[row.status]}`}
         >
           {PAIR_STATUS_LABELS[row.status]}
         </span>
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-2">
+      {!locked && (
+      <div className="mt-2.5 flex flex-wrap items-center gap-2">
         {row.status !== 'accepted' && (
           <ActionButton
             disabled={pending}
@@ -124,21 +201,23 @@ function RegistrationItem({ row }: { row: RegistrationRow }) {
         )}
         {error && <span className="text-sm text-destructive">{error}</span>}
       </div>
+      )}
     </li>
   )
 }
 
 function PlayerCell({ n, p }: { n: number; p: RegistrationPlayer }) {
-  const contact = [p.email, p.phone].filter(Boolean).join(' · ')
+  const contact = [p.email, p.phone, p.dni && `DNI ${p.dni}`]
+    .filter(Boolean)
+    .join(' · ')
   return (
-    <div>
-      <p className="font-display text-xs text-volt">Jugador {n}</p>
-      <p className="mt-1 text-sm font-medium text-foreground">{p.full_name}</p>
+    <div className="min-w-0">
+      <p className="truncate text-sm">
+        <span className="font-display text-xs text-volt">{n}.</span>{' '}
+        <span className="font-medium text-foreground">{p.full_name}</span>
+      </p>
       {contact && (
-        <p className="mt-0.5 text-xs text-muted-foreground">{contact}</p>
-      )}
-      {p.dni && (
-        <p className="text-xs text-muted-foreground">DNI {p.dni}</p>
+        <p className="truncate text-xs text-muted-foreground">{contact}</p>
       )}
     </div>
   )
@@ -166,7 +245,7 @@ function ActionButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`rounded-lg px-3.5 py-2 text-sm font-semibold transition-colors disabled:opacity-50 ${styles}`}
+      className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors disabled:opacity-50 ${styles}`}
     >
       {children}
     </button>

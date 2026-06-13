@@ -26,7 +26,7 @@ export default function RootLayout({
       lang="es"
       className={`dark ${archivo.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col grain court-grid">
+      <body className="min-h-full flex flex-col glow grain court-grid">
         {children}
       </body>
     </html>

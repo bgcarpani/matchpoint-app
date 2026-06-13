@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { requireUser } from '@/lib/supabase/auth'
+import { canManageRegistrations } from '@/lib/domain/tournament'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/lib/types/database'
 
@@ -20,6 +21,22 @@ async function loadOwnedPair(supabase: Client, pairId: string) {
   return data
 }
 
+const LOCKED_MSG =
+  'El torneo ya está en curso: las inscripciones quedaron congeladas.'
+
+// Las inscripciones se congelan cuando el torneo arranca (En curso / Finalizado).
+async function tournamentLocked(
+  supabase: Client,
+  tournamentId: string
+): Promise<boolean> {
+  const { data } = await supabase
+    .from('tournaments')
+    .select('status')
+    .eq('id', tournamentId)
+    .maybeSingle()
+  return data ? !canManageRegistrations(data.status) : false
+}
+
 function revalidate(tournamentId: string) {
   revalidatePath(`/tournaments/${tournamentId}/registrations`)
   revalidatePath(`/tournaments/${tournamentId}`)
@@ -30,6 +47,8 @@ export async function acceptPair(pairId: string): Promise<ActionResult> {
   const { supabase } = await requireUser()
   const pair = await loadOwnedPair(supabase, pairId)
   if (!pair) return { error: 'No se encontró la solicitud.' }
+  if (await tournamentLocked(supabase, pair.tournament_id))
+    return { error: LOCKED_MSG }
 
   // Guard: no aceptar más parejas que max_pairs.
   const [{ data: tournament }, { count }] = await Promise.all([
@@ -63,6 +82,8 @@ export async function rejectPair(pairId: string): Promise<ActionResult> {
   const { supabase } = await requireUser()
   const pair = await loadOwnedPair(supabase, pairId)
   if (!pair) return { error: 'No se encontró la solicitud.' }
+  if (await tournamentLocked(supabase, pair.tournament_id))
+    return { error: LOCKED_MSG }
 
   const { error } = await supabase
     .from('pairs')
@@ -78,6 +99,8 @@ export async function removePair(pairId: string): Promise<ActionResult> {
   const { supabase } = await requireUser()
   const pair = await loadOwnedPair(supabase, pairId)
   if (!pair) return { error: 'No se encontró la solicitud.' }
+  if (await tournamentLocked(supabase, pair.tournament_id))
+    return { error: LOCKED_MSG }
 
   // remove_pair (0004) borra la pareja y sus players, con chequeo de propiedad.
   const { error } = await supabase.rpc('remove_pair', { p_pair_id: pairId })
