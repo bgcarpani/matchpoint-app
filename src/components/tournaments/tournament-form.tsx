@@ -15,6 +15,7 @@ import {
   type TournamentPayload,
 } from '@/app/tournaments/actions'
 import { TextField } from '@/components/form/text-field'
+import { DateField, DateTimeField } from '@/components/form/date-field'
 import {
   CategorySelector,
   type CategoryState,
@@ -32,10 +33,6 @@ export function TournamentForm({ tournament }: { tournament?: Tournament }) {
     resolver: zodResolver(tournamentFormSchema),
     defaultValues: {
       name: tournament?.name ?? '',
-      tournament_date: tournament?.tournament_date ?? '',
-      registration_opens_at: tournament?.registration_opens_at
-        ? toDateTimeLocalValue(tournament.registration_opens_at)
-        : '',
       max_pairs: tournament ? String(tournament.max_pairs) : '',
       max_pair_requests: tournament ? String(tournament.max_pair_requests) : '',
     },
@@ -46,7 +43,17 @@ export function TournamentForm({ tournament }: { tournament?: Tournament }) {
     category_value: tournament?.category_value ?? '1ra',
     gender: tournament?.gender ?? 'male',
   })
+  // Fechas: estado local (date picker), igual que la categoría.
+  const [tournamentDate, setTournamentDate] = useState(
+    tournament?.tournament_date ?? ''
+  )
+  const [opensAt, setOpensAt] = useState(
+    tournament?.registration_opens_at
+      ? toDateTimeLocalValue(tournament.registration_opens_at)
+      : ''
+  )
   const [categoryError, setCategoryError] = useState<string | undefined>()
+  const [dateError, setDateError] = useState<string | undefined>()
   const [serverError, setServerError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
 
@@ -58,9 +65,19 @@ export function TournamentForm({ tournament }: { tournament?: Tournament }) {
       return
     }
     setCategoryError(undefined)
+    if (!tournamentDate) {
+      setDateError('Elegí una fecha')
+      return
+    }
+    setDateError(undefined)
     setServerError(null)
 
-    const payload: TournamentPayload = { ...fields, ...category }
+    const payload: TournamentPayload = {
+      ...fields,
+      ...category,
+      tournament_date: tournamentDate,
+      registration_opens_at: opensAt || null,
+    }
     startTransition(async () => {
       const res = isEdit
         ? await updateTournament(tournament!.id, payload)
@@ -84,24 +101,20 @@ export function TournamentForm({ tournament }: { tournament?: Tournament }) {
         error={categoryError}
       />
 
-      <TextField
+      <DateField
         label="Fecha del torneo"
-        type="date"
-        error={errors.tournament_date?.message}
-        {...register('tournament_date')}
+        value={tournamentDate}
+        onChange={setTournamentDate}
+        error={dateError}
+        fromToday
       />
 
-      <div>
-        <TextField
-          label="Apertura de inscripción (opcional)"
-          type="datetime-local"
-          error={errors.registration_opens_at?.message}
-          {...register('registration_opens_at')}
-        />
-        <p className="mt-1.5 text-xs text-muted-foreground">
-          Dejalo vacío para abrir la inscripción manualmente.
-        </p>
-      </div>
+      <DateTimeField
+        label="Apertura de inscripción (opcional)"
+        value={opensAt}
+        onChange={setOpensAt}
+        hint="Dejalo vacío para abrir la inscripción manualmente."
+      />
 
       <div className="grid grid-cols-2 gap-4">
         <TextField

@@ -50,52 +50,54 @@
 }
 
 /*
- * Volt Court — tema oscuro atlético.
- * bg #0A0E0A · ink #F2F4EC · acento volt #CCFF00.
+ * Court Blue — tema oscuro deportivo.
+ * bg #0B0F17 · ink #EAEEF5 · acento azul #3B82F6.
  * Dark por defecto: los tokens viven en :root y se replican en .dark para
  * que los componentes shadcn que usan la variante dark resuelvan igual.
+ * Nota: el token de acento se sigue llamando `--volt` por compatibilidad con
+ * los componentes existentes (clases text-volt/bg-volt); su valor ahora es azul.
  */
 :root,
 .dark {
-  --background: #0a0e0a;
-  --foreground: #f2f4ec;
-  --card: #10150e;
-  --card-foreground: #f2f4ec;
-  --popover: #10150e;
-  --popover-foreground: #f2f4ec;
-  --primary: #ccff00;
-  --primary-foreground: #0a0e0a;
-  --secondary: #181f15;
-  --secondary-foreground: #f2f4ec;
-  --muted: #151b13;
-  --muted-foreground: #8b9783;
-  --accent: #1c2616;
-  --accent-foreground: #ccff00;
-  --destructive: #ff5747;
-  --border: rgba(242, 244, 236, 0.1);
-  --input: rgba(242, 244, 236, 0.14);
-  --ring: #ccff00;
+  --background: #0b0f17;
+  --foreground: #eaeef5;
+  --card: #131a26;
+  --card-foreground: #eaeef5;
+  --popover: #131a26;
+  --popover-foreground: #eaeef5;
+  --primary: #3b82f6;
+  --primary-foreground: #ffffff;
+  --secondary: #1a2433;
+  --secondary-foreground: #eaeef5;
+  --muted: #151c28;
+  --muted-foreground: #8a93a6;
+  --accent: #1c2a3f;
+  --accent-foreground: #3b82f6;
+  --destructive: #f4524a;
+  --border: rgba(234, 238, 245, 0.1);
+  --input: rgba(234, 238, 245, 0.14);
+  --ring: #3b82f6;
 
-  --volt: #ccff00;
-  --volt-foreground: #0a0e0a;
-  --court-line: rgba(242, 244, 236, 0.07);
+  --volt: #3b82f6;
+  --volt-foreground: #ffffff;
+  --court-line: rgba(234, 238, 245, 0.06);
 
-  --chart-1: #ccff00;
-  --chart-2: #8b9783;
-  --chart-3: #4f5a45;
-  --chart-4: #2c3325;
-  --chart-5: #1c2616;
+  --chart-1: #3b82f6;
+  --chart-2: #6b7a90;
+  --chart-3: #3a4456;
+  --chart-4: #232c3a;
+  --chart-5: #1a2433;
 
   --radius: 0.5rem;
 
-  --sidebar: #10150e;
-  --sidebar-foreground: #f2f4ec;
-  --sidebar-primary: #ccff00;
-  --sidebar-primary-foreground: #0a0e0a;
-  --sidebar-accent: #1c2616;
-  --sidebar-accent-foreground: #ccff00;
-  --sidebar-border: rgba(242, 244, 236, 0.1);
-  --sidebar-ring: #ccff00;
+  --sidebar: #131a26;
+  --sidebar-foreground: #eaeef5;
+  --sidebar-primary: #3b82f6;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #1c2a3f;
+  --sidebar-accent-foreground: #3b82f6;
+  --sidebar-border: rgba(234, 238, 245, 0.1);
+  --sidebar-ring: #3b82f6;
 
   --font-mono-stack: ui-monospace, "SFMono-Regular", "Menlo", monospace;
 }
@@ -153,6 +155,67 @@
       linear-gradient(to right, var(--court-line) 1px, transparent 1px),
       linear-gradient(to bottom, var(--court-line) 1px, transparent 1px);
     background-size: 64px 64px;
+  }
+}
+
+/* react-day-picker (calendario) adaptado al tema oscuro Volt */
+@layer components {
+  .rdp-root {
+    --rdp-accent-color: var(--volt);
+    --rdp-accent-background-color: var(--accent);
+    --rdp-font-family: inherit;
+    --rdp-day-width: 2.25rem;
+    --rdp-day-height: 2.25rem;
+    --rdp-day_button-width: 2.25rem;
+    --rdp-day_button-height: 2.25rem;
+    --rdp-day_button-border-radius: 0.5rem;
+    --rdp-selected-border: none;
+    --rdp-disabled-opacity: 0.3;
+    --rdp-outside-opacity: 0.4;
+    --rdp-today-color: var(--volt);
+    --rdp-nav_button-width: 2rem;
+    --rdp-nav_button-height: 2rem;
+    margin: 0;
+    color: var(--foreground);
+  }
+  .rdp-month_caption {
+    padding-left: 0.25rem;
+    font-size: 0.875rem;
+    font-weight: 700;
+  }
+  .rdp-weekday {
+    color: var(--muted-foreground);
+    font-size: 0.7rem;
+    font-weight: 600;
+  }
+  .rdp-day_button {
+    border: none;
+    border-radius: 0.5rem;
+    color: var(--foreground);
+  }
+  .rdp-day_button:hover:not([disabled]) {
+    background: var(--accent);
+  }
+  .rdp-selected .rdp-day_button {
+    background: var(--volt);
+    color: var(--volt-foreground);
+    font-weight: 700;
+  }
+  .rdp-today:not(.rdp-selected) .rdp-day_button {
+    color: var(--volt);
+    font-weight: 700;
+  }
+  .rdp-chevron {
+    fill: var(--foreground);
+  }
+  .rdp-button_previous,
+  .rdp-button_next {
+    border-radius: 0.5rem;
+    color: var(--foreground);
+  }
+  .rdp-button_previous:hover,
+  .rdp-button_next:hover {
+    background: var(--accent);
   }
 }
 

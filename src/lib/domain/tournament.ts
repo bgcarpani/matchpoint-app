@@ -85,6 +85,19 @@ export const CATEGORY_TYPE_LABELS: Record<CategoryType, string> = {
   suma: 'Suma',
 }
 
+/**
+ * Texto del botón que AVANZA desde cada estado al siguiente (acción, no destino).
+ * `finished` no tiene acción porque es el estado final.
+ */
+export const ADVANCE_ACTION_LABELS: Record<TournamentStatus, string> = {
+  draft: 'Publicar',
+  published: 'Abrir inscripción',
+  registration_open: 'Cerrar inscripción',
+  registration_closed: 'Iniciar torneo',
+  in_progress: 'Finalizar torneo',
+  finished: '',
+}
+
 /** Etiqueta compacta de categoría: "6ta" (individual) o "Suma 14" (suma). */
 export function categoryLabel(type: CategoryType, value: string): string {
   return type === 'individual' ? value : `Suma ${value}`

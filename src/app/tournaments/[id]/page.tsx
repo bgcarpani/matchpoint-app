@@ -1,10 +1,12 @@
 import Link from 'next/link'
+import { headers } from 'next/headers'
 import { notFound, redirect } from 'next/navigation'
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { OrganizerHeader } from '@/components/organizer/organizer-header'
 import { TournamentStatusBadge } from '@/components/tournaments/tournament-status-badge'
 import { LifecycleControls } from '@/components/tournaments/lifecycle-controls'
+import { ShareRegistrationLink } from '@/components/tournaments/share-registration-link'
 import {
   categoryLabel,
   canManageZones,
@@ -56,6 +58,13 @@ export default async function TournamentDetailPage({
   const zonesReady = canManageZones(t.status)
   const hasZones = (zonesCount ?? 0) > 0
 
+  // URL pública absoluta para el link de inscripción (sirve en local y prod).
+  const h = await headers()
+  const host = h.get('host') ?? ''
+  const proto =
+    h.get('x-forwarded-proto') ?? (host.startsWith('localhost') ? 'http' : 'https')
+  const registrationUrl = `${proto}://${host}/t/${t.id}`
+
   return (
     <div className="relative z-[2] mx-auto w-full max-w-4xl px-5 py-8 sm:px-8">
       <OrganizerHeader establishmentName={organizer?.establishment_name} />
@@ -94,6 +103,15 @@ export default async function TournamentDetailPage({
             <LifecycleControls tournamentId={t.id} status={t.status} />
           </div>
         </div>
+
+        {/* Link de inscripción (página pública). En borrador no es visible. */}
+        {!isDraft && (
+          <ShareRegistrationLink
+            url={registrationUrl}
+            registrationOpen={t.status === 'registration_open'}
+            registrationOpensAt={t.registration_opens_at}
+          />
+        )}
 
         {/* Detalles */}
         <div className="mt-4 rounded-2xl border border-border bg-card/40 p-6 sm:p-8">

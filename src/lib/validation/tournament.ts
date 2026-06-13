@@ -30,8 +30,9 @@ export type TournamentInput = z.input<typeof tournamentSchema>
 
 /**
  * Schema de los campos manejados por react-hook-form (todo string, sin coerce
- * para evitar fricción con RHF). La categoría/género se manejan con estado
- * local en el form. La validación definitiva la hace tournamentSchema en la action.
+ * para evitar fricción con RHF). La categoría/género y las fechas (date picker)
+ * se manejan con estado local en el form. La validación definitiva la hace
+ * tournamentSchema en la action.
  */
 const intString = z
   .string()
@@ -42,8 +43,6 @@ const intString = z
 export const tournamentFormSchema = z
   .object({
     name: z.string().trim().min(2, 'Ingresá un nombre'),
-    tournament_date: z.string().min(1, 'Elegí una fecha'),
-    registration_opens_at: z.string().optional(),
     max_pairs: intString,
     max_pair_requests: intString,
   })

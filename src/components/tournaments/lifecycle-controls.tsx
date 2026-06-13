@@ -6,7 +6,11 @@ import {
   advanceTournamentStatus,
   deleteTournament,
 } from '@/app/tournaments/actions'
-import { nextStatus, STATUS_LABELS } from '@/lib/domain/tournament'
+import {
+  nextStatus,
+  STATUS_LABELS,
+  ADVANCE_ACTION_LABELS,
+} from '@/lib/domain/tournament'
 import { Button } from '@/components/ui/button'
 import type { TournamentStatus } from '@/lib/types/database'
 
@@ -61,7 +65,7 @@ export function LifecycleControls({
           disabled={pending}
           onClick={onAdvance}
         >
-          Avanzar a “{STATUS_LABELS[next]}”
+          {pending ? 'Procesando…' : ADVANCE_ACTION_LABELS[status]}
         </Button>
       )}
       {status === 'draft' && (

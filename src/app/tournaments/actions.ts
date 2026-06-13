@@ -12,11 +12,13 @@ import type { CategoryType, Gender } from '@/lib/types/database'
 
 export type ActionResult = { error: string } | { ok: true }
 
-/** Lo que envía el form: campos RHF (string) + categoría/género (estado local). */
+/** Lo que envía el form: campos RHF (string) + categoría/género + fechas (estado local). */
 export interface TournamentPayload extends TournamentFormFields {
   category_type: CategoryType
   category_value: string
   gender: Gender
+  tournament_date: string
+  registration_opens_at: string | null
 }
 
 function firstError(error: { issues: { message: string }[] }): string {
