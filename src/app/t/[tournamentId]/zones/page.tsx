@@ -2,6 +2,7 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import { getPublicTournament } from '@/lib/public/tournament'
 import { getPublicZones } from '@/lib/public/zones'
+import { ZoneStandings } from '@/components/zones/zone-standings'
 
 export const metadata: Metadata = { title: 'Zonas y partidos — Matchpoint' }
 
@@ -83,6 +84,18 @@ export default async function PublicZonesPage({
                 ))}
               </ul>
 
+              {zone.standings.length > 0 && (
+                <>
+                  <p className="mt-5 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                    Posiciones
+                  </p>
+                  <ZoneStandings
+                    rows={zone.standings}
+                    frozen={zone.standingsFrozen}
+                  />
+                </>
+              )}
+
               <p className="mt-5 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                 Partidos
               </p>
@@ -98,15 +111,30 @@ export default async function PublicZonesPage({
                     className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-secondary px-3 py-2 text-sm"
                   >
                     <span className="text-foreground">
-                      {m.team1Label}{' '}
+                      <span
+                        className={m.winner === 'team1' ? 'font-semibold' : ''}
+                      >
+                        {m.team1Label}
+                      </span>{' '}
                       <span className="text-muted-foreground">vs</span>{' '}
-                      {m.team2Label}
-                    </span>
-                    {m.courtName && (
-                      <span className="rounded-md bg-volt/10 px-2 py-0.5 text-xs font-medium text-volt ring-1 ring-volt/30">
-                        {m.courtName}
+                      <span
+                        className={m.winner === 'team2' ? 'font-semibold' : ''}
+                      >
+                        {m.team2Label}
                       </span>
-                    )}
+                    </span>
+                    <span className="flex items-center gap-2">
+                      {m.score && (
+                        <span className="rounded-md bg-card px-2 py-0.5 text-xs font-semibold text-foreground tnum ring-1 ring-border">
+                          {m.score}
+                        </span>
+                      )}
+                      {m.courtName && (
+                        <span className="rounded-md bg-volt/10 px-2 py-0.5 text-xs font-medium text-volt ring-1 ring-volt/30">
+                          {m.courtName}
+                        </span>
+                      )}
+                    </span>
                   </li>
                 ))}
               </ul>

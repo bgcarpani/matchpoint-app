@@ -3,9 +3,14 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import type { CourtType, MatchStatus, ScoringMode } from '@/lib/types/database'
-import { suggestZoneCount, maxZoneCount } from '@/lib/domain/zone'
+import {
+  suggestZoneCount,
+  maxZoneCount,
+  type StandingRow,
+} from '@/lib/domain/zone'
 import type { RecordResultInput } from '@/lib/domain/match'
 import { MatchResultForm } from '@/components/zones/match-result-form'
+import { ZoneStandings } from '@/components/zones/zone-standings'
 import {
   generateZones,
   movePair,
@@ -13,6 +18,8 @@ import {
   publishZones,
   recordMatchResult,
   clearMatchResult,
+  freezeZoneStandings,
+  reopenZoneStandings,
   type ActionResult,
 } from '@/app/tournaments/[id]/zones/actions'
 
@@ -39,6 +46,8 @@ export interface ZoneView {
   id: string
   name: string
   isPublished: boolean
+  standingsFrozen: boolean
+  standings: StandingRow[]
   pairs: ZonePairRow[]
   matches: ZoneMatchRow[]
 }
@@ -175,6 +184,15 @@ export function ZoneManager({
                   '¿Borrar el resultado de este partido?'
                 )
               }
+              onFreeze={() =>
+                run(
+                  () => freezeZoneStandings(tournamentId, zone.id),
+                  '¿Cerrar las posiciones de esta zona? Vas a poder reabrirlas para corregir resultados.'
+                )
+              }
+              onReopen={() =>
+                run(() => reopenZoneStandings(tournamentId, zone.id))
+              }
             />
           ))}
         </div>
@@ -253,6 +271,8 @@ function ZoneCard({
   onAssignCourt,
   onRecordResult,
   onClearResult,
+  onFreeze,
+  onReopen,
 }: {
   zone: ZoneView
   allZones: ZoneView[]
@@ -266,7 +286,14 @@ function ZoneCard({
   onAssignCourt: (matchId: string, courtId: string | null) => void
   onRecordResult: (matchId: string, input: RecordResultInput) => void
   onClearResult: (matchId: string) => void
+  onFreeze: () => void
+  onReopen: () => void
 }) {
+  const allFinished =
+    zone.matches.length > 0 &&
+    zone.matches.every((m) => m.status === 'finished')
+  const showStandings = canRecordResults || zone.standingsFrozen
+
   return (
     <div className="rounded-2xl border border-border bg-card/40 p-5">
       <div className="flex items-baseline justify-between gap-3">
@@ -367,6 +394,45 @@ function ZoneCard({
           </li>
         ))}
       </ul>
+
+      {/* Posiciones */}
+      {showStandings && (
+        <div className="mt-5">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+              Posiciones
+            </p>
+            {canRecordResults &&
+              (zone.standingsFrozen ? (
+                <button
+                  type="button"
+                  disabled={disabled}
+                  onClick={onReopen}
+                  className="rounded-md border border-border px-2.5 py-1 text-xs font-semibold text-foreground transition hover:bg-accent disabled:opacity-50"
+                >
+                  Reabrir posiciones
+                </button>
+              ) : (
+                allFinished && (
+                  <button
+                    type="button"
+                    disabled={disabled}
+                    onClick={onFreeze}
+                    className="rounded-md bg-volt px-2.5 py-1 text-xs font-semibold text-volt-foreground transition hover:brightness-105 disabled:opacity-50"
+                  >
+                    Cerrar posiciones
+                  </button>
+                )
+              ))}
+          </div>
+          <ZoneStandings rows={zone.standings} frozen={zone.standingsFrozen} />
+          {canRecordResults && !zone.standingsFrozen && !allFinished && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Cargá todos los resultados para poder cerrar las posiciones.
+            </p>
+          )}
+        </div>
+      )}
     </div>
   )
 }

@@ -179,6 +179,40 @@ export async function clearMatchResult(
 }
 
 /**
+ * Cierra (congela) las posiciones de una zona: recalcula puntos y posiciones
+ * desde los resultados y las fija en `zone_pairs`. Exige todos los partidos de
+ * la zona en `finished`. Habilita (a futuro) el sorteo de bracket.
+ */
+export async function freezeZoneStandings(
+  tournamentId: string,
+  zoneId: string
+): Promise<ActionResult> {
+  const { supabase } = await requireUser()
+  const { error } = await supabase.rpc('freeze_zone_standings', {
+    p_zone_id: zoneId,
+  })
+  if (error) return { error: zoneErrorLabel(error.message) }
+
+  revalidate(tournamentId)
+  return { ok: true }
+}
+
+/** Reabre las posiciones de una zona para corregir resultados. */
+export async function reopenZoneStandings(
+  tournamentId: string,
+  zoneId: string
+): Promise<ActionResult> {
+  const { supabase } = await requireUser()
+  const { error } = await supabase.rpc('reopen_zone_standings', {
+    p_zone_id: zoneId,
+  })
+  if (error) return { error: zoneErrorLabel(error.message) }
+
+  revalidate(tournamentId)
+  return { ok: true }
+}
+
+/**
  * Publica las zonas del torneo: las hace visibles públicamente. Una vez
  * publicadas no se pueden regenerar ni reasignar parejas (lo enforce la RPC y
  * la propia UI). La RLS del dueño permite el update.

@@ -52,7 +52,7 @@ export default async function ZonesPage({
         .order('name', { ascending: true }),
       supabase
         .from('zones')
-        .select('id, name, is_published')
+        .select('id, name, is_published, standings_frozen')
         .eq('tournament_id', id)
         .order('name', { ascending: true }),
     ])
@@ -60,13 +60,20 @@ export default async function ZonesPage({
   const zoneList = zones ?? []
   const zoneIds = zoneList.map((z) => z.id)
 
-  const [{ data: zonePairs }, { data: matches }] = await Promise.all([
+  const [{ data: zonePairs }, { data: matches }, { data: standings }] =
+    await Promise.all([
     zoneIds.length
       ? supabase
           .from('zone_pairs')
-          .select('zone_id, pair_id')
+          .select('zone_id, pair_id, position')
           .in('zone_id', zoneIds)
-      : Promise.resolve({ data: [] as { zone_id: string; pair_id: string }[] }),
+      : Promise.resolve({
+          data: [] as {
+            zone_id: string
+            pair_id: string
+            position: number | null
+          }[],
+        }),
     zoneIds.length
       ? supabase
           .from('matches')
@@ -88,6 +95,26 @@ export default async function ZonesPage({
             team2_score: number | null
             score_detail: number[][] | null
             winner_pair_id: string | null
+          }[],
+        }),
+    zoneIds.length
+      ? supabase
+          .from('zone_standings_view')
+          .select(
+            'zone_id, pair_id, played, won, lost, games_for, games_against, games_diff, points'
+          )
+          .in('zone_id', zoneIds)
+      : Promise.resolve({
+          data: [] as {
+            zone_id: string
+            pair_id: string
+            played: number
+            won: number
+            lost: number
+            games_for: number
+            games_against: number
+            games_diff: number
+            points: number
           }[],
         }),
   ])
@@ -112,11 +139,37 @@ export default async function ZonesPage({
     ])
   )
 
+  // Posición congelada por pareja (de zone_pairs) + métricas en vivo (de la vista).
+  const pairPosition = new Map(
+    (zonePairs ?? []).map((zp) => [zp.pair_id, zp.position])
+  )
+  const standingByPair = new Map(
+    (standings ?? []).map((s) => [s.pair_id, s])
+  )
+
   // Ensambla la vista por zona.
   const zoneViews: ZoneView[] = zoneList.map((z) => ({
     id: z.id,
     name: z.name,
     isPublished: z.is_published,
+    standingsFrozen: z.standings_frozen,
+    standings: (zonePairs ?? [])
+      .filter((zp) => zp.zone_id === z.id)
+      .map((zp) => {
+        const s = standingByPair.get(zp.pair_id)
+        return {
+          pairId: zp.pair_id,
+          label: pairLabel.get(zp.pair_id) ?? '—',
+          position: pairPosition.get(zp.pair_id) ?? null,
+          played: s?.played ?? 0,
+          won: s?.won ?? 0,
+          lost: s?.lost ?? 0,
+          gamesFor: s?.games_for ?? 0,
+          gamesAgainst: s?.games_against ?? 0,
+          gamesDiff: s?.games_diff ?? 0,
+          points: s?.points ?? 0,
+        }
+      }),
     pairs: (zonePairs ?? [])
       .filter((zp) => zp.zone_id === z.id)
       .map((zp) => ({

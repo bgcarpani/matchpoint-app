@@ -26,6 +26,45 @@ export const ZONE_ERROR_LABELS: Record<string, string> = {
   TOO_MANY_ZONES: 'Hay más zonas que parejas aceptadas.',
   ZONE_NOT_FOUND: 'No se encontró la zona.',
   PAIR_NOT_IN_ZONES: 'La pareja no está asignada a ninguna zona.',
+  NO_MATCHES: 'La zona no tiene partidos para cerrar posiciones.',
+  MATCHES_PENDING:
+    'Cargá el resultado de todos los partidos antes de cerrar las posiciones.',
+}
+
+/**
+ * Fila de standings de una zona: métricas en vivo (desde `zone_standings_view`)
+ * + la posición congelada (de `zone_pairs`, null mientras no se cierren).
+ */
+export interface StandingRow {
+  pairId: string
+  label: string
+  position: number | null
+  played: number
+  won: number
+  lost: number
+  gamesFor: number
+  gamesAgainst: number
+  gamesDiff: number
+  points: number
+}
+
+/**
+ * Orden de la tabla de posiciones. Si están congeladas (position no null) se
+ * respeta esa posición; si no, se ordena en vivo por puntos → diferencia de
+ * games → games a favor (desempate determinístico, igual que freeze_*).
+ */
+export function sortStandings(rows: StandingRow[]): StandingRow[] {
+  return [...rows].sort((a, b) => {
+    if (a.position != null && b.position != null) return a.position - b.position
+    if (a.position != null) return -1
+    if (b.position != null) return 1
+    return (
+      b.points - a.points ||
+      b.gamesDiff - a.gamesDiff ||
+      b.gamesFor - a.gamesFor ||
+      a.label.localeCompare(b.label)
+    )
+  })
 }
 
 /** Traduce un mensaje de error de Postgres/RPC a texto para la UI. */

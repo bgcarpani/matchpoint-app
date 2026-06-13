@@ -28,6 +28,8 @@ export type MatchStatus = 'pending' | 'in_progress' | 'finished'
 
 export type ScoringMode = 'games' | 'best_of_3_sets'
 
+export type MatchFormat = 'round_robin' | 'winner_vs_loser' | 'manual'
+
 // Helper: una columna con default puede omitirse en Insert.
 type WithDefaults<Row, OptionalKeys extends keyof Row> = Omit<Row, OptionalKeys> &
   Partial<Pick<Row, OptionalKeys>>
@@ -135,11 +137,13 @@ export interface Database {
           tournament_id: string
           name: string
           is_published: boolean
+          match_format: MatchFormat
+          standings_frozen: boolean
           created_at: string
         }
         Insert: WithDefaults<
           Database['public']['Tables']['zones']['Row'],
-          'id' | 'is_published' | 'created_at'
+          'id' | 'is_published' | 'match_format' | 'standings_frozen' | 'created_at'
         >
         Update: Partial<Database['public']['Tables']['zones']['Row']>
         Relationships: []
@@ -252,6 +256,20 @@ export interface Database {
         }
         Relationships: []
       }
+      zone_standings_view: {
+        Row: {
+          zone_id: string
+          pair_id: string
+          played: number
+          won: number
+          lost: number
+          games_for: number
+          games_against: number
+          games_diff: number
+          points: number
+        }
+        Relationships: []
+      }
     }
     Functions: {
       owns_tournament: {
@@ -264,6 +282,14 @@ export interface Database {
       }
       move_pair_to_zone: {
         Args: { p_pair_id: string; p_target_zone_id: string }
+        Returns: undefined
+      }
+      freeze_zone_standings: {
+        Args: { p_zone_id: string }
+        Returns: undefined
+      }
+      reopen_zone_standings: {
+        Args: { p_zone_id: string }
         Returns: undefined
       }
       register_pair: {
@@ -293,6 +319,7 @@ export interface Database {
       pair_status: PairStatus
       match_status: MatchStatus
       scoring_mode: ScoringMode
+      match_format: MatchFormat
     }
   }
 }
