@@ -15,11 +15,14 @@ En futuras versiones, los jugadores tendrán perfiles personales con historial, 
 
 ## Stack tecnológico
 
-- **Frontend**: Next.js 16 (App Router) + TypeScript + React
-- **Estilos**: Tailwind CSS + shadcn/ui
+- **Frontend**: Next.js 16 (App Router) + TypeScript + React 19
+- **Estilos**: Tailwind CSS + shadcn/ui + @base-ui/react
+- **Componentes**: react-day-picker (calendar), lucide-react (iconos)
+- **Validación**: react-hook-form 7 + Zod 4
 - **Base de datos**: Supabase (PostgreSQL)
 - **Autenticación**: Supabase Auth
 - **Deploy**: Cloudflare Pages
+- **Tema**: Azul profesional (#3B82F6) sobre azul noche, token-based
 
 ## Requisitos previos
 
@@ -54,6 +57,9 @@ npm run start
 
 # Aplicar migraciones SQL pendientes a Supabase
 npm run db:apply
+
+# Cargar data fake en un torneo (testing)
+npm run seed:registrations -- <tournament-id> [num-pairs]
 ```
 
 ## Estructura del proyecto
@@ -94,6 +100,15 @@ src/
 - ✅ Formulario de inscripción de pareja sin login
 - ✅ Consulta de estado por token único (sin autenticación)
 - ✅ Visualización de zonas y partidos (una vez publicados)
+
+## Interfaz y experiencia de usuario
+
+- **Tema**: Azul deportivo profesional (#3B82F6) sobre azul noche. Colores token-based en `globals.css` para cambios parejos en toda la app.
+- **Calendar date picker**: Calendario interactivo con popover para seleccionar fechas (fecha del torneo y apertura automática de inscripción). Captions en español (Intl), fechas pasadas deshabilitadas.
+- **Loading states**: Spinners visuales en navegación para feedback inmediato durante transiciones de rutas.
+- **Share registration link**: Panel en detalle del torneo con URL copiable, botón "Abrir página pública", y mensajes contextuales sobre estado de inscripción (abierta/cerrada con horarios si está configurada apertura automática).
+- **Labels claros**: Botones del ciclo de vida muestran acciones ("Publicar", "Abrir inscripción", "Cerrar inscripción") en lugar de destinos.
+- **Responsive**: Diseño adaptable a móvil y desktop (grid escalable, padding proporcional).
 
 ## Convenciones de implementación
 

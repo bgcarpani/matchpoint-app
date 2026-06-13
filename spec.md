@@ -265,6 +265,16 @@ created_at      timestamp
 
 ---
 
+## Mejoras de UI/UX (refinamientos completados)
+- [x] **Date picker visual**: calendario interactivo con popover para fechas (tournament_date y registration_opens_at)
+- [x] **Loading states**: spinners en navegación (dashboard, detalle de torneo, página pública) para feedback inmediato
+- [x] **Share registration link**: panel visible en detalle del torneo con URL copiable, botón "Abrir página pública", y mensaje contextual (apertura automática si está configurada, o manual)
+- [x] **Labels del ciclo de vida**: "Publicar", "Abrir inscripción", "Cerrar inscripción", "Iniciar torneo", "Finalizar torneo" (acciones claras, no destinos)
+- [x] **Rebranding**: paleta azul profesional (#3B82F6) sobre azul noche, reemplazando verde neón. Token-based para cambios parejos
+- [x] **Script de data fake**: `npm run seed:registrations` carga parejas falsas en un torneo para testing
+
+---
+
 ## Fuera de scope en v1
 - Login de jugadores
 - Notificaciones (email / WhatsApp)

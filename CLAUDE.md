@@ -25,15 +25,19 @@ Las primeras versiones son organizer-first.
 
 ## Comandos
 ```
-npm run dev      # desarrollo local
-npm run build    # build de producción
-npm run start    # servir build de producción
-npm run lint     # linting
-npm run db:apply # aplica migraciones SQL pendientes vía Supabase Management API
+npm run dev                 # desarrollo local
+npm run build              # build de producción
+npm run start              # servir build de producción
+npm run lint               # linting
+npm run db:apply           # aplica migraciones SQL pendientes vía Supabase Management API
+npm run seed:registrations # carga data fake de solicitudes en un torneo (testing)
 ```
 > `db:apply` corre `scripts/apply-migrations.mjs`. **No es idempotente**: aplica los `.sql` en orden y
 > re-aplicar uno ya corrido falla por objetos existentes. Para una migración nueva: agregar
 > `supabase/migrations/00NN_*.sql` y correr `npm run db:apply -- 00NN` (filtra por prefijo).
+> 
+> `seed:registrations` carga 15 parejas falsas en un torneo. Uso: `npm run seed:registrations -- <tournament-id> [num]`.
+> Útil para testear flujos de inscripción/gestión sin llenar data manualmente.
 
 ## Estado de implementación (v1)
 Slices completados (build + lint + e2e OK): **Fundación, Auth de Organizer, Canchas, Torneos**
@@ -83,9 +87,17 @@ por slice vive en la memoria del asistente.
 ### Validación y UI
 - Stack: react-hook-form 7 + **zod 4** (`z.email()`, no `z.string().email()`) + @hookform/resolvers 5.
 - React Compiler: `watch()`/`setValue()` de RHF disparan `react-hooks/incompatible-library`. Para
-  toggles/selects usar **`useState` local**; reservar RHF para register/handleSubmit/formState.
+  toggles/selects/fechas usar **`useState` local**; reservar RHF para register/handleSubmit/formState.
+  (Ver `DateField` y `DateTimeField` como patrón: estado local + merge al submit, igual que `CategorySelector`.)
 - El `Button` de shadcn usa `@base-ui/react` → **no tiene `asChild`**. Para link-as-button usar
   `buttonVariants()` sobre `<Link>`.
+- **Calendar date picker**: `react-day-picker` + Popover de `@base-ui/react`, captions en español (Intl,
+  sin date-fns), tema oscuro, pasado deshabilitado. Ver `src/components/ui/calendar.tsx` y
+  `src/components/form/date-field.tsx`.
+- **Loading states**: `loading.tsx` en rutas pesadas (dashboard, `/t/[id]`, `/tournaments/[id]`) con
+  spinner desde `src/components/ui/spinner.tsx`. Feedback inmediato en navegación.
+- **Tema (branding)**: azul deportivo (`--volt: #3B82F6`) sobre azul noche (#0B0F17). Tokens en
+  `globals.css` (--background, --foreground, --accent, etc.). Cambio de paleta = actualizar variables CSS.
 
 ## Entidades clave (v1)
 - **Organizer**: dueño de establecimiento, tiene login, crea y gestiona torneos
