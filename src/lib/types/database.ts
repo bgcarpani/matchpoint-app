@@ -30,6 +30,10 @@ export type ScoringMode = 'games' | 'best_of_3_sets'
 
 export type MatchFormat = 'round_robin' | 'winner_vs_loser' | 'manual'
 
+export type MatchPhase = 'zone' | 'bracket'
+
+export type TeamSlot = 'team1' | 'team2'
+
 // Helper: una columna con default puede omitirse en Insert.
 type WithDefaults<Row, OptionalKeys extends keyof Row> = Omit<Row, OptionalKeys> &
   Partial<Pick<Row, OptionalKeys>>
@@ -83,6 +87,8 @@ export interface Database {
           max_pairs: number
           scoring_mode: ScoringMode
           games_per_set: number
+          qualifiers_per_zone: number
+          bracket_published: boolean
           created_at: string
         }
         Insert: WithDefaults<
@@ -92,6 +98,8 @@ export interface Database {
           | 'registration_opens_at'
           | 'scoring_mode'
           | 'games_per_set'
+          | 'qualifiers_per_zone'
+          | 'bracket_published'
           | 'created_at'
         >
         Update: Partial<Database['public']['Tables']['tournaments']['Row']>
@@ -167,10 +175,16 @@ export interface Database {
         Row: {
           id: string
           zone_id: string | null
+          tournament_id: string | null
           court_id: string | null
           round: number
-          team1_pair_id: string
-          team2_pair_id: string
+          phase: MatchPhase
+          bracket_round: number | null
+          bracket_slot: number | null
+          next_match_id: string | null
+          next_slot: TeamSlot | null
+          team1_pair_id: string | null
+          team2_pair_id: string | null
           team1_score: number | null
           team2_score: number | null
           score_detail: number[][] | null
@@ -182,7 +196,15 @@ export interface Database {
           Database['public']['Tables']['matches']['Row'],
           | 'id'
           | 'zone_id'
+          | 'tournament_id'
           | 'court_id'
+          | 'phase'
+          | 'bracket_round'
+          | 'bracket_slot'
+          | 'next_match_id'
+          | 'next_slot'
+          | 'team1_pair_id'
+          | 'team2_pair_id'
           | 'team1_score'
           | 'team2_score'
           | 'score_detail'
@@ -270,6 +292,24 @@ export interface Database {
         }
         Relationships: []
       }
+      public_bracket_view: {
+        Row: {
+          id: string
+          tournament_id: string
+          bracket_round: number | null
+          bracket_slot: number | null
+          team1_pair_id: string | null
+          team2_pair_id: string | null
+          team1_score: number | null
+          team2_score: number | null
+          score_detail: number[][] | null
+          winner_pair_id: string | null
+          status: MatchStatus
+          next_match_id: string | null
+          next_slot: TeamSlot | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       owns_tournament: {
@@ -304,6 +344,28 @@ export interface Database {
         Args: { p_zone_id: string }
         Returns: undefined
       }
+      generate_bracket: {
+        Args: { p_tournament_id: string }
+        Returns: undefined
+      }
+      record_bracket_result: {
+        Args: {
+          p_match_id: string
+          p_team1_score: number
+          p_team2_score: number
+          p_score_detail: number[][] | null
+          p_winner_pair_id: string
+        }
+        Returns: undefined
+      }
+      clear_bracket_result: {
+        Args: { p_match_id: string }
+        Returns: undefined
+      }
+      swap_bracket_participants: {
+        Args: { p_pair_a: string; p_pair_b: string }
+        Returns: undefined
+      }
       register_pair: {
         Args: {
           p_tournament_id: string
@@ -332,6 +394,8 @@ export interface Database {
       match_status: MatchStatus
       scoring_mode: ScoringMode
       match_format: MatchFormat
+      match_phase: MatchPhase
+      team_slot: TeamSlot
     }
   }
 }

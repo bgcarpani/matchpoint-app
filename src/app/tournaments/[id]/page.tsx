@@ -43,21 +43,30 @@ export default async function TournamentDetailPage({
 
   if (!t) notFound()
 
-  const [{ count: requestedCount }, { count: zonesCount }] = await Promise.all([
-    supabase
-      .from('pairs')
-      .select('id', { count: 'exact', head: true })
-      .eq('tournament_id', t.id)
-      .in('status', ['pending', 'accepted']),
-    supabase
-      .from('zones')
-      .select('id', { count: 'exact', head: true })
-      .eq('tournament_id', t.id),
-  ])
+  const [{ count: requestedCount }, { count: zonesCount }, { count: bracketCount }] =
+    await Promise.all([
+      supabase
+        .from('pairs')
+        .select('id', { count: 'exact', head: true })
+        .eq('tournament_id', t.id)
+        .in('status', ['pending', 'accepted']),
+      supabase
+        .from('zones')
+        .select('id', { count: 'exact', head: true })
+        .eq('tournament_id', t.id),
+      supabase
+        .from('matches')
+        .select('id', { count: 'exact', head: true })
+        .eq('tournament_id', t.id)
+        .eq('phase', 'bracket'),
+    ])
 
   const isDraft = t.status === 'draft'
   const zonesReady = canManageZones(t.status)
   const hasZones = (zonesCount ?? 0) > 0
+  const hasBracket = (bracketCount ?? 0) > 0
+  // Las llaves se habilitan con el torneo en curso (o si ya existen).
+  const bracketReady = t.status === 'in_progress' || t.status === 'finished'
 
   // URL pública absoluta para el link de inscripción (sirve en local y prod).
   const h = await headers()
@@ -197,6 +206,31 @@ export default async function TournamentDetailPage({
             <SectionPlaceholder
               title="Zonas y partidos"
               note="Se habilita cuando la inscripción esté cerrada."
+            />
+          )}
+          {bracketReady || hasBracket ? (
+            <Link
+              href={`/tournaments/${t.id}/bracket`}
+              className="group rounded-2xl border border-border bg-card/40 p-6 transition-colors hover:border-volt/50"
+            >
+              <div className="flex items-baseline justify-between gap-4">
+                <h3 className="font-display text-lg text-foreground">Llaves</h3>
+                {hasBracket && (
+                  <span className="font-display text-2xl text-volt tnum">
+                    {bracketCount}
+                  </span>
+                )}
+              </div>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {hasBracket
+                  ? 'Gestionar el cuadro y cargar resultados →'
+                  : 'Sortear las llaves desde las zonas →'}
+              </p>
+            </Link>
+          ) : (
+            <SectionPlaceholder
+              title="Llaves"
+              note="Se habilitan con el torneo en curso, tras cerrar las zonas."
             />
           )}
         </div>

@@ -137,8 +137,8 @@ export async function getPublicZones(
       .map((m) => ({
         id: m.id,
         round: m.round,
-        team1Label: pairLabel.get(m.team1_pair_id) ?? '—',
-        team2Label: pairLabel.get(m.team2_pair_id) ?? '—',
+        team1Label: pairLabel.get(m.team1_pair_id ?? '') ?? '—',
+        team2Label: pairLabel.get(m.team2_pair_id ?? '') ?? '—',
         courtName: m.court_id ? (courtName.get(m.court_id) ?? null) : null,
         score:
           m.status === 'finished'

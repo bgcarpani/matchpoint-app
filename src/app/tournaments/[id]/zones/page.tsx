@@ -88,8 +88,8 @@ export default async function ZonesPage({
             zone_id: string | null
             round: number
             court_id: string | null
-            team1_pair_id: string
-            team2_pair_id: string
+            team1_pair_id: string | null
+            team2_pair_id: string | null
             status: import('@/lib/types/database').MatchStatus
             team1_score: number | null
             team2_score: number | null
@@ -183,8 +183,8 @@ export default async function ZonesPage({
         id: m.id,
         round: m.round,
         courtId: m.court_id,
-        team1Label: pairLabel.get(m.team1_pair_id) ?? '—',
-        team2Label: pairLabel.get(m.team2_pair_id) ?? '—',
+        team1Label: pairLabel.get(m.team1_pair_id ?? '') ?? '—',
+        team2Label: pairLabel.get(m.team2_pair_id ?? '') ?? '—',
         status: m.status,
         team1Score: m.team1_score,
         team2Score: m.team2_score,

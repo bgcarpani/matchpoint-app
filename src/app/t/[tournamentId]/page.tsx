@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
 import { getPublicTournament } from '@/lib/public/tournament'
 import {
   CATEGORY_TYPE_LABELS,
@@ -15,6 +16,15 @@ export default async function PublicTournamentPage({
   const { tournamentId } = await params
   const t = await getPublicTournament(tournamentId)
   if (!t) notFound()
+
+  // ¿Llaves publicadas? public_bracket_view sólo expone torneos con el bracket
+  // publicado → un conteo > 0 alcanza para mostrar el link.
+  const supabase = await createClient()
+  const { count: bracketCount } = await supabase
+    .from('public_bracket_view')
+    .select('id', { count: 'exact', head: true })
+    .eq('tournament_id', t.id)
+  const bracketPublished = (bracketCount ?? 0) > 0
 
   const isOpen = t.status === 'registration_open'
   const requestsFull = t.requested_pairs >= t.max_pair_requests
@@ -138,13 +148,25 @@ export default async function PublicTournamentPage({
             ))}
           </ul>
 
-          {t.zones_published && (
-            <a
-              href={`/t/${t.id}/zones`}
-              className="mt-10 inline-flex items-center gap-2 text-sm font-medium text-volt hover:underline"
-            >
-              Ver zonas y partidos →
-            </a>
+          {(t.zones_published || bracketPublished) && (
+            <div className="mt-10 flex flex-wrap gap-x-6 gap-y-2">
+              {t.zones_published && (
+                <a
+                  href={`/t/${t.id}/zones`}
+                  className="inline-flex items-center gap-2 text-sm font-medium text-volt hover:underline"
+                >
+                  Ver zonas y partidos →
+                </a>
+              )}
+              {bracketPublished && (
+                <a
+                  href={`/t/${t.id}/bracket`}
+                  className="inline-flex items-center gap-2 text-sm font-medium text-volt hover:underline"
+                >
+                  Ver llaves →
+                </a>
+              )}
+            </div>
           )}
         </div>
 

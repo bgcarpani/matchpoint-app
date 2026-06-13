@@ -21,6 +21,10 @@ export const tournamentSchema = z
       .number()
       .int()
       .refine((v) => v === 6 || v === 7, 'El set es a 6 o 7 games'),
+    qualifiers_per_zone: z.coerce
+      .number()
+      .int()
+      .min(1, 'Debe clasificar al menos 1 pareja por zona'),
   })
   .refine((d) => isValidCategoryValue(d.category_type, d.category_value), {
     message: 'Categoría inválida para el tipo elegido',

@@ -21,6 +21,7 @@ export interface TournamentPayload extends TournamentFormFields {
   registration_opens_at: string | null
   scoring_mode: ScoringMode
   games_per_set: number
+  qualifiers_per_zone: number
 }
 
 function firstError(error: { issues: { message: string }[] }): string {
@@ -58,6 +59,7 @@ export async function createTournament(
       max_pair_requests: parsed.data.max_pair_requests,
       scoring_mode: parsed.data.scoring_mode,
       games_per_set: parsed.data.games_per_set,
+      qualifiers_per_zone: parsed.data.qualifiers_per_zone,
     })
     .select('id')
     .single()
@@ -91,6 +93,7 @@ export async function updateTournament(
       max_pair_requests: parsed.data.max_pair_requests,
       scoring_mode: parsed.data.scoring_mode,
       games_per_set: parsed.data.games_per_set,
+      qualifiers_per_zone: parsed.data.qualifiers_per_zone,
     })
     .eq('id', id)
 

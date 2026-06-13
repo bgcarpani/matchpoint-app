@@ -1,0 +1,180 @@
+import Link from 'next/link'
+import { notFound, redirect } from 'next/navigation'
+import type { Metadata } from 'next'
+import { createClient } from '@/lib/supabase/server'
+import { OrganizerHeader } from '@/components/organizer/organizer-header'
+import {
+  BracketBoard,
+  type BracketMatchView,
+} from '@/components/bracket/bracket-board'
+
+export const metadata: Metadata = { title: 'Llaves — Matchpoint' }
+
+export default async function BracketPage({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
+  const { id } = await params
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const [{ data: organizer }, { data: tournament }] = await Promise.all([
+    supabase
+      .from('organizers')
+      .select('establishment_name')
+      .eq('id', user.id)
+      .single(),
+    supabase
+      .from('tournaments')
+      .select(
+        'id, name, status, scoring_mode, games_per_set, qualifiers_per_zone, bracket_published'
+      )
+      .eq('id', id)
+      .single(),
+  ])
+  if (!tournament) notFound()
+
+  const [{ data: zones }, { data: bracketMatches }, { data: acceptedPairs }] =
+    await Promise.all([
+      supabase
+        .from('zones')
+        .select('id, standings_frozen')
+        .eq('tournament_id', id),
+      supabase
+        .from('matches')
+        .select(
+          'id, bracket_round, bracket_slot, team1_pair_id, team2_pair_id, status, team1_score, team2_score, score_detail, winner_pair_id'
+        )
+        .eq('tournament_id', id)
+        .eq('phase', 'bracket')
+        .order('bracket_round', { ascending: true })
+        .order('bracket_slot', { ascending: true }),
+      supabase
+        .from('pairs')
+        .select('id, player1_id, player2_id')
+        .eq('tournament_id', id)
+        .eq('status', 'accepted'),
+    ])
+
+  // Etiquetas de pareja (nombres cortos), igual que en la página de zonas.
+  const accepted = acceptedPairs ?? []
+  const playerIds = accepted.flatMap((p) => [p.player1_id, p.player2_id])
+  const { data: players } = playerIds.length
+    ? await supabase.from('players').select('id, full_name').in('id', playerIds)
+    : { data: [] as { id: string; full_name: string }[] }
+  const playerName = new Map((players ?? []).map((p) => [p.id, p.full_name]))
+  const pairLabel = new Map(
+    accepted.map((p) => [
+      p.id,
+      `${shortName(playerName.get(p.player1_id))} / ${shortName(playerName.get(p.player2_id))}`,
+    ])
+  )
+  const teamOf = (pairId: string | null) =>
+    pairId ? { pairId, label: pairLabel.get(pairId) ?? '—' } : null
+
+  const matches: BracketMatchView[] = (bracketMatches ?? []).map((m) => ({
+    id: m.id,
+    round: m.bracket_round ?? 0,
+    slot: m.bracket_slot ?? 0,
+    team1: teamOf(m.team1_pair_id),
+    team2: teamOf(m.team2_pair_id),
+    status: m.status,
+    team1Score: m.team1_score,
+    team2Score: m.team2_score,
+    scoreDetail: m.score_detail,
+    winner: m.winner_pair_id
+      ? m.winner_pair_id === m.team1_pair_id
+        ? ('team1' as const)
+        : ('team2' as const)
+      : null,
+  }))
+
+  // Participantes actuales del cuadro (para el override de cruces).
+  const seen = new Set<string>()
+  const participants: { pairId: string; label: string }[] = []
+  for (const m of matches) {
+    for (const t of [m.team1, m.team2]) {
+      if (t && !seen.has(t.pairId)) {
+        seen.add(t.pairId)
+        participants.push(t)
+      }
+    }
+  }
+
+  const inProgress = tournament.status === 'in_progress'
+  const zoneList = zones ?? []
+  const allZonesFrozen =
+    zoneList.length > 0 && zoneList.every((z) => z.standings_frozen)
+  const hasBracket = matches.length > 0
+  const published = tournament.bracket_published
+  const anyFinished = matches.some((m) => m.status === 'finished')
+
+  const canGenerate = inProgress && allZonesFrozen
+  const generateHint = !inProgress
+    ? 'Las llaves se arman con el torneo en curso.'
+    : !allZonesFrozen
+      ? 'Cerrá las posiciones de todas las zonas primero.'
+      : null
+  const canEditSeeds = hasBracket && !published && !anyFinished
+
+  const showEmptyState = !hasBracket && !canGenerate
+
+  return (
+    <div className="relative z-[2] mx-auto w-full max-w-4xl px-5 py-8 sm:px-8">
+      <OrganizerHeader establishmentName={organizer?.establishment_name} />
+
+      <section className="mt-10">
+        <Link
+          href={`/tournaments/${tournament.id}`}
+          className="text-sm text-muted-foreground hover:text-foreground"
+        >
+          ← Volver al torneo
+        </Link>
+        <h1 className="font-display mt-4 text-[clamp(2rem,6vw,3.5rem)] text-foreground">
+          Llaves
+        </h1>
+        <p className="mt-2 text-sm text-muted-foreground">{tournament.name}</p>
+
+        <div className="mt-8">
+          {showEmptyState ? (
+            <div className="rounded-2xl border border-dashed border-border bg-card/20 p-10 text-center">
+              <p className="text-foreground">
+                Las llaves se arman cuando el torneo está en curso y todas las
+                zonas tienen las posiciones cerradas.
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Cargá los resultados de las zonas y cerrá sus posiciones para
+                habilitar el sorteo del cuadro.
+              </p>
+            </div>
+          ) : (
+            <BracketBoard
+              tournamentId={tournament.id}
+              matches={matches}
+              participants={participants}
+              published={published}
+              canGenerate={canGenerate}
+              generateHint={generateHint}
+              canRecordResults={inProgress}
+              canEditSeeds={canEditSeeds}
+              scoringMode={tournament.scoring_mode}
+              gamesPerSet={tournament.games_per_set}
+            />
+          )}
+        </div>
+      </section>
+    </div>
+  )
+}
+
+/** "Juan Pérez" → "Juan P." para etiquetas compactas de pareja. */
+function shortName(full: string | undefined): string {
+  if (!full) return '—'
+  const [first, ...rest] = full.trim().split(/\s+/)
+  if (rest.length === 0) return first
+  return `${first} ${rest[rest.length - 1][0]}.`
+}

@@ -60,6 +60,10 @@ export function TournamentForm({ tournament }: { tournament?: Tournament }) {
   const [gamesPerSet, setGamesPerSet] = useState<number>(
     tournament?.games_per_set ?? 6
   )
+  // Clasificados por zona al bracket (estado local, igual que el scoring).
+  const [qualifiersPerZone, setQualifiersPerZone] = useState<string>(
+    tournament ? String(tournament.qualifiers_per_zone) : '2'
+  )
   const [categoryError, setCategoryError] = useState<string | undefined>()
   const [dateError, setDateError] = useState<string | undefined>()
   const [serverError, setServerError] = useState<string | null>(null)
@@ -78,6 +82,12 @@ export function TournamentForm({ tournament }: { tournament?: Tournament }) {
       return
     }
     setDateError(undefined)
+
+    const qpz = Number(qualifiersPerZone)
+    if (!Number.isInteger(qpz) || qpz < 1) {
+      setServerError('Los clasificados por zona deben ser un número ≥ 1.')
+      return
+    }
     setServerError(null)
 
     const payload: TournamentPayload = {
@@ -87,6 +97,7 @@ export function TournamentForm({ tournament }: { tournament?: Tournament }) {
       registration_opens_at: opensAt || null,
       scoring_mode: scoringMode,
       games_per_set: gamesPerSet,
+      qualifiers_per_zone: qpz,
     }
     startTransition(async () => {
       const res = isEdit
@@ -155,6 +166,22 @@ export function TournamentForm({ tournament }: { tournament?: Tournament }) {
         onModeChange={setScoringMode}
         onGamesPerSetChange={setGamesPerSet}
       />
+
+      <div>
+        <TextField
+          label="Clasificados por zona (al bracket)"
+          type="number"
+          inputMode="numeric"
+          min={1}
+          placeholder="2"
+          value={qualifiersPerZone}
+          onChange={(e) => setQualifiersPerZone(e.target.value)}
+        />
+        <p className="mt-1.5 text-xs text-muted-foreground">
+          Cuántas parejas de cada zona avanzan a la fase de llaves. Si el total
+          no es potencia de 2, las mejores sembradas reciben un bye.
+        </p>
+      </div>
 
       {serverError && (
         <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
