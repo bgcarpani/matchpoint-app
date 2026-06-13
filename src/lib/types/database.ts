@@ -26,6 +26,8 @@ export type PairStatus = 'pending' | 'accepted' | 'rejected'
 
 export type MatchStatus = 'pending' | 'in_progress' | 'finished'
 
+export type ScoringMode = 'games' | 'best_of_3_sets'
+
 // Helper: una columna con default puede omitirse en Insert.
 type WithDefaults<Row, OptionalKeys extends keyof Row> = Omit<Row, OptionalKeys> &
   Partial<Pick<Row, OptionalKeys>>
@@ -77,11 +79,18 @@ export interface Database {
           registration_opens_at: string | null
           max_pair_requests: number
           max_pairs: number
+          scoring_mode: ScoringMode
+          games_per_set: number
           created_at: string
         }
         Insert: WithDefaults<
           Database['public']['Tables']['tournaments']['Row'],
-          'id' | 'status' | 'registration_opens_at' | 'created_at'
+          | 'id'
+          | 'status'
+          | 'registration_opens_at'
+          | 'scoring_mode'
+          | 'games_per_set'
+          | 'created_at'
         >
         Update: Partial<Database['public']['Tables']['tournaments']['Row']>
         Relationships: []
@@ -160,12 +169,22 @@ export interface Database {
           team2_pair_id: string
           team1_score: number | null
           team2_score: number | null
+          score_detail: number[][] | null
+          winner_pair_id: string | null
           status: MatchStatus
           created_at: string
         }
         Insert: WithDefaults<
           Database['public']['Tables']['matches']['Row'],
-          'id' | 'zone_id' | 'court_id' | 'team1_score' | 'team2_score' | 'status' | 'created_at'
+          | 'id'
+          | 'zone_id'
+          | 'court_id'
+          | 'team1_score'
+          | 'team2_score'
+          | 'score_detail'
+          | 'winner_pair_id'
+          | 'status'
+          | 'created_at'
         >
         Update: Partial<Database['public']['Tables']['matches']['Row']>
         Relationships: []
@@ -273,6 +292,7 @@ export interface Database {
       gender: Gender
       pair_status: PairStatus
       match_status: MatchStatus
+      scoring_mode: ScoringMode
     }
   }
 }

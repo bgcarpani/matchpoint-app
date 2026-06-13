@@ -31,7 +31,7 @@ export default async function ZonesPage({
       .single(),
     supabase
       .from('tournaments')
-      .select('id, name, status')
+      .select('id, name, status, scoring_mode, games_per_set')
       .eq('id', id)
       .single(),
   ])
@@ -70,7 +70,9 @@ export default async function ZonesPage({
     zoneIds.length
       ? supabase
           .from('matches')
-          .select('id, zone_id, round, court_id, team1_pair_id, team2_pair_id')
+          .select(
+            'id, zone_id, round, court_id, team1_pair_id, team2_pair_id, status, team1_score, team2_score, score_detail, winner_pair_id'
+          )
           .in('zone_id', zoneIds)
           .order('round', { ascending: true })
       : Promise.resolve({
@@ -81,6 +83,11 @@ export default async function ZonesPage({
             court_id: string | null
             team1_pair_id: string
             team2_pair_id: string
+            status: import('@/lib/types/database').MatchStatus
+            team1_score: number | null
+            team2_score: number | null
+            score_detail: number[][] | null
+            winner_pair_id: string | null
           }[],
         }),
   ])
@@ -124,11 +131,21 @@ export default async function ZonesPage({
         courtId: m.court_id,
         team1Label: pairLabel.get(m.team1_pair_id) ?? '—',
         team2Label: pairLabel.get(m.team2_pair_id) ?? '—',
+        status: m.status,
+        team1Score: m.team1_score,
+        team2Score: m.team2_score,
+        scoreDetail: m.score_detail,
+        winner: m.winner_pair_id
+          ? m.winner_pair_id === m.team1_pair_id
+            ? ('team1' as const)
+            : ('team2' as const)
+          : null,
       })),
   }))
 
   const anyPublished = zoneList.some((z) => z.is_published)
   const ready = canManageZones(tournament.status)
+  const canRecordResults = tournament.status === 'in_progress'
 
   return (
     <div className="relative z-[2] mx-auto w-full max-w-4xl px-5 py-8 sm:px-8">
@@ -165,6 +182,9 @@ export default async function ZonesPage({
               acceptedCount={accepted.length}
               canManage={ready && !anyPublished}
               published={anyPublished}
+              canRecordResults={canRecordResults}
+              scoringMode={tournament.scoring_mode}
+              gamesPerSet={tournament.games_per_set}
             />
           )}
         </div>

@@ -16,6 +16,11 @@ export const tournamentSchema = z
     registration_opens_at: z.string().trim().nullable().optional(),
     max_pairs: z.coerce.number().int().positive('Debe ser mayor a 0'),
     max_pair_requests: z.coerce.number().int().positive('Debe ser mayor a 0'),
+    scoring_mode: z.enum(['games', 'best_of_3_sets']),
+    games_per_set: z.coerce
+      .number()
+      .int()
+      .refine((v) => v === 6 || v === 7, 'El set es a 6 o 7 games'),
   })
   .refine((d) => isValidCategoryValue(d.category_type, d.category_value), {
     message: 'Categoría inválida para el tipo elegido',

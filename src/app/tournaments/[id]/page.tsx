@@ -14,6 +14,7 @@ import {
   GENDER_LABELS,
 } from '@/lib/domain/tournament'
 import { formatDate, formatDateTime } from '@/lib/format'
+import { SCORING_MODE_LABELS } from '@/lib/domain/match'
 import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -135,6 +136,10 @@ export default async function TournamentDetailPage({
             <Row
               label="Cupos de solicitud"
               value={`${t.max_pair_requests} parejas`}
+            />
+            <Row
+              label="Resultado"
+              value={`${SCORING_MODE_LABELS[t.scoring_mode]} · set a ${t.games_per_set}`}
             />
           </dl>
         </div>

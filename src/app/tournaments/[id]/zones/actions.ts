@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { requireUser } from '@/lib/supabase/auth'
 import { zoneErrorLabel } from '@/lib/domain/zone'
+import { computeResult, type RecordResultInput } from '@/lib/domain/match'
 
 export type ActionResult = { error: string } | { ok: true }
 
@@ -76,6 +77,102 @@ export async function assignCourt(
     .update({ court_id: courtId })
     .eq('id', matchId)
   if (error) return { error: 'No se pudo asignar la cancha.' }
+
+  revalidate(tournamentId)
+  return { ok: true }
+}
+
+/**
+ * Carga (o corrige) el resultado de un partido de zona. Sólo el organizador
+ * dueño y sólo con el torneo `in_progress`. Valida las reglas de scoring según
+ * la config del torneo (modo + games_per_set) y persiste games/sets, el
+ * desglose por set y la pareja ganadora; el partido pasa a `finished`. La RLS
+ * (matches_all_owner) protege la fila; el recálculo de standings es derivado
+ * (vista en vivo, Feature 4). Corregir = volver a llamar (sobrescribe).
+ */
+export async function recordMatchResult(
+  tournamentId: string,
+  matchId: string,
+  input: RecordResultInput
+): Promise<ActionResult> {
+  const { supabase } = await requireUser()
+
+  const { data: t } = await supabase
+    .from('tournaments')
+    .select('status, scoring_mode, games_per_set')
+    .eq('id', tournamentId)
+    .single()
+  if (!t) return { error: 'Torneo no encontrado.' }
+  if (t.status !== 'in_progress')
+    return { error: 'Los resultados se cargan con el torneo en curso.' }
+
+  const { data: match } = await supabase
+    .from('matches')
+    .select('id, zone_id, team1_pair_id, team2_pair_id')
+    .eq('id', matchId)
+    .single()
+  if (!match || !match.zone_id)
+    return { error: 'No se encontró el partido.' }
+
+  // Defensa: el partido tiene que ser de una zona de ESTE torneo (la RLS ya
+  // restringe al dueño, pero evitamos cruzar torneos del mismo organizador).
+  const { data: zone } = await supabase
+    .from('zones')
+    .select('tournament_id')
+    .eq('id', match.zone_id)
+    .single()
+  if (!zone || zone.tournament_id !== tournamentId)
+    return { error: 'El partido no pertenece a este torneo.' }
+
+  const result = computeResult(t.scoring_mode, t.games_per_set, input)
+  if ('error' in result) return { error: result.error }
+
+  const winnerPairId =
+    result.winner === 'team1' ? match.team1_pair_id : match.team2_pair_id
+
+  const { error } = await supabase
+    .from('matches')
+    .update({
+      team1_score: result.team1_score,
+      team2_score: result.team2_score,
+      score_detail: result.score_detail,
+      winner_pair_id: winnerPairId,
+      status: 'finished',
+    })
+    .eq('id', matchId)
+  if (error) return { error: 'No se pudo guardar el resultado.' }
+
+  revalidate(tournamentId)
+  return { ok: true }
+}
+
+/** Borra el resultado de un partido (vuelve a `pending`). Sólo in_progress. */
+export async function clearMatchResult(
+  tournamentId: string,
+  matchId: string
+): Promise<ActionResult> {
+  const { supabase } = await requireUser()
+
+  const { data: t } = await supabase
+    .from('tournaments')
+    .select('status')
+    .eq('id', tournamentId)
+    .single()
+  if (!t) return { error: 'Torneo no encontrado.' }
+  if (t.status !== 'in_progress')
+    return { error: 'Sólo se corrige con el torneo en curso.' }
+
+  const { error } = await supabase
+    .from('matches')
+    .update({
+      team1_score: null,
+      team2_score: null,
+      score_detail: null,
+      winner_pair_id: null,
+      status: 'pending',
+    })
+    .eq('id', matchId)
+  if (error) return { error: 'No se pudo borrar el resultado.' }
 
   revalidate(tournamentId)
   return { ok: true }

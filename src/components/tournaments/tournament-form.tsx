@@ -20,8 +20,9 @@ import {
   CategorySelector,
   type CategoryState,
 } from '@/components/tournaments/category-selector'
+import { ScoringSelector } from '@/components/tournaments/scoring-selector'
 import { Button } from '@/components/ui/button'
-import type { Tournament } from '@/lib/types/database'
+import type { ScoringMode, Tournament } from '@/lib/types/database'
 
 export function TournamentForm({ tournament }: { tournament?: Tournament }) {
   const isEdit = Boolean(tournament)
@@ -52,6 +53,13 @@ export function TournamentForm({ tournament }: { tournament?: Tournament }) {
       ? toDateTimeLocalValue(tournament.registration_opens_at)
       : ''
   )
+  // Scoring: estado local (igual que categoría/fechas).
+  const [scoringMode, setScoringMode] = useState<ScoringMode>(
+    tournament?.scoring_mode ?? 'games'
+  )
+  const [gamesPerSet, setGamesPerSet] = useState<number>(
+    tournament?.games_per_set ?? 6
+  )
   const [categoryError, setCategoryError] = useState<string | undefined>()
   const [dateError, setDateError] = useState<string | undefined>()
   const [serverError, setServerError] = useState<string | null>(null)
@@ -77,6 +85,8 @@ export function TournamentForm({ tournament }: { tournament?: Tournament }) {
       ...category,
       tournament_date: tournamentDate,
       registration_opens_at: opensAt || null,
+      scoring_mode: scoringMode,
+      games_per_set: gamesPerSet,
     }
     startTransition(async () => {
       const res = isEdit
@@ -138,6 +148,13 @@ export function TournamentForm({ tournament }: { tournament?: Tournament }) {
         Las solicitudes (lista de espera) deben ser mayores o iguales a los
         cupos del torneo. Ambos en parejas.
       </p>
+
+      <ScoringSelector
+        mode={scoringMode}
+        gamesPerSet={gamesPerSet}
+        onModeChange={setScoringMode}
+        onGamesPerSetChange={setGamesPerSet}
+      />
 
       {serverError && (
         <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">

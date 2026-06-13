@@ -8,7 +8,7 @@ import {
   type TournamentFormFields,
 } from '@/lib/validation/tournament'
 import { nextStatus } from '@/lib/domain/tournament'
-import type { CategoryType, Gender } from '@/lib/types/database'
+import type { CategoryType, Gender, ScoringMode } from '@/lib/types/database'
 
 export type ActionResult = { error: string } | { ok: true }
 
@@ -19,6 +19,8 @@ export interface TournamentPayload extends TournamentFormFields {
   gender: Gender
   tournament_date: string
   registration_opens_at: string | null
+  scoring_mode: ScoringMode
+  games_per_set: number
 }
 
 function firstError(error: { issues: { message: string }[] }): string {
@@ -54,6 +56,8 @@ export async function createTournament(
       ),
       max_pairs: parsed.data.max_pairs,
       max_pair_requests: parsed.data.max_pair_requests,
+      scoring_mode: parsed.data.scoring_mode,
+      games_per_set: parsed.data.games_per_set,
     })
     .select('id')
     .single()
@@ -85,6 +89,8 @@ export async function updateTournament(
       ),
       max_pairs: parsed.data.max_pairs,
       max_pair_requests: parsed.data.max_pair_requests,
+      scoring_mode: parsed.data.scoring_mode,
+      games_per_set: parsed.data.games_per_set,
     })
     .eq('id', id)
 

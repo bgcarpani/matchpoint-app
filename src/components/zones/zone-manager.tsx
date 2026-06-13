@@ -2,13 +2,17 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import type { CourtType } from '@/lib/types/database'
+import type { CourtType, MatchStatus, ScoringMode } from '@/lib/types/database'
 import { suggestZoneCount, maxZoneCount } from '@/lib/domain/zone'
+import type { RecordResultInput } from '@/lib/domain/match'
+import { MatchResultForm } from '@/components/zones/match-result-form'
 import {
   generateZones,
   movePair,
   assignCourt,
   publishZones,
+  recordMatchResult,
+  clearMatchResult,
   type ActionResult,
 } from '@/app/tournaments/[id]/zones/actions'
 
@@ -23,6 +27,12 @@ export interface ZoneMatchRow {
   courtId: string | null
   team1Label: string
   team2Label: string
+  status: MatchStatus
+  team1Score: number | null
+  team2Score: number | null
+  scoreDetail: number[][] | null
+  /** lado ganador, derivado en el server */
+  winner: 'team1' | 'team2' | null
 }
 
 export interface ZoneView {
@@ -46,6 +56,9 @@ export function ZoneManager({
   acceptedCount,
   canManage,
   published,
+  canRecordResults,
+  scoringMode,
+  gamesPerSet,
 }: {
   tournamentId: string
   zones: ZoneView[]
@@ -53,6 +66,10 @@ export function ZoneManager({
   acceptedCount: number
   canManage: boolean
   published: boolean
+  /** torneo en curso → habilita cargar/corregir resultados */
+  canRecordResults: boolean
+  scoringMode: ScoringMode
+  gamesPerSet: number
 }) {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
@@ -139,12 +156,24 @@ export function ZoneManager({
               allZones={zones}
               courts={courts}
               canManage={canManage}
+              canRecordResults={canRecordResults}
+              scoringMode={scoringMode}
+              gamesPerSet={gamesPerSet}
               disabled={pending}
               onMovePair={(pairId, targetZoneId) =>
                 run(() => movePair(tournamentId, pairId, targetZoneId))
               }
               onAssignCourt={(matchId, courtId) =>
                 run(() => assignCourt(tournamentId, matchId, courtId))
+              }
+              onRecordResult={(matchId, input) =>
+                run(() => recordMatchResult(tournamentId, matchId, input))
+              }
+              onClearResult={(matchId) =>
+                run(
+                  () => clearMatchResult(tournamentId, matchId),
+                  '¿Borrar el resultado de este partido?'
+                )
               }
             />
           ))}
@@ -216,17 +245,27 @@ function ZoneCard({
   allZones,
   courts,
   canManage,
+  canRecordResults,
+  scoringMode,
+  gamesPerSet,
   disabled,
   onMovePair,
   onAssignCourt,
+  onRecordResult,
+  onClearResult,
 }: {
   zone: ZoneView
   allZones: ZoneView[]
   courts: CourtOption[]
   canManage: boolean
+  canRecordResults: boolean
+  scoringMode: ScoringMode
+  gamesPerSet: number
   disabled: boolean
   onMovePair: (pairId: string, targetZoneId: string) => void
   onAssignCourt: (matchId: string, courtId: string | null) => void
+  onRecordResult: (matchId: string, input: RecordResultInput) => void
+  onClearResult: (matchId: string) => void
 }) {
   return (
     <div className="rounded-2xl border border-border bg-card/40 p-5">
@@ -306,6 +345,25 @@ function ZoneCard({
                 ))}
               </select>
             </div>
+
+            {canRecordResults && (
+              <MatchResultForm
+                mode={scoringMode}
+                gamesPerSet={gamesPerSet}
+                team1Label={m.team1Label}
+                team2Label={m.team2Label}
+                result={{
+                  status: m.status,
+                  team1Score: m.team1Score,
+                  team2Score: m.team2Score,
+                  scoreDetail: m.scoreDetail,
+                  winner: m.winner,
+                }}
+                disabled={disabled}
+                onSubmit={(input) => onRecordResult(m.id, input)}
+                onClear={() => onClearResult(m.id)}
+              />
+            )}
           </li>
         ))}
       </ul>
