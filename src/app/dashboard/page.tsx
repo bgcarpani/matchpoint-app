@@ -1,8 +1,10 @@
 import Link from 'next/link'
+import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { OrganizerHeader } from '@/components/organizer/organizer-header'
+import { CalendarSharePanel } from '@/components/organizer/calendar-share-panel'
 import { TournamentCard } from '@/components/tournaments/tournament-card'
 import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -21,7 +23,7 @@ export default async function DashboardPage() {
   const [{ data: organizer }, { data: tournaments }] = await Promise.all([
     supabase
       .from('organizers')
-      .select('full_name, establishment_name')
+      .select('full_name, establishment_name, calendar_slug')
       .eq('id', user.id)
       .single(),
     supabase
@@ -32,9 +34,28 @@ export default async function DashboardPage() {
 
   const list = tournaments ?? []
 
+  // URL pública absoluta del calendario (sirve en local y prod).
+  const h = await headers()
+  const host = h.get('host') ?? ''
+  const proto =
+    h.get('x-forwarded-proto') ??
+    (host.startsWith('localhost') ? 'http' : 'https')
+  const calendarUrl = organizer?.calendar_slug
+    ? `${proto}://${host}/o/${organizer.calendar_slug}`
+    : null
+
   return (
     <div className="relative z-[2] mx-auto w-full max-w-6xl px-5 py-8 sm:px-8">
       <OrganizerHeader establishmentName={organizer?.establishment_name} />
+
+      {calendarUrl && (
+        <section className="mt-8">
+          <CalendarSharePanel
+            url={calendarUrl}
+            establishmentName={organizer?.establishment_name}
+          />
+        </section>
+      )}
 
       <section className="mt-10">
         <div className="flex flex-wrap items-end justify-between gap-4">

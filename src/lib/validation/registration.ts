@@ -25,11 +25,22 @@ const playerSchema = z
     path: ['email'],
   })
 
-export const registerPairSchema = z.object({
-  tournament_id: z.uuid(),
-  player1: playerSchema,
-  player2: playerSchema,
-})
+export const registerPairSchema = z
+  .object({
+    tournament_id: z.uuid(),
+    player1: playerSchema,
+    player2: playerSchema,
+  })
+  // Los dos jugadores de la MISMA solicitud no pueden compartir email
+  // (case-insensitive). El anti-duplicado contra otras parejas vive en el RPC.
+  .refine(
+    (d) => {
+      const e1 = d.player1.email.trim().toLowerCase()
+      const e2 = d.player2.email.trim().toLowerCase()
+      return e1 === '' || e2 === '' || e1 !== e2
+    },
+    { message: 'Los dos jugadores no pueden tener el mismo email', path: ['player2', 'email'] }
+  )
 
 export type PlayerFields = z.infer<typeof playerSchema>
 export type RegisterPairInput = z.infer<typeof registerPairSchema>

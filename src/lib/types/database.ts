@@ -39,9 +39,13 @@ export interface Database {
           email: string
           full_name: string
           establishment_name: string
+          calendar_slug: string
           created_at: string
         }
-        Insert: WithDefaults<Database['public']['Tables']['organizers']['Row'], 'created_at'>
+        Insert: WithDefaults<
+          Database['public']['Tables']['organizers']['Row'],
+          'calendar_slug' | 'created_at'
+        >
         Update: Partial<Database['public']['Tables']['organizers']['Row']>
         Relationships: []
       }
@@ -168,6 +172,27 @@ export interface Database {
       }
     }
     Views: {
+      public_organizer_view: {
+        Row: {
+          id: string
+          establishment_name: string
+          calendar_slug: string
+        }
+        Relationships: []
+      }
+      public_calendar_tournament_view: {
+        Row: {
+          id: string
+          organizer_id: string
+          name: string
+          category_type: CategoryType
+          category_value: string
+          gender: Gender
+          tournament_date: string
+          status: TournamentStatus
+        }
+        Relationships: []
+      }
       public_tournament_view: {
         Row: {
           id: string

@@ -51,6 +51,10 @@ export function PairRegistrationForm({
       if (!p.email.trim() && !p.phone.trim())
         return `El jugador ${i + 1} necesita email o teléfono.`
     }
+    const e1 = players[0].email.trim().toLowerCase()
+    const e2 = players[1].email.trim().toLowerCase()
+    if (e1 && e2 && e1 === e2)
+      return 'Los dos jugadores no pueden tener el mismo email.'
     return null
   }
 

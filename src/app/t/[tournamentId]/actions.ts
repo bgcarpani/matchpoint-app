@@ -15,6 +15,8 @@ function translateRpcError(message: string): string {
     return 'La inscripción no está abierta para este torneo.'
   if (message.includes('REQUESTS_FULL'))
     return 'Se alcanzó el cupo de solicitudes para este torneo.'
+  if (message.includes('DUPLICATE_EMAIL'))
+    return 'Ya hay una inscripción vigente en este torneo con ese email.'
   if (message.includes('TOURNAMENT_NOT_FOUND'))
     return 'No se encontró el torneo.'
   if (message.includes('players_contact_present'))
