@@ -11,6 +11,7 @@ Las primeras versiones son organizer-first.
 - `functional-doc.md` — análisis funcional completo (todas las versiones)
 - `spec.md` — especificación detallada de implementación de v1
 - `spec-v2.md` — especificación de implementación de v2 (en construcción)
+- `spec-v3.md` — especificación de implementación de v3 (comunicaciones: email + share)
 
 ## Stack
 - Next.js 16 (App Router) + TypeScript
@@ -55,6 +56,15 @@ por decisión de producto; en su lugar se priorizan refinamientos de UI/UX. Hech
 de zonas funcional (`/t/[id]/zones`), rediseño del manager de zonas (tarjetas de partido compactas +
 sección "Partidos" separada de parejas/posiciones). Pendiente: botón "compartir campeón".
 Especificación en `spec-v2.md`; el detalle granular por slice vive en la memoria del asistente.
+
+**v3 — comunicaciones (especificada, sin implementar).** Eje: email transaccional vía Resend.
+Slices: (0) infra de email + helper de URL absoluta, (1) email de inscripción pendiente con link de
+seguimiento, (2) emails de cambio de estado aceptado/rechazado, (3) auth por email del organizer
+(confirmación real + reset de contraseña; reemplaza `mailer_autoconfirm`), (4) botón "Compartir en
+WhatsApp" en torneo/calendario/campeón, (5) "Compartir en historia de Instagram" con imagen generada
+(`next/og`). Decisiones: Resend (no Gmail SMTP); mails solo al jugador 1; WhatsApp **automático**
+pospuesto (solo el botón de compartir entra); transmisiones/streaming diferido a la última versión.
+Especificación completa en `spec-v3.md`.
 
 ## Convenciones de implementación (v1)
 > No revertir sin discusión; reflejan decisiones ya validadas en código y verificadas e2e.
@@ -143,9 +153,10 @@ Americano + Llaves, con **parejas fijas** durante todo el torneo:
 - Resultados / scoring de partidos: v2
 - Bracket / fase de llaves: v2
 - Posiciones y standings de zona: v2
-- Notificaciones (email / WhatsApp): v3
+- Notificaciones por email: v3 (en desarrollo — ver `spec-v3.md`)
+- Notificaciones por WhatsApp (envío automático): pospuesto (botón de compartir sí entra en v3)
 - Supabase Realtime: v2
-- Supabase Storage / streaming: v3
+- Supabase Storage / streaming / transmisiones: última versión (diferido fuera de v3)
 - Rankings y stats: v4
 - Gestión de turnos de canchas: v5
 - Stripe / pagos: v5

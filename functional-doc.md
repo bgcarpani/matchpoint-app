@@ -107,16 +107,21 @@ todos-contra-todos):
 
 ---
 
-## Versión 3 — Transmisión en vivo + Notificaciones
+## Versión 3 — Comunicaciones (Notificaciones + Compartir)
 
-### Transmisión
-- Establecimientos con capacidad de streaming transmiten sus partidos por la app
-- Versión aspiracional con infraestructura pesada (CDN, encoding) — no condiciona el diseño de v1 y v2
+> La transmisión en vivo / streaming, antes tentativamente en v3, se difirió a la **última versión**
+> (ver más abajo). v3 se enfoca en comunicaciones livianas: email transaccional y botones de compartir.
 
-### Notificaciones
-- Al jugador: aviso cuando su inscripción es aceptada o rechazada
-- Al jugador: aviso cuando las zonas son publicadas
-- Canal a definir: email y/o WhatsApp
+### Notificaciones por email
+- Al jugador: aviso cuando envía su solicitud (estado pendiente) con link de seguimiento
+- Al jugador: aviso cuando su inscripción es aceptada o rechazada (con info adicional a futuro)
+- Proveedor: Resend (también usado como SMTP de Supabase Auth para confirmación + reset de contraseña)
+- WhatsApp como canal de notificación **automática**: pospuesto (requiere Business API + plantillas
+  aprobadas + costo). El teléfono ya se guarda desde v1, así que es factible retomarlo más adelante.
+
+### Compartir (redes)
+- Botón "Compartir en WhatsApp" en el torneo, el calendario público y el campeón (post-llaves)
+- Botón "Compartir en historia de Instagram" con imagen generada (Instagram no admite compartir por URL)
 
 ---
 
@@ -139,6 +144,13 @@ Esta versión marca el punto donde el jugador se convierte en usuario pleno de l
 
 ---
 
+## Última versión (aspiracional) — Transmisión en vivo
+- Establecimientos con capacidad de streaming transmiten sus partidos por la app
+- Infraestructura pesada (CDN, encoding, Supabase Storage / multimedia) — no condiciona el diseño previo
+- Diferida fuera de v3 por decisión de producto; se retoma como cierre de la plataforma
+
+---
+
 ## Stack tecnológico y herramientas de desarrollo
 
 > Todas las herramientas deben instalarse o activarse únicamente cuando sean necesarias, no antes.
@@ -151,7 +163,8 @@ Esta versión marca el punto donde el jugador se convierte en usuario pleno de l
 | Tailwind CSS + shadcn/ui | Inicio del proyecto |
 | Supabase (PostgreSQL + Auth) | Inicio del proyecto (v1) |
 | Supabase Realtime | v2 — brackets en vivo |
-| Supabase Storage | v3 — streaming / multimedia |
+| Resend (email transaccional) | v3 — notificaciones + auth por email |
+| Supabase Storage | última versión — streaming / multimedia |
 | Cloudflare Pages | Primer deploy (v1) |
 | Stripe o similar | v5 — si se implementa seña |
 
