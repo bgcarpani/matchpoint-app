@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { formatDateTime } from '@/lib/format'
+import { ShareButtons } from '@/components/share/share-buttons'
 
 /**
  * Panel "Link de inscripción" del detalle del torneo: muestra la URL pública
@@ -9,19 +10,15 @@ import { formatDateTime } from '@/lib/format'
  * (desde los headers de la request) y se recibe ya resuelta, para que funcione
  * igual en local y en producción sin hardcodear el dominio ni depender de
  * `window` en el cliente.
- *
- * TODO(v3 — compartir): la fila de acciones está pensada para sumar botones de
- * compartir en WhatsApp e Instagram.
- *   - WhatsApp: abrir `https://wa.me/?text=${encodeURIComponent(url + mensaje)}`.
- *   - Instagram: no soporta compartir por URL desde la web (va por la app /
- *     historias); se evaluará deep-link o copiar al portapapeles + abrir la app.
  */
 export function ShareRegistrationLink({
   url,
+  tournamentName,
   registrationOpen,
   registrationOpensAt,
 }: {
   url: string
+  tournamentName: string
   registrationOpen: boolean
   /** Horario de apertura automática, o null si la apertura es manual. */
   registrationOpensAt: string | null
@@ -55,7 +52,7 @@ export function ShareRegistrationLink({
         </button>
       </div>
 
-      {/* Fila de acciones. Acá se agregan a futuro los botones de compartir. */}
+      {/* Fila de acciones: abrir + compartir. */}
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <a
           href={url}
@@ -65,6 +62,10 @@ export function ShareRegistrationLink({
         >
           Abrir página pública ↗
         </a>
+        <ShareButtons
+          url={url}
+          text={`Inscribite al torneo ${tournamentName} en Matchpoint:`}
+        />
       </div>
 
       {registrationOpen ? (

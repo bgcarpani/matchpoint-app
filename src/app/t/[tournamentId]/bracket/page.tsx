@@ -2,6 +2,8 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import { getPublicTournament } from '@/lib/public/tournament'
 import { getPublicBracket } from '@/lib/public/bracket'
+import { getBaseUrl } from '@/lib/url'
+import { ShareButtons } from '@/components/share/share-buttons'
 
 export const metadata: Metadata = { title: 'Llaves — Matchpoint' }
 
@@ -11,12 +13,14 @@ export default async function PublicBracketPage({
   params: Promise<{ tournamentId: string }>
 }) {
   const { tournamentId } = await params
-  const [tournament, bracket] = await Promise.all([
+  const [tournament, bracket, baseUrl] = await Promise.all([
     getPublicTournament(tournamentId),
     getPublicBracket(tournamentId),
+    getBaseUrl(),
   ])
 
   const available = bracket && bracket.rounds.length > 0
+  const tournamentUrl = `${baseUrl}/t/${tournamentId}`
 
   return (
     <main className="relative z-[2] mx-auto w-full max-w-5xl px-5 pb-24 sm:px-8">
@@ -66,6 +70,14 @@ export default async function PublicBracketPage({
               <p className="font-display mt-1 text-3xl text-foreground">
                 {bracket!.champion}
               </p>
+              <div className="mt-4 flex justify-center">
+                <ShareButtons
+                  url={tournamentUrl}
+                  text={`🏆 ${bracket!.champion} se consagró campeón${
+                    tournament ? ` en ${tournament.name}` : ''
+                  }. Mirá las llaves en Matchpoint:`}
+                />
+              </div>
             </div>
           )}
 

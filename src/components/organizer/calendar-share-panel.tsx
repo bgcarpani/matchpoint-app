@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
+import { ShareButtons } from '@/components/share/share-buttons'
 
 /**
  * Panel "Calendario público" del dashboard: muestra la URL estática del
@@ -87,6 +88,14 @@ export function CalendarSharePanel({
             >
               Descargar QR ↓
             </button>
+            <ShareButtons
+              url={url}
+              text={
+                establishmentName
+                  ? `Mirá los torneos de ${establishmentName} en Matchpoint:`
+                  : 'Mirá los torneos en Matchpoint:'
+              }
+            />
           </div>
         </div>
 

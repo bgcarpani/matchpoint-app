@@ -118,6 +118,7 @@ export default async function TournamentDetailPage({
         {!isDraft && (
           <ShareRegistrationLink
             url={registrationUrl}
+            tournamentName={t.name}
             registrationOpen={t.status === 'registration_open'}
             registrationOpensAt={t.registration_opens_at}
           />
