@@ -6,6 +6,9 @@ import {
   registerPairSchema,
   type RegisterPairInput,
 } from '@/lib/validation/registration'
+import { sendEmail } from '@/lib/email/send'
+import { pendingEmail } from '@/lib/email/templates'
+import { getBaseUrl } from '@/lib/url'
 
 export type RegisterResult = { error: string } | { token: string }
 
@@ -50,6 +53,24 @@ export async function registerPair(
 
   if (error) return { error: translateRpcError(error.message) }
   if (!data) return { error: 'No se pudo generar la inscripción.' }
+
+  // Mail de "solicitud pendiente" al jugador 1 (contacto principal). Best-effort:
+  // sendEmail no lanza, así que un fallo de envío nunca rompe la inscripción.
+  if (player1.email) {
+    const { data: tournament } = await supabase
+      .from('tournaments')
+      .select('name')
+      .eq('id', tournament_id)
+      .maybeSingle()
+
+    const baseUrl = await getBaseUrl()
+    const { subject, html } = pendingEmail({
+      playerName: player1.full_name,
+      tournamentName: tournament?.name ?? 'tu torneo',
+      trackUrl: `${baseUrl}/inscription/${data}`,
+    })
+    await sendEmail({ to: player1.email, subject, html })
+  }
 
   // Refresca los conteos de la página pública.
   revalidatePath(`/t/${tournament_id}`)
