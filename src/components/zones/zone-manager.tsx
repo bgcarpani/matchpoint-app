@@ -12,12 +12,9 @@ import {
   type StandingRow,
 } from '@/lib/domain/zone'
 import type { RecordResultInput } from '@/lib/domain/match'
-import { MatchResultForm } from '@/components/zones/match-result-form'
 import { ZoneStandings } from '@/components/zones/zone-standings'
-import {
-  MatchCourtSelect,
-  type CourtOption,
-} from '@/components/zones/match-court-select'
+import { ZoneMatchCard } from '@/components/zones/zone-match-card'
+import { type CourtOption } from '@/components/zones/match-court-select'
 import {
   generateZones,
   movePair,
@@ -232,65 +229,90 @@ export function ZoneManager({
         </div>
       )}
 
-      {/* Zonas */}
+      {/* Zonas — parejas + posiciones (siempre visibles) */}
       {hasZones && (
-        <div className="grid gap-4 lg:grid-cols-2">
-          {visibleZones.map((zone) => (
-            <ZoneCard
-              key={zone.id}
-              zone={zone}
-              allZones={zones}
-              courts={courts}
-              canManage={canManage}
-              canRecordResults={canRecordResults}
-              scoringMode={scoringMode}
-              gamesPerSet={gamesPerSet}
-              disabled={pending}
-              onMovePair={(pairId, targetZoneId) =>
-                run(() => movePair(tournamentId, pairId, targetZoneId))
-              }
-              onGenerateNextRound={() =>
-                run(() => generateNextRound(tournamentId, zone.id))
-              }
-              onAddMatch={(t1, t2) =>
-                run(() => addManualMatch(tournamentId, zone.id, t1, t2))
-              }
-              onRemoveMatch={(matchId) =>
-                run(
-                  () => removeManualMatch(tournamentId, matchId),
-                  '¿Borrar este partido?'
-                )
-              }
-              onAssignCourt={(matchId, courtId) =>
-                run(() => assignCourt(tournamentId, matchId, courtId))
-              }
-              onRecordResult={(matchId, input) =>
-                run(() => recordMatchResult(tournamentId, matchId, input))
-              }
-              onClearResult={(matchId) =>
-                run(
-                  () => clearMatchResult(tournamentId, matchId),
-                  '¿Borrar el resultado de este partido?'
-                )
-              }
-              onFreeze={() =>
-                run(
-                  () => freezeZoneStandings(tournamentId, zone.id),
-                  '¿Cerrar las posiciones de esta zona? Vas a poder reabrirlas para corregir resultados.'
-                )
-              }
-              onFreezeManual={(pairIds) =>
-                run(
-                  () => freezeManualStandings(tournamentId, zone.id, pairIds),
-                  '¿Cerrar las posiciones con este orden?'
-                )
-              }
-              onReopen={() =>
-                run(() => reopenZoneStandings(tournamentId, zone.id))
-              }
-            />
-          ))}
-        </div>
+        <section className="space-y-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+            Zonas
+          </p>
+          <div className="grid gap-4 lg:grid-cols-2">
+            {visibleZones.map((zone) => (
+              <ZoneCard
+                key={zone.id}
+                zone={zone}
+                allZones={zones}
+                canManage={canManage}
+                canRecordResults={canRecordResults}
+                disabled={pending}
+                onMovePair={(pairId, targetZoneId) =>
+                  run(() => movePair(tournamentId, pairId, targetZoneId))
+                }
+                onFreeze={() =>
+                  run(
+                    () => freezeZoneStandings(tournamentId, zone.id),
+                    '¿Cerrar las posiciones de esta zona? Vas a poder reabrirlas para corregir resultados.'
+                  )
+                }
+                onFreezeManual={(pairIds) =>
+                  run(
+                    () => freezeManualStandings(tournamentId, zone.id, pairIds),
+                    '¿Cerrar las posiciones con este orden?'
+                  )
+                }
+                onReopen={() =>
+                  run(() => reopenZoneStandings(tournamentId, zone.id))
+                }
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Partidos — sección aparte, agrupada por zona */}
+      {hasZones && (
+        <section className="space-y-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+            Partidos
+          </p>
+          <div className="grid gap-4 lg:grid-cols-2">
+            {visibleZones.map((zone) => (
+              <ZoneMatchesCard
+                key={zone.id}
+                zone={zone}
+                courts={courts}
+                canManage={canManage}
+                canRecordResults={canRecordResults}
+                scoringMode={scoringMode}
+                gamesPerSet={gamesPerSet}
+                disabled={pending}
+                onGenerateNextRound={() =>
+                  run(() => generateNextRound(tournamentId, zone.id))
+                }
+                onAddMatch={(t1, t2) =>
+                  run(() => addManualMatch(tournamentId, zone.id, t1, t2))
+                }
+                onRemoveMatch={(matchId) =>
+                  run(
+                    () => removeManualMatch(tournamentId, matchId),
+                    '¿Borrar este partido?'
+                  )
+                }
+                onAssignCourt={(matchId, courtId) =>
+                  run(() => assignCourt(tournamentId, matchId, courtId))
+                }
+                onRecordResult={(matchId, input) =>
+                  run(() => recordMatchResult(tournamentId, matchId, input))
+                }
+                onClearResult={(matchId) =>
+                  run(
+                    () => clearMatchResult(tournamentId, matchId),
+                    '¿Borrar el resultado de este partido?'
+                  )
+                }
+              />
+            ))}
+          </div>
+        </section>
       )}
     </div>
   )
@@ -380,38 +402,20 @@ function GenerateForm({
 function ZoneCard({
   zone,
   allZones,
-  courts,
   canManage,
   canRecordResults,
-  scoringMode,
-  gamesPerSet,
   disabled,
   onMovePair,
-  onGenerateNextRound,
-  onAddMatch,
-  onRemoveMatch,
-  onAssignCourt,
-  onRecordResult,
-  onClearResult,
   onFreeze,
   onFreezeManual,
   onReopen,
 }: {
   zone: ZoneView
   allZones: ZoneView[]
-  courts: CourtOption[]
   canManage: boolean
   canRecordResults: boolean
-  scoringMode: ScoringMode
-  gamesPerSet: number
   disabled: boolean
   onMovePair: (pairId: string, targetZoneId: string) => void
-  onGenerateNextRound: () => void
-  onAddMatch: (team1PairId: string, team2PairId: string) => void
-  onRemoveMatch: (matchId: string) => void
-  onAssignCourt: (matchId: string, courtId: string | null) => void
-  onRecordResult: (matchId: string, input: RecordResultInput) => void
-  onClearResult: (matchId: string) => void
   onFreeze: () => void
   onFreezeManual: (pairIds: string[]) => void
   onReopen: () => void
@@ -424,13 +428,8 @@ function ZoneCard({
     zone.matches.every((m) => m.status === 'finished')
   const showStandings = canRecordResults || zone.standingsFrozen
 
-  // winner_vs_loser: gating de la ronda 2.
-  const round1 = zone.matches.filter((m) => m.round === 1)
+  // winner_vs_loser: para poder cerrar posiciones hace falta la ronda 2 jugada.
   const round2 = zone.matches.filter((m) => m.round === 2)
-  const round1Complete =
-    round1.length === 2 && round1.every((m) => m.status === 'finished')
-  const canGenerateRound2 =
-    isWvl && canRecordResults && round1Complete && round2.length === 0
 
   // ¿Se pueden cerrar las posiciones (formatos no-manual)?
   const canFreeze =
@@ -448,11 +447,6 @@ function ZoneCard({
           {zone.pairs.length} parejas
         </span>
       </div>
-
-      {/* Formato (se elige globalmente arriba; acá solo lectura) */}
-      <p className="mt-2 text-xs text-muted-foreground">
-        Formato: {MATCH_FORMAT_LABELS[zone.matchFormat]}
-      </p>
 
       {/* Parejas */}
       <ul className="mt-4 space-y-2">
@@ -483,101 +477,6 @@ function ZoneCard({
           </li>
         ))}
       </ul>
-
-      {/* Partidos */}
-      <div className="mt-5 flex items-center justify-between gap-2">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-          Partidos
-        </p>
-        {canGenerateRound2 && (
-          <button
-            type="button"
-            disabled={disabled}
-            onClick={onGenerateNextRound}
-            className="rounded-md bg-volt px-2.5 py-1 text-xs font-semibold text-volt-foreground transition hover:brightness-105 disabled:opacity-50"
-          >
-            Generar ronda 2
-          </button>
-        )}
-      </div>
-      <ul className="mt-2 space-y-2">
-        {zone.matches.length === 0 && (
-          <li className="text-sm text-muted-foreground">
-            {isManual
-              ? 'Agregá los partidos de la zona.'
-              : 'Sin partidos generados.'}
-          </li>
-        )}
-        {zone.matches.map((m, i) => {
-          // En winner_vs_loser mostramos un encabezado por ronda.
-          const prev = zone.matches[i - 1]
-          const showRoundHeader = isWvl && (!prev || prev.round !== m.round)
-          return (
-            <li key={m.id}>
-              {showRoundHeader && (
-                <p className="mb-1 mt-2 text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                  Ronda {m.round}
-                </p>
-              )}
-              <div className="rounded-lg border border-border bg-secondary px-3 py-2">
-                <div className="flex items-center justify-between gap-2 text-sm text-foreground">
-                  <span>
-                    {m.team1Label}{' '}
-                    <span className="text-muted-foreground">vs</span>{' '}
-                    {m.team2Label}
-                  </span>
-                  {canManage && isManual && (
-                    <button
-                      type="button"
-                      disabled={disabled}
-                      onClick={() => onRemoveMatch(m.id)}
-                      className="shrink-0 rounded-md border border-border px-2 py-0.5 text-xs text-muted-foreground transition hover:bg-accent hover:text-foreground disabled:opacity-50"
-                      aria-label="Borrar partido"
-                    >
-                      Borrar
-                    </button>
-                  )}
-                </div>
-                <MatchCourtSelect
-                  courtId={m.courtId}
-                  courts={courts}
-                  finished={m.status === 'finished'}
-                  disabled={disabled}
-                  onAssign={(courtId) => onAssignCourt(m.id, courtId)}
-                />
-
-                {canRecordResults && (
-                  <MatchResultForm
-                    mode={scoringMode}
-                    gamesPerSet={gamesPerSet}
-                    team1Label={m.team1Label}
-                    team2Label={m.team2Label}
-                    result={{
-                      status: m.status,
-                      team1Score: m.team1Score,
-                      team2Score: m.team2Score,
-                      scoreDetail: m.scoreDetail,
-                      winner: m.winner,
-                    }}
-                    disabled={disabled}
-                    onSubmit={(input) => onRecordResult(m.id, input)}
-                    onClear={() => onClearResult(m.id)}
-                  />
-                )}
-              </div>
-            </li>
-          )
-        })}
-      </ul>
-
-      {/* Alta manual de partidos */}
-      {canManage && isManual && zone.pairs.length >= 2 && (
-        <AddManualMatchForm
-          pairs={zone.pairs}
-          disabled={disabled}
-          onAdd={onAddMatch}
-        />
-      )}
 
       {/* Posiciones */}
       {showStandings && (
@@ -631,6 +530,126 @@ function ZoneCard({
             />
           )}
         </div>
+      )}
+    </div>
+  )
+}
+
+/**
+ * Tarjeta de la sección "Partidos" para una zona: formato (lectura), botón de
+ * ronda 2 (winner_vs_loser), lista de partidos compactos y alta manual. Vive
+ * separada de la tarjeta de zona (parejas + posiciones) para achicar el alto de
+ * la pantalla; opera sobre el mismo `zone` y las mismas actions.
+ */
+function ZoneMatchesCard({
+  zone,
+  courts,
+  canManage,
+  canRecordResults,
+  scoringMode,
+  gamesPerSet,
+  disabled,
+  onGenerateNextRound,
+  onAddMatch,
+  onRemoveMatch,
+  onAssignCourt,
+  onRecordResult,
+  onClearResult,
+}: {
+  zone: ZoneView
+  courts: CourtOption[]
+  canManage: boolean
+  canRecordResults: boolean
+  scoringMode: ScoringMode
+  gamesPerSet: number
+  disabled: boolean
+  onGenerateNextRound: () => void
+  onAddMatch: (team1PairId: string, team2PairId: string) => void
+  onRemoveMatch: (matchId: string) => void
+  onAssignCourt: (matchId: string, courtId: string | null) => void
+  onRecordResult: (matchId: string, input: RecordResultInput) => void
+  onClearResult: (matchId: string) => void
+}) {
+  const isWvl = zone.matchFormat === 'winner_vs_loser'
+  const isManual = zone.matchFormat === 'manual'
+
+  // winner_vs_loser: gating de la ronda 2.
+  const round1 = zone.matches.filter((m) => m.round === 1)
+  const round2 = zone.matches.filter((m) => m.round === 2)
+  const round1Complete =
+    round1.length === 2 && round1.every((m) => m.status === 'finished')
+  const canGenerateRound2 =
+    isWvl && canRecordResults && round1Complete && round2.length === 0
+
+  return (
+    <div className="rounded-2xl border border-border bg-card/40 p-5">
+      <div className="flex items-baseline justify-between gap-3">
+        <h3 className="font-display text-lg text-foreground">{zone.name}</h3>
+        <span className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
+          {MATCH_FORMAT_LABELS[zone.matchFormat]}
+        </span>
+      </div>
+
+      <div className="mt-4 flex items-center justify-between gap-2">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+          Partidos
+        </p>
+        {canGenerateRound2 && (
+          <button
+            type="button"
+            disabled={disabled}
+            onClick={onGenerateNextRound}
+            className="rounded-md bg-volt px-2.5 py-1 text-xs font-semibold text-volt-foreground transition hover:brightness-105 disabled:opacity-50"
+          >
+            Generar ronda 2
+          </button>
+        )}
+      </div>
+      <ul className="mt-2 space-y-2">
+        {zone.matches.length === 0 && (
+          <li className="text-sm text-muted-foreground">
+            {isManual
+              ? 'Agregá los partidos de la zona.'
+              : 'Sin partidos generados.'}
+          </li>
+        )}
+        {zone.matches.map((m, i) => {
+          // En winner_vs_loser mostramos un encabezado por ronda.
+          const prev = zone.matches[i - 1]
+          const showRoundHeader = isWvl && (!prev || prev.round !== m.round)
+          return (
+            <li key={m.id}>
+              {showRoundHeader && (
+                <p className="mb-1 mt-2 text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                  Ronda {m.round}
+                </p>
+              )}
+              <ZoneMatchCard
+                match={m}
+                courts={courts}
+                scoringMode={scoringMode}
+                gamesPerSet={gamesPerSet}
+                canRecordResults={canRecordResults}
+                canManage={canManage}
+                isManual={isManual}
+                disabled={disabled}
+                onAssignCourt={(courtId) => onAssignCourt(m.id, courtId)}
+                onRecordResult={(input) => onRecordResult(m.id, input)}
+                onClearResult={() => onClearResult(m.id)}
+                onRemoveMatch={() => onRemoveMatch(m.id)}
+              />
+            </li>
+          )
+        })}
+      </ul>
+
+      {/* Alta manual de partidos */}
+      {canManage && isManual && zone.pairs.length >= 2 && (
+        <AddManualMatchForm
+          pairs={zone.pairs}
+          disabled={disabled}
+          onAdd={onAddMatch}
+        />
       )}
     </div>
   )

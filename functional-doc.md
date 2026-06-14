@@ -85,9 +85,10 @@ todos-contra-todos):
 - Resultados registrados en cada instancia del bracket
 
 ### Consideraciones
-- El seguimiento (visualización de bracket y posiciones en tiempo real) es opcional por torneo
+- El seguimiento en tiempo real (Realtime) de bracket y posiciones está **postergado** (decisión de
+  producto, 2026-06-13): no es el foco actual. Por ahora la vista pública se refresca en navegación /
+  recarga. Se retoma más adelante. Detalle en `spec-v2.md` → Feature 6.
 - El organizador puede preferir gestión manual en su cancha
-- Requiere Supabase Realtime para actualizaciones en vivo
 
 ### Refinamientos adicionales v2 (independientes del motor de resultados)
 - **Calendario público del organizador**: cada organizador tiene una URL estática por establecimiento
@@ -97,8 +98,12 @@ todos-contra-todos):
 - **Anti-duplicado de inscripción por email**: no se puede enviar una nueva solicitud a un torneo si
   el email de alguno de los dos jugadores ya tiene una solicitud **pendiente o aceptada** en ese
   mismo torneo. Las rechazadas no bloquean (pueden re-inscribirse).
+- **Refinamientos de UI/UX de zonas** (en lugar de Realtime): filtrado por zona funcional en la vista
+  pública (`/t/[id]/zones`); en el manager del organizador, las tarjetas de partido son compactas
+  (estilo marcador) y los partidos viven en una sección "Partidos" separada de parejas y posiciones,
+  para reducir el alto de pantalla.
 
-> Detalle de implementación de ambos en `spec-v2.md`.
+> Detalle de implementación en `spec-v2.md`.
 
 ---
 

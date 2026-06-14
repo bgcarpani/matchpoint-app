@@ -47,9 +47,14 @@ Slices completados (build + lint + e2e OK): **Fundación, Auth de Organizer, Can
 opcional por partido editables antes de publicar, vista pública en `/t/[id]/zones`).
 **v1 MVP funcionalmente completo.** Pendiente conocido: apertura automática de inscripción
 (`registration_opens_at`) requiere un job programado (Supabase cron) — hoy la apertura es manual.
-Próximo foco: v2 — **especificada en `spec-v2.md`** (calendario público + QR, anti-duplicado por
-email, resultados/scoring, standings de zona, formatos de partido, bracket y Realtime). El detalle
-granular por slice vive en la memoria del asistente.
+
+**v2 — slices 1 a 5 completados** (build + lint OK, commiteados): calendario público + QR,
+anti-duplicado por email, resultados/scoring, standings de zona + formatos de partido, y fase de
+llaves / bracket. **Feature 6 (Realtime / seguimiento en vivo) SUSPENDIDA** (2026-06-13): postergada
+por decisión de producto; en su lugar se priorizan refinamientos de UI/UX. Hechos: filtrado público
+de zonas funcional (`/t/[id]/zones`), rediseño del manager de zonas (tarjetas de partido compactas +
+sección "Partidos" separada de parejas/posiciones). Pendiente: botón "compartir campeón".
+Especificación en `spec-v2.md`; el detalle granular por slice vive en la memoria del asistente.
 
 ## Convenciones de implementación (v1)
 > No revertir sin discusión; reflejan decisiones ya validadas en código y verificadas e2e.

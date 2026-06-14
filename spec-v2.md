@@ -297,6 +297,15 @@ jugadores** coincide con el de algún jugador que ya integra una pareja de **ese
 
 ## Feature 6 — Seguimiento en vivo (Realtime)
 
+> **SUSPENDIDA (2026-06-13).** Por decisión del proyecto, Realtime queda postergado: no es el foco
+> actual. El flag `live_tracking_enabled` todavía NO está en ninguna migración (se agrega al
+> retomar). En su lugar se priorizan mejoras de UI/UX:
+> - ✅ **Filtrado público de zonas** — filtro real por zona (client-side) en `/t/[id]/zones`
+>   (`PublicZonesView`); reemplaza la navegación por anclas que sólo desplazaba.
+> - ✅ **Rediseño del manager de zonas** — tarjetas de partido compactas tipo marcador
+>   (`zone-match-card.tsx`) y partidos en una sección "Partidos" separada de parejas/posiciones.
+> - ⏳ **Botón "compartir campeón"** — pendiente.
+
 ### Reglas de negocio
 - La vista pública de zonas/standings/bracket se suscribe vía **Supabase Realtime** a cambios en
   `matches` → actualización en vivo de resultados, posiciones y avance del bracket.

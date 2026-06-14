@@ -2,7 +2,7 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import { getPublicTournament } from '@/lib/public/tournament'
 import { getPublicZones } from '@/lib/public/zones'
-import { ZoneStandings } from '@/components/zones/zone-standings'
+import { PublicZonesView } from '@/components/zones/public-zones-view'
 
 export const metadata: Metadata = { title: 'Zonas y partidos — Matchpoint' }
 
@@ -58,117 +58,7 @@ export default async function PublicZonesPage({
           </p>
         </div>
       ) : (
-        <>
-          {/* Navegación: clickear una zona para desplazarse hasta ella */}
-          {zones!.length > 1 && (
-            <nav className="sticky top-0 z-10 mt-8 -mx-1 flex flex-wrap gap-2 bg-background/80 px-1 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-              {zones!.map((zone) => (
-                <a
-                  key={zone.id}
-                  href={`#zone-${zone.id}`}
-                  className="rounded-full border border-border px-3 py-1 text-xs font-semibold text-muted-foreground transition hover:bg-accent hover:text-foreground"
-                >
-                  {zone.name}
-                </a>
-              ))}
-            </nav>
-          )}
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
-          {zones!.map((zone) => (
-            <article
-              key={zone.id}
-              id={`zone-${zone.id}`}
-              className="scroll-mt-20 rounded-2xl border border-border bg-card/40 p-6"
-            >
-              <div className="flex items-baseline justify-between gap-3">
-                <h2 className="font-display text-xl text-foreground">
-                  {zone.name}
-                </h2>
-                <span className="text-xs uppercase tracking-[0.14em] text-muted-foreground tnum">
-                  {zone.pairs.length} parejas
-                </span>
-              </div>
-
-              <ul className="mt-4 space-y-1.5">
-                {zone.pairs.map((p) => (
-                  <li
-                    key={p.pairId}
-                    className="rounded-lg border border-border bg-secondary px-3 py-2 text-sm text-foreground"
-                  >
-                    {p.label}
-                  </li>
-                ))}
-              </ul>
-
-              {zone.standings.length > 0 && (
-                <>
-                  <p className="mt-5 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                    Posiciones
-                  </p>
-                  <ZoneStandings
-                    rows={zone.standings}
-                    frozen={zone.standingsFrozen}
-                  />
-                </>
-              )}
-
-              <p className="mt-5 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                Partidos
-              </p>
-              <ul className="mt-2 space-y-2">
-                {zone.matches.length === 0 && (
-                  <li className="text-sm text-muted-foreground">
-                    Sin partidos.
-                  </li>
-                )}
-                {zone.matches.map((m, i) => {
-                  const prev = zone.matches[i - 1]
-                  const showRoundHeader =
-                    zone.matchFormat === 'winner_vs_loser' &&
-                    (!prev || prev.round !== m.round)
-                  return (
-                  <li
-                    key={m.id}
-                    className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-secondary px-3 py-2 text-sm"
-                  >
-                    {showRoundHeader && (
-                      <p className="w-full text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                        Ronda {m.round}
-                      </p>
-                    )}
-                    <span className="text-foreground">
-                      <span
-                        className={m.winner === 'team1' ? 'font-semibold' : ''}
-                      >
-                        {m.team1Label}
-                      </span>{' '}
-                      <span className="text-muted-foreground">vs</span>{' '}
-                      <span
-                        className={m.winner === 'team2' ? 'font-semibold' : ''}
-                      >
-                        {m.team2Label}
-                      </span>
-                    </span>
-                    <span className="flex items-center gap-2">
-                      {m.score && (
-                        <span className="rounded-md bg-card px-2 py-0.5 text-xs font-semibold text-foreground tnum ring-1 ring-border">
-                          {m.score}
-                        </span>
-                      )}
-                      {m.courtName && (
-                        <span className="rounded-md bg-volt/10 px-2 py-0.5 text-xs font-medium text-volt ring-1 ring-volt/30">
-                          {m.courtName}
-                        </span>
-                      )}
-                    </span>
-                  </li>
-                  )
-                })}
-              </ul>
-            </article>
-          ))}
-          </div>
-        </>
+        <PublicZonesView zones={zones!} />
       )}
     </main>
   )

@@ -202,6 +202,17 @@ matchpoint-app/
 - ✅ Consulta de estado por token único (sin autenticación)
 - ✅ Visualización de zonas y partidos (una vez publicados)
 
+## Características implementadas (v2)
+
+- ✅ Calendario público del organizador (URL estática por establecimiento + QR imprimible)
+- ✅ Anti-duplicado de inscripción por email dentro de un torneo
+- ✅ Resultados / scoring de partidos (configurable por torneo: games o best of 3 sets)
+- ✅ Standings / posiciones de zona + formatos de partido (round-robin / ganador-vs-perdedor / manual)
+- ✅ Fase de llaves / bracket (siembra configurable + byes automáticos + progresión)
+- ✅ Refinamientos de UI/UX en zonas: filtro por zona en la vista pública; tarjetas de partido
+  compactas y sección "Partidos" separada de parejas/posiciones en el manager del organizador
+- ⏸️ Seguimiento en vivo (Realtime): **postergado** por decisión de producto (ver `spec-v2.md` → Feature 6)
+
 ## Flujo de uso de la aplicación
 
 ```mermaid
@@ -292,7 +303,7 @@ Las transiciones son unidireccionales.
 
 ## Próximas versiones
 
-- **v2** (especificada en `spec-v2.md`): calendario público del organizador + QR, anti-duplicado de inscripción por email, resultados/scoring de partidos, standings de zona, bracket (eliminación directa) y seguimiento en vivo (Realtime)
+- **v2** (en curso, ver `spec-v2.md`): calendario público + QR, anti-duplicado por email, resultados/scoring, standings de zona, bracket — **implementados**. Seguimiento en vivo (Realtime) **postergado**.
 - **v3**: Notificaciones y transmisión en vivo
 - **v4**: Login y perfiles de jugador con estadísticas y rankings
 - **v5**: Gestión avanzada de disponibilidad de canchas y pagos
