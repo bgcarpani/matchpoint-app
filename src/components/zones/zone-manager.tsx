@@ -2,12 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import type {
-  CourtType,
-  MatchFormat,
-  MatchStatus,
-  ScoringMode,
-} from '@/lib/types/database'
+import type { MatchFormat, MatchStatus, ScoringMode } from '@/lib/types/database'
 import {
   suggestZoneCount,
   maxZoneCount,
@@ -20,6 +15,10 @@ import type { RecordResultInput } from '@/lib/domain/match'
 import { MatchResultForm } from '@/components/zones/match-result-form'
 import { ZoneStandings } from '@/components/zones/zone-standings'
 import {
+  MatchCourtSelect,
+  type CourtOption,
+} from '@/components/zones/match-court-select'
+import {
   generateZones,
   movePair,
   assignCourt,
@@ -29,12 +28,14 @@ import {
   freezeZoneStandings,
   freezeManualStandings,
   reopenZoneStandings,
-  regenerateZoneMatches,
+  setZonesFormat,
   generateNextRound,
   addManualMatch,
   removeManualMatch,
   type ActionResult,
 } from '@/app/tournaments/[id]/zones/actions'
+
+export type { CourtOption }
 
 export interface ZonePairRow {
   pairId: string
@@ -66,12 +67,6 @@ export interface ZoneView {
   matches: ZoneMatchRow[]
 }
 
-export interface CourtOption {
-  id: string
-  name: string
-  type: CourtType
-}
-
 export function ZoneManager({
   tournamentId,
   zones,
@@ -97,6 +92,7 @@ export function ZoneManager({
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
+  const [selectedZone, setSelectedZone] = useState<'all' | string>('all')
 
   function run(action: () => Promise<ActionResult>, confirmMsg?: string) {
     if (confirmMsg && !confirm(confirmMsg)) return
@@ -112,6 +108,18 @@ export function ZoneManager({
   }
 
   const hasZones = zones.length > 0
+
+  // El filtro puede quedar apuntando a una zona que ya no existe (tras regenerar).
+  const activeZone = zones.some((z) => z.id === selectedZone)
+    ? selectedZone
+    : 'all'
+  const visibleZones =
+    activeZone === 'all' ? zones : zones.filter((z) => z.id === activeZone)
+
+  // Formato global: el mismo para todas las zonas (lo representa la 1ª zona).
+  const currentFormat = zones[0]?.matchFormat ?? 'round_robin'
+  const allSupportWvl =
+    hasZones && zones.every((z) => supportsWinnerVsLoser(z.pairs.length))
 
   return (
     <div className="space-y-6">
@@ -166,13 +174,68 @@ export function ZoneManager({
           />
         )}
 
+        {/* Formato global (igual para todas las zonas) */}
+        {canManage && hasZones && (
+          <div className="mt-5 border-t border-border pt-5">
+            <label className="block max-w-sm">
+              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                Formato de los partidos
+              </span>
+              <select
+                value={currentFormat}
+                disabled={pending}
+                onChange={(e) => {
+                  const next = e.target.value as MatchFormat
+                  if (next !== currentFormat)
+                    run(
+                      () => setZonesFormat(tournamentId, next),
+                      '¿Cambiar el formato? Se reemplazan los partidos de todas las zonas.'
+                    )
+                }}
+                className="mt-1.5 w-full rounded-md border border-border bg-card px-2 py-1.5 text-sm text-foreground outline-none focus:border-volt/60 disabled:opacity-50"
+              >
+                <option value="round_robin">
+                  {MATCH_FORMAT_LABELS.round_robin}
+                </option>
+                <option value="winner_vs_loser" disabled={!allSupportWvl}>
+                  {MATCH_FORMAT_LABELS.winner_vs_loser}
+                  {allSupportWvl ? '' : ' (todas las zonas con 4 parejas)'}
+                </option>
+                <option value="manual">{MATCH_FORMAT_LABELS.manual}</option>
+              </select>
+            </label>
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              {MATCH_FORMAT_HINTS[currentFormat]}
+            </p>
+          </div>
+        )}
+
         {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
       </div>
+
+      {/* Chips de navegación entre zonas (la pantalla puede ser larga) */}
+      {hasZones && zones.length > 1 && (
+        <div className="sticky top-0 z-10 -mx-1 flex flex-wrap gap-2 bg-background/80 px-1 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <ZoneChip
+            label="Todas"
+            active={activeZone === 'all'}
+            onClick={() => setSelectedZone('all')}
+          />
+          {zones.map((z) => (
+            <ZoneChip
+              key={z.id}
+              label={z.name}
+              active={activeZone === z.id}
+              onClick={() => setSelectedZone(z.id)}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Zonas */}
       {hasZones && (
         <div className="grid gap-4 lg:grid-cols-2">
-          {zones.map((zone) => (
+          {visibleZones.map((zone) => (
             <ZoneCard
               key={zone.id}
               zone={zone}
@@ -185,12 +248,6 @@ export function ZoneManager({
               disabled={pending}
               onMovePair={(pairId, targetZoneId) =>
                 run(() => movePair(tournamentId, pairId, targetZoneId))
-              }
-              onChangeFormat={(format) =>
-                run(
-                  () => regenerateZoneMatches(tournamentId, zone.id, format),
-                  '¿Cambiar el formato? Se reemplazan los partidos de esta zona.'
-                )
               }
               onGenerateNextRound={() =>
                 run(() => generateNextRound(tournamentId, zone.id))
@@ -236,6 +293,30 @@ export function ZoneManager({
         </div>
       )}
     </div>
+  )
+}
+
+function ZoneChip({
+  label,
+  active,
+  onClick,
+}: {
+  label: string
+  active: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+        active
+          ? 'bg-volt text-volt-foreground'
+          : 'border border-border text-muted-foreground hover:bg-accent hover:text-foreground'
+      }`}
+    >
+      {label}
+    </button>
   )
 }
 
@@ -306,7 +387,6 @@ function ZoneCard({
   gamesPerSet,
   disabled,
   onMovePair,
-  onChangeFormat,
   onGenerateNextRound,
   onAddMatch,
   onRemoveMatch,
@@ -326,7 +406,6 @@ function ZoneCard({
   gamesPerSet: number
   disabled: boolean
   onMovePair: (pairId: string, targetZoneId: string) => void
-  onChangeFormat: (format: MatchFormat) => void
   onGenerateNextRound: () => void
   onAddMatch: (team1PairId: string, team2PairId: string) => void
   onRemoveMatch: (matchId: string) => void
@@ -370,44 +449,10 @@ function ZoneCard({
         </span>
       </div>
 
-      {/* Formato */}
-      {canManage ? (
-        <div className="mt-3">
-          <label className="block">
-            <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-              Formato
-            </span>
-            <select
-              value={zone.matchFormat}
-              disabled={disabled}
-              onChange={(e) => {
-                const next = e.target.value as MatchFormat
-                if (next !== zone.matchFormat) onChangeFormat(next)
-              }}
-              className="mt-1.5 w-full rounded-md border border-border bg-card px-2 py-1.5 text-sm text-foreground outline-none focus:border-volt/60 disabled:opacity-50"
-            >
-              <option value="round_robin">
-                {MATCH_FORMAT_LABELS.round_robin}
-              </option>
-              <option
-                value="winner_vs_loser"
-                disabled={!supportsWinnerVsLoser(zone.pairs.length)}
-              >
-                {MATCH_FORMAT_LABELS.winner_vs_loser}
-                {supportsWinnerVsLoser(zone.pairs.length) ? '' : ' (4 parejas)'}
-              </option>
-              <option value="manual">{MATCH_FORMAT_LABELS.manual}</option>
-            </select>
-          </label>
-          <p className="mt-1.5 text-xs text-muted-foreground">
-            {MATCH_FORMAT_HINTS[zone.matchFormat]}
-          </p>
-        </div>
-      ) : (
-        <p className="mt-2 text-xs text-muted-foreground">
-          Formato: {MATCH_FORMAT_LABELS[zone.matchFormat]}
-        </p>
-      )}
+      {/* Formato (se elige globalmente arriba; acá solo lectura) */}
+      <p className="mt-2 text-xs text-muted-foreground">
+        Formato: {MATCH_FORMAT_LABELS[zone.matchFormat]}
+      </p>
 
       {/* Parejas */}
       <ul className="mt-4 space-y-2">
@@ -493,27 +538,13 @@ function ZoneCard({
                     </button>
                   )}
                 </div>
-                <div className="mt-2">
-                  <select
-                    value={m.courtId ?? ''}
-                    disabled={disabled}
-                    onChange={(e) =>
-                      onAssignCourt(
-                        m.id,
-                        e.target.value === '' ? null : e.target.value
-                      )
-                    }
-                    className="w-full rounded-md border border-border bg-card px-2 py-1.5 text-xs text-foreground outline-none focus:border-volt/60 disabled:opacity-50"
-                    aria-label="Asignar cancha al partido"
-                  >
-                    <option value="">Sin cancha asignada</option>
-                    {courts.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name} ({c.type === 'indoor' ? 'Techada' : 'Aire libre'})
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <MatchCourtSelect
+                  courtId={m.courtId}
+                  courts={courts}
+                  finished={m.status === 'finished'}
+                  disabled={disabled}
+                  onAssign={(courtId) => onAssignCourt(m.id, courtId)}
+                />
 
                 {canRecordResults && (
                   <MatchResultForm

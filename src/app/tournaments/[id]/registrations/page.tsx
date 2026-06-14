@@ -66,9 +66,8 @@ export default async function RegistrationsPage({
   }))
 
   const accepted = rows.filter((r) => r.status === 'accepted').length
-  const requested = rows.filter(
-    (r) => r.status === 'accepted' || r.status === 'pending'
-  ).length
+  // El cupo de solicitudes cuenta solo pendientes: aceptar/rechazar libera lugar.
+  const requested = rows.filter((r) => r.status === 'pending').length
 
   return (
     <div className="relative z-[2] mx-auto w-full max-w-4xl px-5 py-8 sm:px-8">

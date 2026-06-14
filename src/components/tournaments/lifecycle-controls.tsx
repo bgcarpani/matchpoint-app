@@ -42,8 +42,11 @@ export function LifecycleControls({
   }
 
   function onDelete() {
-    if (!confirm('¿Eliminar este torneo? Esta acción no se puede deshacer.'))
-      return
+    const msg =
+      status === 'draft'
+        ? '¿Eliminar este torneo? Esta acción no se puede deshacer.'
+        : '¿Eliminar este torneo? Se borran también sus inscripciones, zonas, partidos y llaves. Esta acción no se puede deshacer.'
+    if (!confirm(msg)) return
     setError(null)
     startTransition(async () => {
       const res = await deleteTournament(tournamentId)
@@ -64,17 +67,15 @@ export function LifecycleControls({
           {pending ? 'Procesando…' : ADVANCE_ACTION_LABELS[status]}
         </Button>
       )}
-      {status === 'draft' && (
-        <Button
-          variant="destructive"
-          size="lg"
-          className="h-11"
-          disabled={pending}
-          onClick={onDelete}
-        >
-          Eliminar
-        </Button>
-      )}
+      <Button
+        variant="destructive"
+        size="lg"
+        className="h-11"
+        disabled={pending}
+        onClick={onDelete}
+      >
+        Eliminar
+      </Button>
       {error && (
         <p className="w-full text-sm text-destructive">{error}</p>
       )}

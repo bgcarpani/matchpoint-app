@@ -15,6 +15,7 @@ export interface PublicBracketMatch {
   slot: number
   team1Label: string | null
   team2Label: string | null
+  courtName: string | null
   score: string | null
   winner: 'team1' | 'team2' | null
 }
@@ -42,7 +43,7 @@ export async function getPublicBracket(
   const { data: matches } = await supabase
     .from('public_bracket_view')
     .select(
-      'id, bracket_round, bracket_slot, team1_pair_id, team2_pair_id, team1_score, team2_score, score_detail, winner_pair_id, status'
+      'id, bracket_round, bracket_slot, court_id, team1_pair_id, team2_pair_id, team1_score, team2_score, score_detail, winner_pair_id, status'
     )
     .eq('tournament_id', tournamentId)
     .order('bracket_round', { ascending: true })
@@ -50,17 +51,22 @@ export async function getPublicBracket(
 
   if (!matches || matches.length === 0) return null
 
-  const [{ data: tournament }, { data: pairView }] = await Promise.all([
-    supabase
-      .from('tournaments')
-      .select('scoring_mode')
-      .eq('id', tournamentId)
-      .maybeSingle(),
-    supabase
-      .from('public_pair_view')
-      .select('id, player1_name, player2_name')
-      .eq('tournament_id', tournamentId),
-  ])
+  const [{ data: tournament }, { data: pairView }, { data: courts }] =
+    await Promise.all([
+      supabase
+        .from('tournaments')
+        .select('scoring_mode')
+        .eq('id', tournamentId)
+        .maybeSingle(),
+      supabase
+        .from('public_pair_view')
+        .select('id, player1_name, player2_name')
+        .eq('tournament_id', tournamentId),
+      supabase
+        .from('public_court_view')
+        .select('id, name')
+        .eq('tournament_id', tournamentId),
+    ])
   const scoringMode: ScoringMode = tournament?.scoring_mode ?? 'games'
   const pairLabel = new Map(
     (pairView ?? []).map((p) => [
@@ -68,6 +74,7 @@ export async function getPublicBracket(
       pairLabelFrom(p.player1_name, p.player2_name),
     ])
   )
+  const courtName = new Map((courts ?? []).map((c) => [c.id, c.name]))
 
   const totalRounds = matches.reduce(
     (m, x) => Math.max(m, x.bracket_round ?? 0),
@@ -87,6 +94,7 @@ export async function getPublicBracket(
       team2Label: m.team2_pair_id
         ? (pairLabel.get(m.team2_pair_id) ?? '—')
         : null,
+      courtName: m.court_id ? (courtName.get(m.court_id) ?? null) : null,
       score:
         m.status === 'finished'
           ? formatResult(

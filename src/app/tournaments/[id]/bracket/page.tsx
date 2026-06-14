@@ -38,27 +38,33 @@ export default async function BracketPage({
   ])
   if (!tournament) notFound()
 
-  const [{ data: zones }, { data: bracketMatches }, { data: acceptedPairs }] =
-    await Promise.all([
-      supabase
-        .from('zones')
-        .select('id, standings_frozen')
-        .eq('tournament_id', id),
-      supabase
-        .from('matches')
-        .select(
-          'id, bracket_round, bracket_slot, team1_pair_id, team2_pair_id, status, team1_score, team2_score, score_detail, winner_pair_id'
-        )
-        .eq('tournament_id', id)
-        .eq('phase', 'bracket')
-        .order('bracket_round', { ascending: true })
-        .order('bracket_slot', { ascending: true }),
-      supabase
-        .from('pairs')
-        .select('id, player1_id, player2_id')
-        .eq('tournament_id', id)
-        .eq('status', 'accepted'),
-    ])
+  const [
+    { data: zones },
+    { data: bracketMatches },
+    { data: acceptedPairs },
+    { data: courts },
+  ] = await Promise.all([
+    supabase.from('zones').select('id, standings_frozen').eq('tournament_id', id),
+    supabase
+      .from('matches')
+      .select(
+        'id, bracket_round, bracket_slot, court_id, team1_pair_id, team2_pair_id, status, team1_score, team2_score, score_detail, winner_pair_id'
+      )
+      .eq('tournament_id', id)
+      .eq('phase', 'bracket')
+      .order('bracket_round', { ascending: true })
+      .order('bracket_slot', { ascending: true }),
+    supabase
+      .from('pairs')
+      .select('id, player1_id, player2_id')
+      .eq('tournament_id', id)
+      .eq('status', 'accepted'),
+    supabase
+      .from('courts')
+      .select('id, name, type')
+      .eq('organizer_id', user.id)
+      .order('name', { ascending: true }),
+  ])
 
   // Etiquetas de pareja (nombres cortos), igual que en la página de zonas.
   const accepted = acceptedPairs ?? []
@@ -80,6 +86,7 @@ export default async function BracketPage({
     id: m.id,
     round: m.bracket_round ?? 0,
     slot: m.bracket_slot ?? 0,
+    courtId: m.court_id,
     team1: teamOf(m.team1_pair_id),
     team2: teamOf(m.team2_pair_id),
     status: m.status,
@@ -156,6 +163,7 @@ export default async function BracketPage({
               tournamentId={tournament.id}
               matches={matches}
               participants={participants}
+              courts={courts ?? []}
               published={published}
               canGenerate={canGenerate}
               generateHint={generateHint}

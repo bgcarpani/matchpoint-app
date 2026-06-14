@@ -28,7 +28,7 @@ export interface PublicTournamentView {
   courts: { id: string; name: string; type: CourtType }[]
   /** parejas aceptadas (cupos confirmados ocupados) */
   accepted_pairs: number
-  /** solicitudes recibidas: pendientes + aceptadas (lista de espera ocupada) */
+  /** solicitudes pendientes (cola de cupo; aceptar/rechazar libera lugar) */
   requested_pairs: number
   /** true cuando hay zonas publicadas → habilita ver /t/[id]/zones */
   zones_published: boolean

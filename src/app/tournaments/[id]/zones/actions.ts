@@ -73,6 +73,37 @@ export async function regenerateZoneMatches(
 }
 
 /**
+ * Aplica un formato de partido a TODAS las zonas del torneo (el formato es
+ * global, no por zona). Recorre las zonas y regenera sus partidos vía
+ * generate_zone_matches (que valida no-publicado y reinicia posiciones). Si una
+ * zona no soporta el formato (p. ej. winner_vs_loser sin 4 parejas), la RPC
+ * devuelve error y se corta.
+ */
+export async function setZonesFormat(
+  tournamentId: string,
+  format: MatchFormat
+): Promise<ActionResult> {
+  const { supabase } = await requireUser()
+  const { data: zones } = await supabase
+    .from('zones')
+    .select('id')
+    .eq('tournament_id', tournamentId)
+  if (!zones || zones.length === 0)
+    return { error: 'No hay zonas para aplicar el formato.' }
+
+  for (const z of zones) {
+    const { error } = await supabase.rpc('generate_zone_matches', {
+      p_zone_id: z.id,
+      p_format: format,
+    })
+    if (error) return { error: zoneErrorLabel(error.message) }
+  }
+
+  revalidate(tournamentId)
+  return { ok: true }
+}
+
+/**
  * Genera la ronda 2 de una zona winner_vs_loser a partir de los resultados de la
  * ronda 1 (ganador-vs-ganador y perdedor-vs-perdedor). Requiere el torneo en
  * curso con los dos partidos de ronda 1 cargados.

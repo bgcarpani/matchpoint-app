@@ -93,6 +93,13 @@ export default async function PublicBracketPage({
                         )}
                       </div>
                       <TeamLine label={m.team2Label} isWinner={m.winner === 'team2'} />
+                      {m.courtName && (
+                        <p className="mt-2 text-center">
+                          <span className="rounded-md bg-volt/10 px-2 py-0.5 text-xs font-medium text-volt ring-1 ring-volt/30">
+                            {m.courtName}
+                          </span>
+                        </p>
+                      )}
                     </article>
                   ))}
                 </div>

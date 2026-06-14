@@ -58,11 +58,27 @@ export default async function PublicZonesPage({
           </p>
         </div>
       ) : (
-        <div className="mt-10 grid gap-4 md:grid-cols-2">
+        <>
+          {/* Navegación: clickear una zona para desplazarse hasta ella */}
+          {zones!.length > 1 && (
+            <nav className="sticky top-0 z-10 mt-8 -mx-1 flex flex-wrap gap-2 bg-background/80 px-1 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+              {zones!.map((zone) => (
+                <a
+                  key={zone.id}
+                  href={`#zone-${zone.id}`}
+                  className="rounded-full border border-border px-3 py-1 text-xs font-semibold text-muted-foreground transition hover:bg-accent hover:text-foreground"
+                >
+                  {zone.name}
+                </a>
+              ))}
+            </nav>
+          )}
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
           {zones!.map((zone) => (
             <article
               key={zone.id}
-              className="rounded-2xl border border-border bg-card/40 p-6"
+              id={`zone-${zone.id}`}
+              className="scroll-mt-20 rounded-2xl border border-border bg-card/40 p-6"
             >
               <div className="flex items-baseline justify-between gap-3">
                 <h2 className="font-display text-xl text-foreground">
@@ -151,7 +167,8 @@ export default async function PublicZonesPage({
               </ul>
             </article>
           ))}
-        </div>
+          </div>
+        </>
       )}
     </main>
   )

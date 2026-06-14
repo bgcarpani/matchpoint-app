@@ -7,11 +7,16 @@ import type { RecordResultInput } from '@/lib/domain/match'
 import { bracketRoundLabel } from '@/lib/domain/bracket'
 import { MatchResultForm } from '@/components/zones/match-result-form'
 import {
+  MatchCourtSelect,
+  type CourtOption,
+} from '@/components/zones/match-court-select'
+import {
   generateBracket,
   recordBracketResult,
   clearBracketResult,
   publishBracket,
   swapBracketParticipants,
+  assignBracketCourt,
   type ActionResult,
 } from '@/app/tournaments/[id]/bracket/actions'
 
@@ -19,6 +24,7 @@ export interface BracketMatchView {
   id: string
   round: number
   slot: number
+  courtId: string | null
   team1: { pairId: string; label: string } | null
   team2: { pairId: string; label: string } | null
   status: MatchStatus
@@ -32,6 +38,7 @@ export function BracketBoard({
   tournamentId,
   matches,
   participants,
+  courts,
   published,
   canGenerate,
   generateHint,
@@ -43,6 +50,7 @@ export function BracketBoard({
   tournamentId: string
   matches: BracketMatchView[]
   participants: { pairId: string; label: string }[]
+  courts: CourtOption[]
   published: boolean
   canGenerate: boolean
   generateHint: string | null
@@ -218,36 +226,51 @@ export function BracketBoard({
                     </div>
 
                     {m.team1 && m.team2 ? (
-                      canRecordResults ? (
-                        <MatchResultForm
-                          mode={scoringMode}
-                          gamesPerSet={gamesPerSet}
-                          team1Label={m.team1.label}
-                          team2Label={m.team2.label}
-                          result={{
-                            status: m.status,
-                            team1Score: m.team1Score,
-                            team2Score: m.team2Score,
-                            scoreDetail: m.scoreDetail,
-                            winner: m.winner,
-                          }}
-                          disabled={pending}
-                          onSubmit={(input: RecordResultInput) =>
-                            run(() =>
-                              recordBracketResult(tournamentId, m.id, input)
-                            )
-                          }
-                          onClear={() =>
-                            run(() => clearBracketResult(tournamentId, m.id))
-                          }
-                        />
-                      ) : (
-                        m.status === 'finished' && (
-                          <p className="mt-2 text-xs text-muted-foreground">
-                            Resultado cargado.
-                          </p>
-                        )
-                      )
+                      <>
+                        {canRecordResults ? (
+                          <MatchResultForm
+                            mode={scoringMode}
+                            gamesPerSet={gamesPerSet}
+                            team1Label={m.team1.label}
+                            team2Label={m.team2.label}
+                            result={{
+                              status: m.status,
+                              team1Score: m.team1Score,
+                              team2Score: m.team2Score,
+                              scoreDetail: m.scoreDetail,
+                              winner: m.winner,
+                            }}
+                            disabled={pending}
+                            onSubmit={(input: RecordResultInput) =>
+                              run(() =>
+                                recordBracketResult(tournamentId, m.id, input)
+                              )
+                            }
+                            onClear={() =>
+                              run(() => clearBracketResult(tournamentId, m.id))
+                            }
+                          />
+                        ) : (
+                          m.status === 'finished' && (
+                            <p className="mt-2 text-xs text-muted-foreground">
+                              Resultado cargado.
+                            </p>
+                          )
+                        )}
+                        {canRecordResults && (
+                          <MatchCourtSelect
+                            courtId={m.courtId}
+                            courts={courts}
+                            finished={m.status === 'finished'}
+                            disabled={pending}
+                            onAssign={(courtId) =>
+                              run(() =>
+                                assignBracketCourt(tournamentId, m.id, courtId)
+                              )
+                            }
+                          />
+                        )}
+                      </>
                     ) : (
                       <p className="mt-2 text-xs text-muted-foreground">
                         A definir.

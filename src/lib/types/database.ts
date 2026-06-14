@@ -307,6 +307,7 @@ export interface Database {
           status: MatchStatus
           next_match_id: string | null
           next_slot: TeamSlot | null
+          court_id: string | null
         }
         Relationships: []
       }
@@ -382,6 +383,10 @@ export interface Database {
       }
       remove_pair: {
         Args: { p_pair_id: string }
+        Returns: undefined
+      }
+      delete_tournament: {
+        Args: { p_tournament_id: string }
         Returns: undefined
       }
     }

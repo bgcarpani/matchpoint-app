@@ -49,7 +49,7 @@ export default async function TournamentDetailPage({
         .from('pairs')
         .select('id', { count: 'exact', head: true })
         .eq('tournament_id', t.id)
-        .in('status', ['pending', 'accepted']),
+        .eq('status', 'pending'),
       supabase
         .from('zones')
         .select('id', { count: 'exact', head: true })

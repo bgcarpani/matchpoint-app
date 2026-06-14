@@ -132,17 +132,12 @@ export async function advanceTournamentStatus(
 
 export async function deleteTournament(id: string): Promise<ActionResult> {
   const { supabase } = await requireUser()
-  const { data: current, error: readErr } = await supabase
-    .from('tournaments')
-    .select('status')
-    .eq('id', id)
-    .single()
 
-  if (readErr || !current) return { error: 'Torneo no encontrado.' }
-  if (current.status !== 'draft')
-    return { error: 'Solo se puede eliminar un torneo en borrador.' }
-
-  const { error } = await supabase.from('tournaments').delete().eq('id', id)
+  // delete_tournament (RPC SECURITY DEFINER) valida propiedad, borra el torneo
+  // en cualquier estado (cascade a pairs/zones/matches) y limpia los players.
+  const { error } = await supabase.rpc('delete_tournament', {
+    p_tournament_id: id,
+  })
   if (error) return { error: 'No se pudo eliminar el torneo.' }
 
   revalidatePath('/dashboard')

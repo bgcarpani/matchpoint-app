@@ -116,6 +116,46 @@ export async function swapBracketParticipants(
   return { ok: true }
 }
 
+/**
+ * Asigna (o quita) la cancha de un partido de bracket. Valida que la cancha sea
+ * del organizador y que el partido sea de bracket de este torneo. Editable en
+ * cualquier momento (la UI bloquea el cambio cuando hay resultado, salvo Editar).
+ */
+export async function assignBracketCourt(
+  tournamentId: string,
+  matchId: string,
+  courtId: string | null
+): Promise<ActionResult> {
+  const { supabase, user } = await requireUser()
+
+  if (courtId) {
+    const { data: court } = await supabase
+      .from('courts')
+      .select('id')
+      .eq('id', courtId)
+      .eq('organizer_id', user.id)
+      .maybeSingle()
+    if (!court) return { error: 'La cancha no es de tu establecimiento.' }
+  }
+
+  const { data: match } = await supabase
+    .from('matches')
+    .select('id, tournament_id, phase')
+    .eq('id', matchId)
+    .single()
+  if (!match || match.tournament_id !== tournamentId || match.phase !== 'bracket')
+    return { error: 'No se encontró el partido.' }
+
+  const { error } = await supabase
+    .from('matches')
+    .update({ court_id: courtId })
+    .eq('id', matchId)
+  if (error) return { error: 'No se pudo asignar la cancha.' }
+
+  revalidate(tournamentId)
+  return { ok: true }
+}
+
 /** Publica las llaves: las hace visibles públicamente. */
 export async function publishBracket(
   tournamentId: string
