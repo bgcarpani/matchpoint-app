@@ -65,6 +65,7 @@ export function ShareRegistrationLink({
         <ShareButtons
           url={url}
           text={`Inscribite al torneo ${tournamentName} en Matchpoint:`}
+          storyUrl={`${url}/og/story`}
         />
       </div>
 

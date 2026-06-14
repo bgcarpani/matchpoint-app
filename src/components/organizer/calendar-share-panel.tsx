@@ -95,6 +95,7 @@ export function CalendarSharePanel({
                   ? `Mirá los torneos de ${establishmentName} en Matchpoint:`
                   : 'Mirá los torneos en Matchpoint:'
               }
+              storyUrl={`${url}/og/story`}
             />
           </div>
         </div>

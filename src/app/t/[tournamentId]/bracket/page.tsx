@@ -76,6 +76,7 @@ export default async function PublicBracketPage({
                   text={`🏆 ${bracket!.champion} se consagró campeón${
                     tournament ? ` en ${tournament.name}` : ''
                   }. Mirá las llaves en Matchpoint:`}
+                  storyUrl={`${baseUrl}/t/${tournamentId}/bracket/og/story`}
                 />
               </div>
             </div>
