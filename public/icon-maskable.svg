@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Matchpoint">
+  <!-- Fondo full-bleed sólido y contenido dentro de la safe-zone (~66%) para máscaras. -->
+  <rect width="512" height="512" fill="#0B1220"/>
+  <g transform="translate(256 256) scale(0.66) translate(-256 -256)">
+    <polyline points="150,360 150,150 256,296 362,150 362,360" fill="none" stroke="#3B82F6" stroke-width="48" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="256" cy="388" r="26" fill="#3B82F6"/>
+  </g>
+</svg>

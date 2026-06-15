@@ -16,7 +16,8 @@ export const config = {
      * - api (las route handlers validan auth por su cuenta vía RLS)
      * - _next/static, _next/image (assets)
      * - favicon.ico y archivos estáticos comunes
+     * - sw.js y manifest.webmanifest (assets de la PWA, sin lógica de auth)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|sw.js|manifest.webmanifest|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
   ],
 }

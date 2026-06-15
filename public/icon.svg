@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Matchpoint">
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="36%" r="62%">
+      <stop offset="0%" stop-color="#1e3a8a"/>
+      <stop offset="100%" stop-color="#0B1220"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#glow)"/>
+  <polyline points="150,360 150,150 256,296 362,150 362,360" fill="none" stroke="#3B82F6" stroke-width="48" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="256" cy="388" r="26" fill="#3B82F6"/>
+</svg>

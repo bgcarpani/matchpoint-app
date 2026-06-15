@@ -17,6 +17,7 @@ Las primeras versiones son organizer-first.
 - Next.js 16 (App Router) + TypeScript
 - Tailwind CSS + shadcn/ui
 - Supabase (PostgreSQL + Auth)
+- PWA (instalable + offline) vía Serwist
 - Deploy: Cloudflare Pages
 
 > Regla: cada tecnología/herramienta se instala solo cuando es necesaria, no antes.
@@ -75,6 +76,22 @@ Especificación completa en `spec-v3.md`.
 - `cookies()` es async; los `params` de página/route son `Promise` → siempre `await`.
 - La protección de rutas del proxy es **optimista**: cada página del área organizer revalida con
   `supabase.auth.getUser()` y redirige a `/login` por su cuenta.
+
+### PWA (instalable + offline)
+La app es una **PWA**: mismo deploy sirve web normal y "app instalada" (no hay build separado;
+instalar es opcional por usuario, el acceso web queda intacto). Decisión y roadmap en el plan
+`ayudame-a-refinar-y-velvety-star.md` (resumen: nativo pospuesto; compartir a IG Stories pulido
+requiere app nativa y ni así da link clickeable, por eso se mantiene el flujo actual de share).
+- **Manifest**: `src/app/manifest.ts` (metadata route → `/manifest.webmanifest`, auto-linkeado).
+- **Íconos**: `public/icon.svg` (any) + `public/icon-maskable.svg` (safe-zone); apple-touch-icon
+  se genera con `next/og` en `src/app/apple-icon.tsx` (iOS no lee el manifest y exige PNG).
+- **Service worker**: Serwist. `src/app/sw.ts` (fuente) → `public/sw.js` (generado, gitignored).
+  Config en `next.config.ts` (`withSerwist`, `disable` en dev). El área autenticada
+  (`/dashboard`, `/courts`, `/tournaments/*`) es **NetworkOnly** (no se cachea PII); las vistas
+  públicas usan `defaultCache` → offline una vez visitadas.
+- **Serwist usa webpack, no Turbopack** → `npm run build` corre con `--webpack`. El SW se desactiva
+  en dev, así que `npm run dev` sigue con Turbopack; para probar offline: `npm run build && npm run start`.
+- **Pendiente (Fase 2)**: push notifications (Web Push / VAPID) sobre la PWA.
 
 ### Supabase — clientes y claves
 - `src/lib/supabase/{client,server,admin}.ts`: navegador (publishable) / SSR con cookies (async) /

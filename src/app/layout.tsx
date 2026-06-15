@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Archivo } from "next/font/google";
 import "./globals.css";
 
@@ -14,6 +14,16 @@ export const metadata: Metadata = {
   title: "Matchpoint — Torneos de pádel",
   description:
     "Gestión y descubrimiento de torneos de pádel para la comunidad: inscribí tu pareja y seguí las zonas.",
+  applicationName: "Matchpoint",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Matchpoint",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0B1220",
 };
 
 export default function RootLayout({
