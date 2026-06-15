@@ -30,11 +30,11 @@ export async function GET(
       ? `${count} ${count === 1 ? 'torneo vigente' : 'torneos vigentes'}`
       : 'Próximamente, nuevos torneos'
 
-  return await buildStory({
+  return buildStory({
     eyebrow: 'Calendario',
     title: organizer.establishment_name,
     subtitle,
-    qrValue: `${baseUrl}/o/${slug}`,
-    caption: 'Escaneá para ver los torneos',
+    url: `${baseUrl}/o/${slug}`,
+    caption: 'Mirá los torneos',
   })
 }

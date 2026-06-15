@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
+import { getBaseUrl } from '@/lib/url'
+import { categoryLabel, GENDER_LABELS } from '@/lib/domain/tournament'
 import { OrganizerHeader } from '@/components/organizer/organizer-header'
 import {
   BracketBoard,
@@ -22,7 +24,7 @@ export default async function BracketPage({
   } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const [{ data: organizer }, { data: tournament }] = await Promise.all([
+  const [{ data: organizer }, { data: tournament }, baseUrl] = await Promise.all([
     supabase
       .from('organizers')
       .select('establishment_name')
@@ -31,10 +33,11 @@ export default async function BracketPage({
     supabase
       .from('tournaments')
       .select(
-        'id, name, status, scoring_mode, games_per_set, qualifiers_per_zone, bracket_published'
+        'id, name, status, scoring_mode, games_per_set, qualifiers_per_zone, bracket_published, category_type, category_value, gender'
       )
       .eq('id', id)
       .single(),
+    getBaseUrl(),
   ])
   if (!tournament) notFound()
 
@@ -171,6 +174,13 @@ export default async function BracketPage({
               canEditSeeds={canEditSeeds}
               scoringMode={tournament.scoring_mode}
               gamesPerSet={tournament.games_per_set}
+              tournamentName={tournament.name}
+              shareUrl={`${baseUrl}/t/${tournament.id}`}
+              storyUrl={`${baseUrl}/t/${tournament.id}/bracket/og/story`}
+              categoryGender={`${categoryLabel(
+                tournament.category_type,
+                tournament.category_value
+              )} ${GENDER_LABELS[tournament.gender]}`}
             />
           )}
         </div>

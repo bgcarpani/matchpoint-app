@@ -2,8 +2,7 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import { getPublicTournament } from '@/lib/public/tournament'
 import { getPublicBracket } from '@/lib/public/bracket'
-import { getBaseUrl } from '@/lib/url'
-import { ShareButtons } from '@/components/share/share-buttons'
+import { PublicBracketView } from '@/components/bracket/public-bracket-view'
 
 export const metadata: Metadata = { title: 'Llaves — Matchpoint' }
 
@@ -13,14 +12,12 @@ export default async function PublicBracketPage({
   params: Promise<{ tournamentId: string }>
 }) {
   const { tournamentId } = await params
-  const [tournament, bracket, baseUrl] = await Promise.all([
+  const [tournament, bracket] = await Promise.all([
     getPublicTournament(tournamentId),
     getPublicBracket(tournamentId),
-    getBaseUrl(),
   ])
 
   const available = bracket && bracket.rounds.length > 0
-  const tournamentUrl = `${baseUrl}/t/${tournamentId}`
 
   return (
     <main className="relative z-[2] mx-auto w-full max-w-5xl px-5 pb-24 sm:px-8">
@@ -70,79 +67,12 @@ export default async function PublicBracketPage({
               <p className="font-display mt-1 text-3xl text-foreground">
                 {bracket!.champion}
               </p>
-              <div className="mt-4 flex justify-center">
-                <ShareButtons
-                  url={tournamentUrl}
-                  text={`🏆 ${bracket!.champion} se consagró campeón${
-                    tournament ? ` en ${tournament.name}` : ''
-                  }. Mirá las llaves en Matchpoint:`}
-                  storyUrl={`${baseUrl}/t/${tournamentId}/bracket/og/story`}
-                />
-              </div>
             </div>
           )}
 
-          <div className="mt-10 space-y-8">
-            {bracket!.rounds.map((round) => (
-              <section key={round.round}>
-                <h2 className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                  {round.label}
-                </h2>
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  {round.matches.map((m) => (
-                    <article
-                      key={m.id}
-                      className="rounded-xl border border-border bg-card/40 p-4 text-sm"
-                    >
-                      <TeamLine label={m.team1Label} isWinner={m.winner === 'team1'} />
-                      <div className="my-1 flex items-center justify-center gap-2">
-                        <span className="text-[0.7rem] uppercase tracking-[0.14em] text-muted-foreground">
-                          vs
-                        </span>
-                        {m.score && (
-                          <span className="rounded-md bg-card px-2 py-0.5 text-xs font-semibold text-foreground tnum ring-1 ring-border">
-                            {m.score}
-                          </span>
-                        )}
-                      </div>
-                      <TeamLine label={m.team2Label} isWinner={m.winner === 'team2'} />
-                      {m.courtName && (
-                        <p className="mt-2 text-center">
-                          <span className="rounded-md bg-volt/10 px-2 py-0.5 text-xs font-medium text-volt ring-1 ring-volt/30">
-                            {m.courtName}
-                          </span>
-                        </p>
-                      )}
-                    </article>
-                  ))}
-                </div>
-              </section>
-            ))}
-          </div>
+          <PublicBracketView rounds={bracket!.rounds} />
         </>
       )}
     </main>
-  )
-}
-
-function TeamLine({
-  label,
-  isWinner,
-}: {
-  label: string | null
-  isWinner: boolean
-}) {
-  return (
-    <p
-      className={
-        label
-          ? isWinner
-            ? 'font-semibold text-foreground'
-            : 'text-foreground'
-          : 'italic text-muted-foreground'
-      }
-    >
-      {label ?? 'A definir'}
-    </p>
   )
 }

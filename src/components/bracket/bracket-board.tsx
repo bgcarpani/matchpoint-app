@@ -5,11 +5,9 @@ import { useRouter } from 'next/navigation'
 import type { MatchStatus, ScoringMode } from '@/lib/types/database'
 import type { RecordResultInput } from '@/lib/domain/match'
 import { bracketRoundLabel } from '@/lib/domain/bracket'
-import { MatchResultForm } from '@/components/zones/match-result-form'
-import {
-  MatchCourtSelect,
-  type CourtOption,
-} from '@/components/zones/match-court-select'
+import { type CourtOption } from '@/components/zones/match-court-select'
+import { BracketMatchCard } from '@/components/bracket/bracket-match-card'
+import { ShareButtons } from '@/components/share/share-buttons'
 import {
   generateBracket,
   recordBracketResult,
@@ -46,6 +44,10 @@ export function BracketBoard({
   canEditSeeds,
   scoringMode,
   gamesPerSet,
+  tournamentName,
+  shareUrl,
+  storyUrl,
+  categoryGender,
 }: {
   tournamentId: string
   matches: BracketMatchView[]
@@ -58,12 +60,21 @@ export function BracketBoard({
   canEditSeeds: boolean
   scoringMode: ScoringMode
   gamesPerSet: number
+  /** Nombre del torneo (para el texto de compartir campeón). */
+  tournamentName: string
+  /** URL pública del torneo (`/t/<id>`) ya resuelta server-side. */
+  shareUrl: string
+  /** Ruta `/og/story` para la historia de IG; sólo con llaves publicadas. */
+  storyUrl: string | null
+  /** "6ta Masculino" / "Suma 14 Mixto": categoría + género destacados. */
+  categoryGender: string
 }) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [swapA, setSwapA] = useState('')
   const [swapB, setSwapB] = useState('')
+  const [selectedRound, setSelectedRound] = useState<'all' | number>('all')
 
   const hasBracket = matches.length > 0
   const totalRounds = useMemo(
@@ -85,6 +96,15 @@ export function BracketBoard({
         matches: ms.sort((a, b) => a.slot - b.slot),
       }))
   }, [matches])
+
+  // El filtro puede quedar apuntando a una ronda inexistente (tras regenerar).
+  const activeRound = rounds.some((r) => r.round === selectedRound)
+    ? selectedRound
+    : 'all'
+  const visibleRounds =
+    activeRound === 'all'
+      ? rounds
+      : rounds.filter((r) => r.round === activeRound)
 
   // Campeón: ganador de la final (último round, 1 partido) si terminó.
   const champion = useMemo(() => {
@@ -162,9 +182,16 @@ export function BracketBoard({
       {champion && (
         <div className="mt-5 rounded-2xl border border-volt/40 bg-volt/5 p-5 text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-            Campeón
+            Campeón {categoryGender}
           </p>
           <p className="font-display mt-1 text-2xl text-foreground">{champion}</p>
+          <div className="mt-4 flex flex-wrap justify-center gap-2">
+            <ShareButtons
+              url={shareUrl}
+              text={`🏆 Campeón ${categoryGender} — ${champion} se consagró en ${tournamentName}. Mirá las llaves en Matchpoint:`}
+              storyUrl={published ? (storyUrl ?? undefined) : undefined}
+            />
+          </div>
         </div>
       )}
 
@@ -197,86 +224,53 @@ export function BracketBoard({
         </div>
       )}
 
+      {/* Chips de navegación entre rondas (la pantalla puede ser larga) */}
+      {hasBracket && rounds.length > 1 && (
+        <div className="sticky top-0 z-10 mt-6 -mx-1 flex flex-wrap gap-2 bg-background/80 px-1 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <RoundChip
+            label="Todas"
+            active={activeRound === 'all'}
+            onClick={() => setSelectedRound('all')}
+          />
+          {rounds.map((r) => (
+            <RoundChip
+              key={r.round}
+              label={bracketRoundLabel(r.round, totalRounds)}
+              active={activeRound === r.round}
+              onClick={() => setSelectedRound(r.round)}
+            />
+          ))}
+        </div>
+      )}
+
       {/* Cuadro */}
       {hasBracket && (
         <div className="mt-6 space-y-6">
-          {rounds.map(({ round, matches: ms }) => (
+          {visibleRounds.map(({ round, matches: ms }) => (
             <section key={round}>
               <h2 className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                 {bracketRoundLabel(round, totalRounds)}
               </h2>
               <div className="mt-2 grid gap-3 sm:grid-cols-2">
                 {ms.map((m) => (
-                  <article
+                  <BracketMatchCard
                     key={m.id}
-                    className="rounded-xl border border-border bg-card/40 p-4"
-                  >
-                    <div className="text-sm">
-                      <TeamLine
-                        label={m.team1?.label ?? null}
-                        isWinner={m.winner === 'team1'}
-                      />
-                      <p className="my-0.5 text-center text-[0.7rem] uppercase tracking-[0.14em] text-muted-foreground">
-                        vs
-                      </p>
-                      <TeamLine
-                        label={m.team2?.label ?? null}
-                        isWinner={m.winner === 'team2'}
-                      />
-                    </div>
-
-                    {m.team1 && m.team2 ? (
-                      <>
-                        {canRecordResults ? (
-                          <MatchResultForm
-                            mode={scoringMode}
-                            gamesPerSet={gamesPerSet}
-                            team1Label={m.team1.label}
-                            team2Label={m.team2.label}
-                            result={{
-                              status: m.status,
-                              team1Score: m.team1Score,
-                              team2Score: m.team2Score,
-                              scoreDetail: m.scoreDetail,
-                              winner: m.winner,
-                            }}
-                            disabled={pending}
-                            onSubmit={(input: RecordResultInput) =>
-                              run(() =>
-                                recordBracketResult(tournamentId, m.id, input)
-                              )
-                            }
-                            onClear={() =>
-                              run(() => clearBracketResult(tournamentId, m.id))
-                            }
-                          />
-                        ) : (
-                          m.status === 'finished' && (
-                            <p className="mt-2 text-xs text-muted-foreground">
-                              Resultado cargado.
-                            </p>
-                          )
-                        )}
-                        {canRecordResults && (
-                          <MatchCourtSelect
-                            courtId={m.courtId}
-                            courts={courts}
-                            finished={m.status === 'finished'}
-                            disabled={pending}
-                            onAssign={(courtId) =>
-                              run(() =>
-                                assignBracketCourt(tournamentId, m.id, courtId)
-                              )
-                            }
-                          />
-                        )}
-                      </>
-                    ) : (
-                      <p className="mt-2 text-xs text-muted-foreground">
-                        A definir.
-                      </p>
-                    )}
-                  </article>
+                    match={m}
+                    courts={courts}
+                    scoringMode={scoringMode}
+                    gamesPerSet={gamesPerSet}
+                    canRecordResults={canRecordResults}
+                    disabled={pending}
+                    onAssignCourt={(courtId) =>
+                      run(() => assignBracketCourt(tournamentId, m.id, courtId))
+                    }
+                    onRecordResult={(input: RecordResultInput) =>
+                      run(() => recordBracketResult(tournamentId, m.id, input))
+                    }
+                    onClearResult={() =>
+                      run(() => clearBracketResult(tournamentId, m.id))
+                    }
+                  />
                 ))}
               </div>
             </section>
@@ -287,25 +281,27 @@ export function BracketBoard({
   )
 }
 
-function TeamLine({
+function RoundChip({
   label,
-  isWinner,
+  active,
+  onClick,
 }: {
-  label: string | null
-  isWinner: boolean
+  label: string
+  active: boolean
+  onClick: () => void
 }) {
   return (
-    <p
-      className={
-        label
-          ? isWinner
-            ? 'font-semibold text-foreground'
-            : 'text-foreground'
-          : 'text-muted-foreground italic'
-      }
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+        active
+          ? 'bg-volt text-volt-foreground'
+          : 'border border-border text-muted-foreground hover:bg-accent hover:text-foreground'
+      }`}
     >
-      {label ?? 'A definir'}
-    </p>
+      {label}
+    </button>
   )
 }
 

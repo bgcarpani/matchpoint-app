@@ -1,6 +1,6 @@
 /**
  * Imagen de historia (Instagram) del torneo — 1080×1920.
- * Pública: lee la vista segura del torneo y arma un QR al link de inscripción.
+ * Pública: lee la vista segura del torneo y muestra el link de inscripción como CTA.
  */
 import { getPublicTournament } from '@/lib/public/tournament'
 import { getBaseUrl } from '@/lib/url'
@@ -27,11 +27,11 @@ export async function GET(
     .filter(Boolean)
     .join('\n')
 
-  return await buildStory({
+  return buildStory({
     eyebrow: 'Torneo',
     title: tournament.name,
     subtitle,
-    qrValue: `${baseUrl}/t/${tournamentId}`,
-    caption: 'Escaneá para inscribirte',
+    url: `${baseUrl}/t/${tournamentId}`,
+    caption: 'Inscribite online',
   })
 }

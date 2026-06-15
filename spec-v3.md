@@ -72,7 +72,8 @@ Se separan dos cosas distintas que conviene no confundir:
 - **`resend`** — SDK de envío; funciona sobre `fetch`, compatible con edge/Cloudflare.
 - **`next/og` (`ImageResponse`)** — generación de la imagen de Instagram; ya incluido en Next 16, sin
   dependencia extra.
-- Reutilizar **`qrcode.react`** (instalado en v2) para incrustar el QR dentro de la imagen de historia.
+- **`qrcode.react`** (instalado en v2) sigue usándose para el QR en pantalla del calendario, **no** en
+  la imagen de historia (ver Slice 4: la historia se ve desde el mismo celular, el QR no aplica).
 - **Variables de entorno nuevas** (`.env.local` + `.env.example`):
   - `RESEND_API_KEY` — API key de Resend (server-only).
   - `EMAIL_FROM` — remitente, ej. `Matchpoint <noreply@tudominio>`.
@@ -207,23 +208,33 @@ admite compartir por URL desde la web; una historia necesita una imagen, así qu
 
 ### Implementación
 - **Imágenes generadas** con `ImageResponse` de `next/og`, formato **1080×1920**, branding (azul noche
-  + volt), con nombre del torneo / campeón y **QR** al link público. Route handlers nuevos:
+  + volt), con nombre del torneo / campeón y la **URL pública impresa como CTA legible** (sin QR; ver
+  decisión abajo). Composición con **safe zones**: contenido en la franja superior/central, tercio
+  inferior libre para que la persona ubique ahí el sticker de enlace. Route handlers:
   - `src/app/t/[tournamentId]/og/story/route.tsx` — tarjeta del torneo.
   - `src/app/t/[tournamentId]/bracket/og/story/route.tsx` — tarjeta del campeón.
   - `src/app/o/[slug]/og/story/route.tsx` — tarjeta del calendario.
 - **Botón "Compartir en historia"** en `share-buttons.tsx`:
+  - **Copia la URL al portapapeles** (`navigator.clipboard`) para que agregar el link sea un solo pegar.
   - Hace `fetch` de la imagen como `Blob`/`File` y llama `navigator.share({ files: [file] })` → en
     mobile el usuario elige Instagram → "Agregar a tu historia".
-  - **Fallback** (desktop / Web Share Level 2 no soportado): descarga la imagen + abre `instagram.com`
-    con un texto guía ("descargá la imagen y subila a tu historia").
+  - **Fallback** (desktop / Web Share Level 2 no soportado): descarga la imagen + abre `instagram.com`.
+  - Muestra una **guía inline**: "subí la historia → sticker de Enlace → pegar".
 
-> **Limitación conocida:** compartir solo texto/URL a Instagram **no** llega a una historia; por eso se
-> genera imagen. El soporte de `navigator.share` con archivos es principalmente mobile.
+> **Decisión (2026-06-15): sin QR + link sticker manual.** El objetivo ideal era una historia
+> *clickeable* generada/subida por nosotros, pero **no es posible desde web**: agregar un link sticker
+> requiere la app nativa de Instagram + Sharing SDK (pasteboard iOS / `instagram-stories://share` con
+> Facebook App ID). El navegador solo puede compartir la **imagen**. Además, el QR no aplica: la historia
+> se ve desde el mismo celular que la comparte, así que es inescaneable. Por eso: se elimina el QR, se
+> imprime la URL como CTA, se copia el link al portapapeles y se guía a pegarlo en el sticker de Enlace
+> (clickeable, disponible hoy para todas las cuentas). El soporte de `navigator.share` con archivos es
+> principalmente mobile.
 
 ### Criterios de aceptación
-- [ ] Cada route `/og/story` devuelve una imagen 1080×1920 con el branding y el QR correctos.
-- [ ] En mobile compatible, el botón abre el share sheet con la imagen lista para historia.
-- [ ] En desktop / no soportado, el botón descarga la imagen y abre Instagram con la guía.
+- [ ] Cada route `/og/story` devuelve una imagen 1080×1920 con branding, URL legible como CTA y
+      contenido dentro de las safe zones (sin QR).
+- [ ] En mobile compatible, el botón copia el link, abre el share sheet con la imagen y muestra la guía.
+- [ ] En desktop / no soportado, el botón descarga la imagen, abre Instagram y muestra la guía.
 - [ ] El botón convive con el de WhatsApp en las tres superficies (torneo, calendario, campeón).
 
 ---

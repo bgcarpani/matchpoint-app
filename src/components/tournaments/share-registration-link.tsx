@@ -14,11 +14,14 @@ import { ShareButtons } from '@/components/share/share-buttons'
 export function ShareRegistrationLink({
   url,
   tournamentName,
+  categoryGender,
   registrationOpen,
   registrationOpensAt,
 }: {
   url: string
   tournamentName: string
+  /** "6ta Masculino" / "Suma 14 Mixto": categoría + género destacados. */
+  categoryGender: string
   registrationOpen: boolean
   /** Horario de apertura automática, o null si la apertura es manual. */
   registrationOpensAt: string | null
@@ -64,7 +67,7 @@ export function ShareRegistrationLink({
         </a>
         <ShareButtons
           url={url}
-          text={`Inscribite al torneo ${tournamentName} en Matchpoint:`}
+          text={`🎾 Torneo ${categoryGender} — ${tournamentName}. ¡Inscribite en Matchpoint!`}
           storyUrl={`${url}/og/story`}
         />
       </div>

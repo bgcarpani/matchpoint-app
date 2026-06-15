@@ -22,11 +22,11 @@ export async function GET(
 
   if (!bracket?.champion) return new Response('Not found', { status: 404 })
 
-  return await buildStory({
+  return buildStory({
     eyebrow: 'Campeón',
     title: bracket.champion,
     subtitle: tournament?.name,
-    qrValue: `${baseUrl}/t/${tournamentId}`,
-    caption: 'Escaneá para ver las llaves',
+    url: `${baseUrl}/t/${tournamentId}/bracket`,
+    caption: 'Mirá las llaves',
   })
 }

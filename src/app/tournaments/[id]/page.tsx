@@ -119,6 +119,7 @@ export default async function TournamentDetailPage({
           <ShareRegistrationLink
             url={registrationUrl}
             tournamentName={t.name}
+            categoryGender={`${categoryLabel(t.category_type, t.category_value)} ${GENDER_LABELS[t.gender]}`}
             registrationOpen={t.status === 'registration_open'}
             registrationOpensAt={t.registration_opens_at}
           />

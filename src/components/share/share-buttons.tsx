@@ -8,10 +8,12 @@ import { useState } from 'react'
  * local y producción sin depender de `window`.
  *
  * - WhatsApp: click-to-chat (`https://wa.me/?text=…`), sin API ni costo.
- * - Instagram (historia): Instagram no admite compartir por URL desde la web;
- *   una historia necesita una imagen, así que se genera (`storyUrl` → ruta
- *   `/og/story`). En mobile compatible se usa `navigator.share({ files })`; en
- *   desktop / no soportado se descarga la imagen y se abre instagram.com.
+ * - Instagram (historia): Instagram no admite subir una historia ni agregarle un
+ *   *link sticker* desde la web (eso requiere la app nativa + Sharing SDK). Lo que
+ *   sí podemos: generar la imagen (`storyUrl` → `/og/story`) y compartirla con
+ *   `navigator.share({ files })` (mobile) o descargarla (desktop). Para que la
+ *   historia quede clickeable, además **copiamos la URL al portapapeles** y guiamos
+ *   a la persona a pegarla en el sticker de Enlace de Instagram (un solo pegar).
  */
 export function ShareButtons({
   url,
@@ -24,12 +26,23 @@ export function ShareButtons({
   storyUrl?: string
 }) {
   const [busy, setBusy] = useState(false)
+  const [hint, setHint] = useState<string | null>(null)
   const waHref = `https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}`
 
   async function shareStory() {
     if (!storyUrl || busy) return
     setBusy(true)
     try {
+      // Copiamos el link primero: cuando la persona agregue el sticker de Enlace
+      // en Instagram, ya lo tiene en el portapapeles para pegar.
+      let copied = false
+      try {
+        await navigator.clipboard?.writeText(url)
+        copied = true
+      } catch {
+        // Sin permiso de clipboard: la URL igual va impresa en la imagen.
+      }
+
       const res = await fetch(storyUrl)
       const blob = await res.blob()
       const file = new File([blob], 'matchpoint-historia.png', {
@@ -39,19 +52,24 @@ export function ShareButtons({
       // Web Share Level 2 (mobile): abre el share sheet con la imagen lista.
       if (navigator.canShare?.({ files: [file] })) {
         await navigator.share({ files: [file], text })
-        return
+      } else {
+        // Fallback (desktop / no soportado): descargar + abrir Instagram.
+        const href = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = href
+        a.download = 'matchpoint-historia.png'
+        document.body.appendChild(a)
+        a.click()
+        a.remove()
+        URL.revokeObjectURL(href)
+        window.open('https://www.instagram.com/', '_blank', 'noopener')
       }
 
-      // Fallback (desktop / no soportado): descargar + abrir Instagram.
-      const href = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = href
-      a.download = 'matchpoint-historia.png'
-      document.body.appendChild(a)
-      a.click()
-      a.remove()
-      URL.revokeObjectURL(href)
-      window.open('https://www.instagram.com/', '_blank', 'noopener')
+      setHint(
+        copied
+          ? 'Link copiado. En Instagram: subí la historia → sticker de Enlace → pegar.'
+          : 'En Instagram: subí la historia → sticker de Enlace → pegá el link del torneo.'
+      )
     } catch {
       // Último recurso: abrir la imagen en otra pestaña para guardarla a mano.
       window.open(storyUrl, '_blank', 'noopener')
@@ -82,6 +100,12 @@ export function ShareButtons({
           <InstagramIcon className="h-4 w-4 text-[#E1306C]" />
           {busy ? 'Generando…' : 'Compartir en historia'}
         </button>
+      )}
+
+      {hint && (
+        <p className="basis-full text-xs leading-relaxed text-muted-foreground">
+          {hint}
+        </p>
       )}
     </>
   )

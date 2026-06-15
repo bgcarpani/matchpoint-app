@@ -1,19 +1,23 @@
 /**
  * Builder compartido de la imagen de "historia" (Instagram) con next/og.
  *
- * Formato 1080×1920, branding Matchpoint (azul noche + acento volt) y un QR al
- * link público (reusa qrcode.react). Lo consumen los route handlers
- * `/og/story` de torneo, campeón y calendario.
+ * Formato 1080×1920, branding Matchpoint (azul noche + acento volt). Lo consumen
+ * los route handlers `/og/story` de torneo, campeón y calendario.
+ *
+ * Decisiones de diseño:
+ * - **Sin QR**: la historia se ve desde el mismo celular que la comparte, así que
+ *   un QR es inescaneable. En su lugar se imprime la URL legible como CTA y la
+ *   persona agrega el *sticker de Enlace* de Instagram (la URL ya queda copiada
+ *   al portapapeles desde el botón de compartir → es un solo pegar).
+ * - **Safe zones**: Instagram tapa ~250px arriba y ~330px abajo con su propia UI.
+ *   El contenido vive en la franja superior/central y el tercio inferior queda
+ *   libre para que la persona ubique ahí el sticker de enlace.
  *
  * Corre en edge runtime (Satori). Estilos inline + flexbox: Satori no soporta
- * grid y exige `display:flex` en todo nodo con varios hijos.
- *
- * El QR NO puede ser un componente React con hooks (qrcode.react usa useMemo y
- * Satori no ejecuta hooks): se genera como SVG estático con `qrcode` y se
- * embebe como <img> con data URI.
+ * grid y exige `display:flex` en todo nodo con varios hijos. Sin emojis ni
+ * glifos especiales: la fuente por defecto de Satori puede no tenerlos.
  */
 import { ImageResponse } from 'next/og'
-import QRCode from 'qrcode'
 
 const VOLT = '#3b82f6'
 const BG = '#0b1220'
@@ -27,27 +31,20 @@ export interface StoryInput {
   title: string
   /** Línea(s) de apoyo bajo el título. */
   subtitle?: string
-  /** URL que codifica el QR. */
-  qrValue: string
-  /** Texto debajo del QR. */
+  /** URL pública de destino; se muestra como CTA legible (sin protocolo). */
+  url: string
+  /** Llamado a la acción bajo la URL, ej. "Inscribite online". */
   caption: string
 }
 
-export async function buildStory({
+export function buildStory({
   eyebrow,
   title,
   subtitle,
-  qrValue,
+  url,
   caption,
-}: StoryInput): Promise<ImageResponse> {
-  // QR como SVG estático (sin hooks): módulos navy sobre fondo blanco para que
-  // escanee bien. Se embebe como data URI en un <img>.
-  const qrSvg = await QRCode.toString(qrValue, {
-    type: 'svg',
-    margin: 0,
-    color: { dark: '#0b1220', light: '#ffffff' },
-  })
-  const qrDataUri = `data:image/svg+xml;utf8,${encodeURIComponent(qrSvg)}`
+}: StoryInput): ImageResponse {
+  const displayUrl = url.replace(/^https?:\/\//, '').replace(/\/$/, '')
 
   return new ImageResponse(
     (
@@ -55,13 +52,14 @@ export async function buildStory({
         style={{
           display: 'flex',
           flexDirection: 'column',
-          justifyContent: 'space-between',
+          justifyContent: 'flex-start',
           width: '1080px',
           height: '1920px',
           backgroundColor: BG,
-          backgroundImage: `radial-gradient(circle at 50% 18%, rgba(59,130,246,0.28), rgba(59,130,246,0) 55%)`,
+          backgroundImage: `radial-gradient(circle at 50% 22%, rgba(59,130,246,0.28), rgba(59,130,246,0) 55%)`,
           color: INK,
-          padding: '110px 96px',
+          // Safe zones: 290 arriba (UI de IG), 0 abajo (tercio libre para sticker).
+          padding: '290px 96px 0',
           fontFamily: 'sans-serif',
         }}
       >
@@ -77,6 +75,7 @@ export async function buildStory({
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'flex-start',
+            marginTop: 120,
           }}
         >
           <span
@@ -115,31 +114,32 @@ export async function buildStory({
           ) : null}
         </div>
 
-        {/* QR */}
-        <div style={{ display: 'flex', alignItems: 'center' }}>
+        {/* CTA + URL legible (reemplaza al QR) */}
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-start',
+            marginTop: 90,
+          }}
+        >
+          <span style={{ fontSize: 44, fontWeight: 700, color: INK }}>
+            {caption}
+          </span>
           <div
             style={{
               display: 'flex',
-              backgroundColor: '#ffffff',
-              borderRadius: 28,
-              padding: 28,
+              marginTop: 28,
+              borderRadius: 24,
+              border: `3px solid ${VOLT}`,
+              backgroundColor: 'rgba(59,130,246,0.12)',
+              padding: '22px 40px',
             }}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={qrDataUri} width={240} height={240} alt="" />
+            <span style={{ fontSize: 46, fontWeight: 700, color: VOLT }}>
+              {displayUrl}
+            </span>
           </div>
-          <span
-            style={{
-              fontSize: 40,
-              color: INK,
-              marginLeft: 44,
-              maxWidth: 460,
-              lineHeight: 1.25,
-              fontWeight: 600,
-            }}
-          >
-            {caption}
-          </span>
         </div>
       </div>
     ),
