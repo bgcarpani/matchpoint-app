@@ -115,6 +115,8 @@ todos-contra-todos):
 ### Notificaciones por email
 - Al jugador: aviso cuando envía su solicitud (estado pendiente) con link de seguimiento
 - Al jugador: aviso cuando su inscripción es aceptada o rechazada (con info adicional a futuro)
+- Destinatario: el **jugador 1** (quien carga la inscripción y deja su email de contacto). Un fallo de
+  envío nunca rompe la acción de negocio (inscripción / aceptación / rechazo)
 - Proveedor: Resend (también usado como SMTP de Supabase Auth para confirmación + reset de contraseña)
 - WhatsApp como canal de notificación **automática**: pospuesto (requiere Business API + plantillas
   aprobadas + costo). El teléfono ya se guarda desde v1, así que es factible retomarlo más adelante.
@@ -122,6 +124,20 @@ todos-contra-todos):
 ### Compartir (redes)
 - Botón "Compartir en WhatsApp" en el torneo, el calendario público y el campeón (post-llaves)
 - Botón "Compartir en historia de Instagram" con imagen generada (Instagram no admite compartir por URL)
+
+### Refinamiento de plataforma — PWA (app instalable + offline)
+La aplicación es una **PWA**: el mismo deploy sirve tanto la web normal como la "app instalada", sin
+build separado. Instalar es **opcional por usuario** y el acceso web queda intacto.
+- **Instalable**: se puede agregar a la pantalla de inicio (móvil) o instalar como app (escritorio),
+  con su propio ícono y splash, gracias al manifest y los íconos de la app.
+- **Offline**: una vez visitadas, las **vistas públicas** (torneo, calendario, zonas, llaves) quedan
+  disponibles sin conexión. El **área del organizador** (dashboard, canchas, torneos) **no se cachea**
+  para no guardar datos personales en el dispositivo: siempre requiere red.
+- **Notificaciones push** (Web Push): quedan pospuestas para una **fase 2** sobre la misma base PWA.
+
+> Nota de alcance: la app nativa quedó pospuesta. Una historia de Instagram con enlace *clickeable*
+> generado por nosotros requeriría app nativa y, aun así, no daría link clickeable desde web; por eso
+> se mantiene el flujo de compartir descripto arriba (imagen + sticker de enlace manual).
 
 ---
 
@@ -162,8 +178,9 @@ Esta versión marca el punto donde el jugador se convierte en usuario pleno de l
 | Next.js 16 (App Router) + TypeScript | Inicio del proyecto |
 | Tailwind CSS + shadcn/ui | Inicio del proyecto |
 | Supabase (PostgreSQL + Auth) | Inicio del proyecto (v1) |
-| Supabase Realtime | v2 — brackets en vivo |
+| Supabase Realtime | v2 — brackets en vivo (postergado por decisión de producto) |
 | Resend (email transaccional) | v3 — notificaciones + auth por email |
+| Serwist (PWA: instalable + offline) | v3 — app instalable, service worker |
 | Supabase Storage | última versión — streaming / multimedia |
 | Cloudflare Pages | Primer deploy (v1) |
 | Stripe o similar | v5 — si se implementa seña |

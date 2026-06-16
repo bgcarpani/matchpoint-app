@@ -14,6 +14,8 @@ import {
 import type { RecordResultInput } from '@/lib/domain/match'
 import { ZoneStandings } from '@/components/zones/zone-standings'
 import { ZoneMatchCard } from '@/components/zones/zone-match-card'
+import { PrintButton } from '@/components/share/print-button'
+import { ZonesPrintSheet } from '@/components/zones/zones-print-sheet'
 import { type CourtOption } from '@/components/zones/match-court-select'
 import {
   generateZones,
@@ -107,11 +109,11 @@ export function ZoneManager({
   const hasZones = zones.length > 0
 
   // El filtro puede quedar apuntando a una zona que ya no existe (tras regenerar).
+  // En pantalla ocultamos las no-activas por CSS (no las quitamos del DOM) para
+  // que la impresión muestre todas aunque haya un filtro puesto.
   const activeZone = zones.some((z) => z.id === selectedZone)
     ? selectedZone
     : 'all'
-  const visibleZones =
-    activeZone === 'all' ? zones : zones.filter((z) => z.id === activeZone)
 
   // Formato global: el mismo para todas las zonas (lo representa la 1ª zona).
   const currentFormat = zones[0]?.matchFormat ?? 'round_robin'
@@ -121,7 +123,7 @@ export function ZoneManager({
   return (
     <div className="space-y-6">
       {/* Estado / acciones globales */}
-      <div className="rounded-2xl border border-border bg-card/40 p-6">
+      <div className="no-print rounded-2xl border border-border bg-card/40 p-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
@@ -138,21 +140,24 @@ export function ZoneManager({
             </p>
           </div>
 
-          {canManage && hasZones && (
-            <button
-              type="button"
-              disabled={pending}
-              onClick={() =>
-                run(
-                  () => publishZones(tournamentId),
-                  '¿Publicar las zonas? Una vez publicadas no se pueden regenerar ni reasignar parejas.'
-                )
-              }
-              className="rounded-lg bg-volt px-4 py-2 text-sm font-semibold text-volt-foreground transition hover:brightness-105 disabled:opacity-50"
-            >
-              Publicar zonas
-            </button>
-          )}
+          <div className="flex flex-wrap items-center gap-2">
+            {hasZones && <PrintButton label="Imprimir zonas" />}
+            {canManage && hasZones && (
+              <button
+                type="button"
+                disabled={pending}
+                onClick={() =>
+                  run(
+                    () => publishZones(tournamentId),
+                    '¿Publicar las zonas? Una vez publicadas no se pueden regenerar ni reasignar parejas.'
+                  )
+                }
+                className="rounded-lg bg-volt px-4 py-2 text-sm font-semibold text-volt-foreground transition hover:brightness-105 disabled:opacity-50"
+              >
+                Publicar zonas
+              </button>
+            )}
+          </div>
         </div>
 
         {canManage && (
@@ -176,7 +181,7 @@ export function ZoneManager({
           <div className="mt-5 border-t border-border pt-5">
             <label className="block max-w-sm">
               <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                Formato de los partidos
+                Formato de zonas
               </span>
               <select
                 value={currentFormat}
@@ -212,7 +217,7 @@ export function ZoneManager({
 
       {/* Chips de navegación entre zonas (la pantalla puede ser larga) */}
       {hasZones && zones.length > 1 && (
-        <div className="sticky top-0 z-10 -mx-1 flex flex-wrap gap-2 bg-background/80 px-1 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="no-print sticky top-0 z-10 -mx-1 flex flex-wrap gap-2 bg-background/80 px-1 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <ZoneChip
             label="Todas"
             active={activeZone === 'all'}
@@ -231,14 +236,16 @@ export function ZoneManager({
 
       {/* Zonas — parejas + posiciones (siempre visibles) */}
       {hasZones && (
-        <section className="space-y-3">
+        <section className="no-print space-y-3">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
             Zonas
           </p>
           <div className="grid gap-4 lg:grid-cols-2">
-            {visibleZones.map((zone) => (
+            {zones.map((zone) => {
+              const show = activeZone === 'all' || activeZone === zone.id
+              return (
+              <div key={zone.id} className={show ? '' : 'hidden'}>
               <ZoneCard
-                key={zone.id}
                 zone={zone}
                 allZones={zones}
                 canManage={canManage}
@@ -263,21 +270,25 @@ export function ZoneManager({
                   run(() => reopenZoneStandings(tournamentId, zone.id))
                 }
               />
-            ))}
+              </div>
+              )
+            })}
           </div>
         </section>
       )}
 
       {/* Partidos — sección aparte, agrupada por zona */}
       {hasZones && (
-        <section className="space-y-3">
+        <section className="no-print space-y-3">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
             Partidos
           </p>
           <div className="grid gap-4 lg:grid-cols-2">
-            {visibleZones.map((zone) => (
+            {zones.map((zone) => {
+              const show = activeZone === 'all' || activeZone === zone.id
+              return (
+              <div key={zone.id} className={show ? '' : 'hidden'}>
               <ZoneMatchesCard
-                key={zone.id}
                 zone={zone}
                 courts={courts}
                 canManage={canManage}
@@ -310,10 +321,16 @@ export function ZoneManager({
                   )
                 }
               />
-            ))}
+              </div>
+              )
+            })}
           </div>
         </section>
       )}
+
+      {/* Hoja de impresión: una zona por página (parejas + posiciones +
+          partidos), sólo visible al imprimir. */}
+      {hasZones && <ZonesPrintSheet zones={zones} courts={courts} />}
     </div>
   )
 }
@@ -464,7 +481,7 @@ function ZoneCard({
                   if (e.target.value !== zone.id)
                     onMovePair(p.pairId, e.target.value)
                 }}
-                className="rounded-md border border-border bg-card px-2 py-1 text-xs text-muted-foreground outline-none focus:border-volt/60 disabled:opacity-50"
+                className="no-print rounded-md border border-border bg-card px-2 py-1 text-xs text-muted-foreground outline-none focus:border-volt/60 disabled:opacity-50"
                 aria-label="Mover pareja a otra zona"
               >
                 {allZones.map((z) => (
@@ -491,7 +508,7 @@ function ZoneCard({
                   type="button"
                   disabled={disabled}
                   onClick={onReopen}
-                  className="rounded-md border border-border px-2.5 py-1 text-xs font-semibold text-foreground transition hover:bg-accent disabled:opacity-50"
+                  className="no-print rounded-md border border-border px-2.5 py-1 text-xs font-semibold text-foreground transition hover:bg-accent disabled:opacity-50"
                 >
                   Reabrir posiciones
                 </button>
@@ -501,7 +518,7 @@ function ZoneCard({
                     type="button"
                     disabled={disabled}
                     onClick={onFreeze}
-                    className="rounded-md bg-volt px-2.5 py-1 text-xs font-semibold text-volt-foreground transition hover:brightness-105 disabled:opacity-50"
+                    className="no-print rounded-md bg-volt px-2.5 py-1 text-xs font-semibold text-volt-foreground transition hover:brightness-105 disabled:opacity-50"
                   >
                     Cerrar posiciones
                   </button>
@@ -599,7 +616,7 @@ function ZoneMatchesCard({
             type="button"
             disabled={disabled}
             onClick={onGenerateNextRound}
-            className="rounded-md bg-volt px-2.5 py-1 text-xs font-semibold text-volt-foreground transition hover:brightness-105 disabled:opacity-50"
+            className="no-print rounded-md bg-volt px-2.5 py-1 text-xs font-semibold text-volt-foreground transition hover:brightness-105 disabled:opacity-50"
           >
             Generar ronda 2
           </button>
@@ -697,7 +714,7 @@ function AddManualMatchForm({
   const valid = t1 !== '' && t2 !== '' && t1 !== t2
 
   return (
-    <div className="mt-3 rounded-lg border border-dashed border-border p-3">
+    <div className="no-print mt-3 rounded-lg border border-dashed border-border p-3">
       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
         Agregar partido
       </p>
@@ -794,7 +811,7 @@ function ManualStandingsEditor({
               <span className="tnum w-5 text-muted-foreground">{i + 1}</span>
               {row.label}
             </span>
-            <span className="flex gap-1">
+            <span className="no-print flex gap-1">
               <button
                 type="button"
                 disabled={disabled || i === 0}
@@ -817,7 +834,7 @@ function ManualStandingsEditor({
           </li>
         ))}
       </ul>
-      <div className="flex items-center justify-between gap-2 bg-secondary/60 px-3 py-2">
+      <div className="no-print flex items-center justify-between gap-2 bg-secondary/60 px-3 py-2">
         <span className="text-xs text-muted-foreground">
           {allFinished
             ? 'Ordená y cerrá las posiciones.'

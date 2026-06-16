@@ -203,12 +203,14 @@ export default async function ZonesPage({
 
   return (
     <div className="relative z-[2] mx-auto w-full max-w-4xl px-5 py-8 sm:px-8">
-      <OrganizerHeader establishmentName={organizer?.establishment_name} />
+      <div className="no-print">
+        <OrganizerHeader establishmentName={organizer?.establishment_name} />
+      </div>
 
       <section className="mt-10">
         <Link
           href={`/tournaments/${tournament.id}`}
-          className="text-sm text-muted-foreground hover:text-foreground"
+          className="no-print text-sm text-muted-foreground hover:text-foreground"
         >
           ← Volver al torneo
         </Link>

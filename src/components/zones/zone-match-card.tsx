@@ -155,14 +155,21 @@ export function ZoneMatchCard({
 
       {/* Pie: cancha (izq) + acción (der) */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border px-2.5 py-1.5">
-        <CourtControl
-          courtId={match.courtId}
-          courts={courts}
-          disabled={disabled}
-          onAssign={onAssignCourt}
-        />
+        <div className="no-print">
+          <CourtControl
+            courtId={match.courtId}
+            courts={courts}
+            disabled={disabled}
+            onAssign={onAssignCourt}
+          />
+        </div>
+        {match.courtId && (
+          <span className="hidden text-xs text-muted-foreground print:inline">
+            {courts.find((c) => c.id === match.courtId)?.name}
+          </span>
+        )}
 
-        <div className="flex items-center gap-1.5">
+        <div className="no-print flex items-center gap-1.5">
           {canManage && isManual && (
             <button
               type="button"

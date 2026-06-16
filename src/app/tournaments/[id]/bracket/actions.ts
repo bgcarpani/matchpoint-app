@@ -31,6 +31,90 @@ export async function generateBracket(tournamentId: string): Promise<ActionResul
 }
 
 /**
+ * Genera un bracket EN BLANCO (sin parejas) del tamaño elegido, para imprimir
+ * llaves vacías y completarlas a mano. Se permite si las llaves no están
+ * publicadas y no hay resultados cargados; si ya había un cuadro en blanco se
+ * reemplaza (permite cambiar el tamaño). El sorteo real desde las posiciones lo
+ * reemplaza luego con `generateBracket`.
+ */
+export async function generateEmptyBracket(
+  tournamentId: string,
+  size: number
+): Promise<ActionResult> {
+  const { supabase } = await requireUser()
+
+  if (![2, 4, 8, 16, 32].includes(size))
+    return { error: 'Tamaño de llave inválido.' }
+
+  const { data: t } = await supabase
+    .from('tournaments')
+    .select('bracket_published')
+    .eq('id', tournamentId)
+    .single()
+  if (!t) return { error: 'Torneo no encontrado.' }
+  if (t.bracket_published)
+    return { error: 'Las llaves ya están publicadas; no se pueden regenerar.' }
+
+  const { data: existing } = await supabase
+    .from('matches')
+    .select('id, status')
+    .eq('tournament_id', tournamentId)
+    .eq('phase', 'bracket')
+  if (existing && existing.length > 0) {
+    if (existing.some((m) => m.status === 'finished'))
+      return { error: 'Ya hay resultados cargados en las llaves.' }
+    await supabase
+      .from('matches')
+      .delete()
+      .eq('tournament_id', tournamentId)
+      .eq('phase', 'bracket')
+  }
+
+  // Árbol completo: rondas 1..log2(size); ronda r con size/2^r partidos.
+  const rounds = Math.log2(size)
+  const rows = []
+  for (let r = 1; r <= rounds; r++) {
+    for (let s = 1; s <= size / 2 ** r; s++) {
+      rows.push({
+        tournament_id: tournamentId,
+        phase: 'bracket' as const,
+        round: r,
+        bracket_round: r,
+        bracket_slot: s,
+      })
+    }
+  }
+  const { data: inserted, error } = await supabase
+    .from('matches')
+    .insert(rows)
+    .select('id, bracket_round, bracket_slot')
+  if (error || !inserted)
+    return { error: 'No se pudieron generar las llaves en blanco.' }
+
+  // Enlaza el avance (next_match_id / next_slot): slot impar → team1, par → team2.
+  const byKey = new Map(
+    inserted.map((m) => [`${m.bracket_round}:${m.bracket_slot}`, m])
+  )
+  for (const m of inserted) {
+    if ((m.bracket_round ?? 0) >= rounds) continue
+    const next = byKey.get(
+      `${(m.bracket_round ?? 0) + 1}:${Math.ceil((m.bracket_slot ?? 0) / 2)}`
+    )
+    if (!next) continue
+    await supabase
+      .from('matches')
+      .update({
+        next_match_id: next.id,
+        next_slot: (m.bracket_slot ?? 0) % 2 === 1 ? 'team1' : 'team2',
+      })
+      .eq('id', m.id)
+  }
+
+  revalidate(tournamentId)
+  return { ok: true }
+}
+
+/**
  * Carga (o corrige) el resultado de un partido de bracket y avanza al ganador
  * al siguiente cruce. La validación de scoring es en TS (computeResult); la RPC
  * persiste atómicamente y propaga (limpiando aguas abajo si cambia el ganador).

@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "db:apply": "node --env-file=.env.local scripts/apply-migrations.mjs",
-    "seed:registrations": "node --env-file=.env.local scripts/seed-registrations.mjs"
+    "seed:registrations": "node --env-file=.env.local scripts/seed-registrations.mjs",
+    "seed:tournament": "node --env-file=.env.local scripts/seed-tournament.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",

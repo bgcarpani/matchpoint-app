@@ -16,6 +16,12 @@ const withSerwist = withSerwistInit({
   disable: process.env.NODE_ENV === 'development',
 })
 
-const nextConfig: NextConfig = {}
+const nextConfig: NextConfig = {
+  // Permite que el JS de dev (HMR, Server Actions) se sirva cuando la app se
+  // accede desde fuera de localhost: túnel de Cloudflare (probar en el celu) y
+  // la IP de la LAN. Sin esto Next bloquea los recursos cross-origin y el form
+  // de login cae a un GET nativo en vez de ejecutar el Server Action.
+  allowedDevOrigins: ['*.trycloudflare.com', '192.168.1.88'],
+}
 
 export default withSerwist(nextConfig)

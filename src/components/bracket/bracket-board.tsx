@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState, useTransition } from 'react'
+import { Fragment, useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import type { MatchStatus, ScoringMode } from '@/lib/types/database'
 import type { RecordResultInput } from '@/lib/domain/match'
@@ -8,8 +8,11 @@ import { bracketRoundLabel } from '@/lib/domain/bracket'
 import { type CourtOption } from '@/components/zones/match-court-select'
 import { BracketMatchCard } from '@/components/bracket/bracket-match-card'
 import { ShareButtons } from '@/components/share/share-buttons'
+import { PrintButton } from '@/components/share/print-button'
+import { BracketViewToggle, type BracketViewMode } from '@/components/bracket/bracket-view-toggle'
 import {
   generateBracket,
+  generateEmptyBracket,
   recordBracketResult,
   clearBracketResult,
   publishBracket,
@@ -74,9 +77,12 @@ export function BracketBoard({
   const [error, setError] = useState<string | null>(null)
   const [swapA, setSwapA] = useState('')
   const [swapB, setSwapB] = useState('')
+  const [view, setView] = useState<BracketViewMode>('cuadro')
   const [selectedRound, setSelectedRound] = useState<'all' | number>('all')
+  const [blankSize, setBlankSize] = useState('8')
 
   const hasBracket = matches.length > 0
+  const anyFinished = matches.some((m) => m.status === 'finished')
   const totalRounds = useMemo(
     () => matches.reduce((m, x) => Math.max(m, x.round), 0),
     [matches]
@@ -97,14 +103,11 @@ export function BracketBoard({
       }))
   }, [matches])
 
-  // El filtro puede quedar apuntando a una ronda inexistente (tras regenerar).
+  // Filtro de ronda (sólo vista lista). El filtro puede quedar apuntando a una
+  // ronda inexistente tras regenerar: caer a 'all'.
   const activeRound = rounds.some((r) => r.round === selectedRound)
     ? selectedRound
     : 'all'
-  const visibleRounds =
-    activeRound === 'all'
-      ? rounds
-      : rounds.filter((r) => r.round === activeRound)
 
   // Campeón: ganador de la final (último round, 1 partido) si terminó.
   const champion = useMemo(() => {
@@ -122,10 +125,30 @@ export function BracketBoard({
     })
   }
 
+  function renderCard(m: BracketMatchView) {
+    return (
+      <BracketMatchCard
+        match={m}
+        courts={courts}
+        scoringMode={scoringMode}
+        gamesPerSet={gamesPerSet}
+        canRecordResults={canRecordResults}
+        disabled={pending}
+        onAssignCourt={(courtId) =>
+          run(() => assignBracketCourt(tournamentId, m.id, courtId))
+        }
+        onRecordResult={(input: RecordResultInput) =>
+          run(() => recordBracketResult(tournamentId, m.id, input))
+        }
+        onClearResult={() => run(() => clearBracketResult(tournamentId, m.id))}
+      />
+    )
+  }
+
   return (
     <div>
       {/* Controles */}
-      <div className="flex flex-wrap items-center gap-2.5">
+      <div className="no-print flex flex-wrap items-center gap-2.5">
         {!hasBracket ? (
           <>
             <button
@@ -171,10 +194,59 @@ export function BracketBoard({
             </button>
           </>
         )}
+
+        {hasBracket && (
+          <span className="ml-auto flex items-center gap-2">
+            <BracketViewToggle view={view} onChange={setView} />
+            <PrintButton label="Imprimir llaves" />
+          </span>
+        )}
       </div>
 
+      {/* Llaves en blanco: cuadro vacío para imprimir y completar a mano */}
+      {!published && !anyFinished && (
+        <div className="no-print mt-4 rounded-xl border border-dashed border-border bg-card/30 p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+            Llaves en blanco
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Generá un cuadro vacío del tamaño elegido para imprimirlo y
+            completarlo a mano.
+          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <select
+              value={blankSize}
+              disabled={pending}
+              onChange={(e) => setBlankSize(e.target.value)}
+              className="rounded-md border border-border bg-background px-2 py-1.5 text-xs text-foreground outline-none focus:border-volt/60 disabled:opacity-50"
+              aria-label="Tamaño del cuadro en blanco"
+            >
+              {[4, 8, 16, 32].map((n) => (
+                <option key={n} value={n}>
+                  {n} parejas
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              disabled={pending}
+              onClick={() => {
+                if (
+                  !hasBracket ||
+                  confirm('Se reemplazan las llaves actuales por un cuadro en blanco. ¿Continuar?')
+                )
+                  run(() => generateEmptyBracket(tournamentId, Number(blankSize)))
+              }}
+              className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-accent disabled:opacity-50"
+            >
+              {hasBracket ? 'Rehacer en blanco' : 'Generar llaves en blanco'}
+            </button>
+          </div>
+        </div>
+      )}
+
       {error && (
-        <p className="mt-3 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+        <p className="no-print mt-3 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           {error}
         </p>
       )}
@@ -185,7 +257,7 @@ export function BracketBoard({
             Campeón {categoryGender}
           </p>
           <p className="font-display mt-1 text-2xl text-foreground">{champion}</p>
-          <div className="mt-4 flex flex-wrap justify-center gap-2">
+          <div className="no-print mt-4 flex flex-wrap justify-center gap-2">
             <ShareButtons
               url={shareUrl}
               text={`🏆 Campeón ${categoryGender} — ${champion} se consagró en ${tournamentName}. Mirá las llaves en Matchpoint:`}
@@ -197,7 +269,7 @@ export function BracketBoard({
 
       {/* Override manual de cruces (antes de publicar y sin resultados) */}
       {canEditSeeds && participants.length >= 2 && (
-        <div className="mt-5 rounded-xl border border-border bg-card/40 p-4">
+        <div className="no-print mt-5 rounded-xl border border-border bg-card/40 p-4">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
             Reacomodar cruces
           </p>
@@ -224,59 +296,103 @@ export function BracketBoard({
         </div>
       )}
 
-      {/* Chips de navegación entre rondas (la pantalla puede ser larga) */}
-      {hasBracket && rounds.length > 1 && (
-        <div className="sticky top-0 z-10 mt-6 -mx-1 flex flex-wrap gap-2 bg-background/80 px-1 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <RoundChip
-            label="Todas"
-            active={activeRound === 'all'}
-            onClick={() => setSelectedRound('all')}
-          />
-          {rounds.map((r) => (
-            <RoundChip
-              key={r.round}
-              label={bracketRoundLabel(r.round, totalRounds)}
-              active={activeRound === r.round}
-              onClick={() => setSelectedRound(r.round)}
-            />
-          ))}
+      {/* Cuadro (árbol): cada ronda una columna; los cruces se centran entre sus
+          dos alimentadores y los conectores `]` los unen. Scroll horizontal. */}
+      {hasBracket && view === 'cuadro' && (
+        <div className="mt-6 overflow-x-auto pb-4">
+          <div className="flex min-w-max items-stretch">
+            {rounds.map(({ round, matches: ms }, ri) => (
+              <Fragment key={round}>
+                <div className="flex w-[300px] shrink-0 flex-col px-2">
+                  <div className="mb-3 text-center text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                    {bracketRoundLabel(round, totalRounds)}
+                  </div>
+                  <div className="flex flex-1 flex-col justify-around gap-3">
+                    {ms.map((m) => (
+                      <div key={m.id} className="print:break-inside-avoid">
+                        {renderCard(m)}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {ri < rounds.length - 1 && (
+                  <Connectors count={rounds[ri + 1].matches.length} />
+                )}
+              </Fragment>
+            ))}
+          </div>
         </div>
       )}
 
-      {/* Cuadro */}
-      {hasBracket && (
-        <div className="mt-6 space-y-6">
-          {visibleRounds.map(({ round, matches: ms }) => (
-            <section key={round}>
-              <h2 className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                {bracketRoundLabel(round, totalRounds)}
-              </h2>
-              <div className="mt-2 grid gap-3 sm:grid-cols-2">
-                {ms.map((m) => (
-                  <BracketMatchCard
-                    key={m.id}
-                    match={m}
-                    courts={courts}
-                    scoringMode={scoringMode}
-                    gamesPerSet={gamesPerSet}
-                    canRecordResults={canRecordResults}
-                    disabled={pending}
-                    onAssignCourt={(courtId) =>
-                      run(() => assignBracketCourt(tournamentId, m.id, courtId))
-                    }
-                    onRecordResult={(input: RecordResultInput) =>
-                      run(() => recordBracketResult(tournamentId, m.id, input))
-                    }
-                    onClearResult={() =>
-                      run(() => clearBracketResult(tournamentId, m.id))
-                    }
-                  />
-                ))}
-              </div>
-            </section>
-          ))}
-        </div>
+      {/* Lista: rondas apiladas (vista compacta / imprimible linealmente). */}
+      {hasBracket && view === 'lista' && (
+        <>
+          {rounds.length > 1 && (
+            <div className="no-print sticky top-0 z-10 mt-6 -mx-1 flex flex-wrap gap-2 bg-background/80 px-1 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+              <RoundChip
+                label="Todas"
+                active={activeRound === 'all'}
+                onClick={() => setSelectedRound('all')}
+              />
+              {rounds.map((r) => (
+                <RoundChip
+                  key={r.round}
+                  label={bracketRoundLabel(r.round, totalRounds)}
+                  active={activeRound === r.round}
+                  onClick={() => setSelectedRound(r.round)}
+                />
+              ))}
+            </div>
+          )}
+
+          <div className="mt-6 space-y-6">
+            {rounds.map(({ round, matches: ms }) => {
+              const show = activeRound === 'all' || activeRound === round
+              return (
+                <section
+                  key={round}
+                  className={`${show ? '' : 'hidden print:block'} print:break-inside-avoid`}
+                >
+                  <h2 className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                    {bracketRoundLabel(round, totalRounds)}
+                  </h2>
+                  <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                    {ms.map((m) => (
+                      <div key={m.id} className="print:break-inside-avoid">
+                        {renderCard(m)}
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )
+            })}
+          </div>
+        </>
       )}
+    </div>
+  )
+}
+
+/**
+ * Columna de conectores entre dos rondas: un `]` por cruce de la ronda derecha,
+ * distribuido con `justify-around` igual que los cruces, de modo que cada `]`
+ * queda centrado en su par de alimentadores. El spacer superior replica el alto
+ * del título de ronda para alinear las áreas.
+ */
+function Connectors({ count }: { count: number }) {
+  return (
+    <div className="flex w-5 shrink-0 flex-col">
+      <div aria-hidden className="mb-3 text-xs">
+        &nbsp;
+      </div>
+      <div className="flex flex-1 flex-col">
+        {Array.from({ length: count }).map((_, j) => (
+          <div key={j} className="flex flex-1 items-center">
+            <div className="h-1/2 w-full rounded-r-md border-y border-r border-border" />
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

@@ -159,20 +159,27 @@ export function BracketMatchCard({
       {!pending && (canRecordResults || match.courtId) && (
         <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border px-2.5 py-1.5">
           {canRecordResults ? (
-            <CourtControl
-              courtId={match.courtId}
-              courts={courts}
-              disabled={disabled}
-              onAssign={onAssignCourt}
-            />
+            <div className="no-print">
+              <CourtControl
+                courtId={match.courtId}
+                courts={courts}
+                disabled={disabled}
+                onAssign={onAssignCourt}
+              />
+            </div>
           ) : (
             <span className="px-1 text-xs text-muted-foreground">
               {courts.find((c) => c.id === match.courtId)?.name ?? ''}
             </span>
           )}
+          {canRecordResults && match.courtId && (
+            <span className="hidden px-1 text-xs text-muted-foreground print:inline">
+              {courts.find((c) => c.id === match.courtId)?.name ?? ''}
+            </span>
+          )}
 
           {canRecordResults && (
-            <div className="flex items-center gap-1.5">
+            <div className="no-print flex items-center gap-1.5">
               {showInputs ? (
                 <>
                   <button
@@ -243,17 +250,20 @@ function PairName({
 }) {
   return (
     <div className="flex h-[30px] items-center">
-      <span
-        className={`truncate text-sm ${
-          label
-            ? highlight
-              ? 'font-semibold text-foreground'
-              : 'text-foreground'
-            : 'italic text-muted-foreground'
-        }`}
-      >
-        {label ?? 'A definir'}
-      </span>
+      {label ? (
+        <span
+          className={`truncate text-sm ${
+            highlight ? 'font-semibold text-foreground' : 'text-foreground'
+          }`}
+        >
+          {label}
+        </span>
+      ) : (
+        // En blanco al imprimir (llaves vacías) para poder escribir encima.
+        <span className="truncate text-sm italic text-muted-foreground print:hidden">
+          A definir
+        </span>
+      )}
     </div>
   )
 }

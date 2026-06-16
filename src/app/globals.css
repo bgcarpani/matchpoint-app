@@ -272,3 +272,54 @@
     opacity: 1;
   }
 }
+
+/* Impresión: las vistas públicas (zonas, llaves) tienen botón "Imprimir".
+ * En lugar de pisar cada clase, redefinimos los tokens del tema a una paleta
+ * clara → todo el árbol (cards, chips, textos) sale legible en papel. Apagamos
+ * el halo/grano del fondo y ocultamos el chrome con `.no-print`. Apaisado por
+ * defecto: el cuadro de llaves es ancho. */
+@media print {
+  :root,
+  .dark {
+    --background: #ffffff;
+    --foreground: #0b1220;
+    --card: #ffffff;
+    --card-foreground: #0b1220;
+    --secondary: #f1f5f9;
+    --secondary-foreground: #0b1220;
+    --muted: #ffffff;
+    --muted-foreground: #475569;
+    --accent: #e2e8f0;
+    --accent-foreground: #1d4ed8;
+    --border: #cbd5e1;
+    --volt: #1d4ed8;
+    --volt-foreground: #ffffff;
+  }
+
+  @page {
+    size: landscape;
+    margin: 12mm;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+  }
+
+  /* Capas decorativas de fondo */
+  .glow::after,
+  .grain::before {
+    display: none !important;
+  }
+
+  /* Chrome que no va al papel (headers, navegación, botones de acción) */
+  .no-print {
+    display: none !important;
+  }
+
+  /* Que los colores de fondo de chips/badges sí salgan impresos */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

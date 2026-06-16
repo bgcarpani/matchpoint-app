@@ -58,9 +58,9 @@ export function CalendarSharePanel({
       </p>
 
       <div className="mt-5 grid gap-6 sm:grid-cols-[1fr_auto]">
-        <div>
+        <div className="min-w-0">
           <div className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2.5">
-            <code className="flex-1 truncate text-xs text-foreground">
+            <code className="min-w-0 flex-1 truncate text-xs text-foreground">
               {url}
             </code>
             <button

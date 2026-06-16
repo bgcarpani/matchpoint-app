@@ -131,16 +131,16 @@ export default async function BracketPage({
       : null
   const canEditSeeds = hasBracket && !published && !anyFinished
 
-  const showEmptyState = !hasBracket && !canGenerate
-
   return (
     <div className="relative z-[2] mx-auto w-full max-w-4xl px-5 py-8 sm:px-8">
-      <OrganizerHeader establishmentName={organizer?.establishment_name} />
+      <div className="no-print">
+        <OrganizerHeader establishmentName={organizer?.establishment_name} />
+      </div>
 
       <section className="mt-10">
         <Link
           href={`/tournaments/${tournament.id}`}
-          className="text-sm text-muted-foreground hover:text-foreground"
+          className="no-print text-sm text-muted-foreground hover:text-foreground"
         >
           ← Volver al torneo
         </Link>
@@ -150,39 +150,26 @@ export default async function BracketPage({
         <p className="mt-2 text-sm text-muted-foreground">{tournament.name}</p>
 
         <div className="mt-8">
-          {showEmptyState ? (
-            <div className="rounded-2xl border border-dashed border-border bg-card/20 p-10 text-center">
-              <p className="text-foreground">
-                Las llaves se arman cuando el torneo está en curso y todas las
-                zonas tienen las posiciones cerradas.
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Cargá los resultados de las zonas y cerrá sus posiciones para
-                habilitar el sorteo del cuadro.
-              </p>
-            </div>
-          ) : (
-            <BracketBoard
-              tournamentId={tournament.id}
-              matches={matches}
-              participants={participants}
-              courts={courts ?? []}
-              published={published}
-              canGenerate={canGenerate}
-              generateHint={generateHint}
-              canRecordResults={inProgress}
-              canEditSeeds={canEditSeeds}
-              scoringMode={tournament.scoring_mode}
-              gamesPerSet={tournament.games_per_set}
-              tournamentName={tournament.name}
-              shareUrl={`${baseUrl}/t/${tournament.id}`}
-              storyUrl={`${baseUrl}/t/${tournament.id}/bracket/og/story`}
-              categoryGender={`${categoryLabel(
-                tournament.category_type,
-                tournament.category_value
-              )} ${GENDER_LABELS[tournament.gender]}`}
-            />
-          )}
+          <BracketBoard
+            tournamentId={tournament.id}
+            matches={matches}
+            participants={participants}
+            courts={courts ?? []}
+            published={published}
+            canGenerate={canGenerate}
+            generateHint={generateHint}
+            canRecordResults={inProgress}
+            canEditSeeds={canEditSeeds}
+            scoringMode={tournament.scoring_mode}
+            gamesPerSet={tournament.games_per_set}
+            tournamentName={tournament.name}
+            shareUrl={`${baseUrl}/t/${tournament.id}`}
+            storyUrl={`${baseUrl}/t/${tournament.id}/bracket/og/story`}
+            categoryGender={`${categoryLabel(
+              tournament.category_type,
+              tournament.category_value
+            )} ${GENDER_LABELS[tournament.gender]}`}
+          />
         </div>
       </section>
     </div>
