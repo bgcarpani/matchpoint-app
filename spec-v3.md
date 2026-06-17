@@ -45,6 +45,60 @@ El "qué/por qué" cross-versión vive en `functional-doc.md`. Las convenciones 
 
 ---
 
+## Pendientes para funcionamiento end-to-end (handoff — cierre de v3)
+
+> **Estado del código:** TODOS los slices de v3 (0–6) están implementados, commiteados y con
+> **build + lint OK** en la rama `v3-comunicaciones`. Lo que sigue es **configuración de
+> infraestructura y verificación manual** que **no vive en el repo**. Sin estos pasos, los emails
+> no se envían y el flujo de auth por email no funciona, **aunque el código esté completo**.
+> Este es el checklist autoritativo para dejar v3 andando de punta a punta.
+
+### A. Variables de entorno
+- [ ] `.env.local` (dev) con `RESEND_API_KEY`, `EMAIL_FROM`, `NEXT_PUBLIC_SITE_URL` (ver `.env.example`).
+- [ ] Las mismas variables cargadas en **Cloudflare Pages** (Production + Preview) para que producción
+  envíe mails y arme URLs absolutas correctamente.
+
+### B. Resend (proveedor de email — slices 0, 1, 2, 6 y 5)
+- [ ] Cuenta de Resend + `RESEND_API_KEY` generada.
+- [ ] **Dominio remitente verificado** por DNS para el `EMAIL_FROM`. Sin dominio verificado, Resend
+  **solo** envía a la casilla de la cuenta; para pruebas en dev se puede usar
+  `Matchpoint <onboarding@resend.dev>`.
+
+### C. Migración SQL (Slice 6 — seña)
+- [ ] Aplicar `supabase/migrations/0018_pair_deposit.sql`: `npm run db:apply -- 0018`
+  (**no idempotente** — correr una sola vez; re-aplicar falla porque la columna ya existe).
+- [ ] Verificar con la **anon key** que `public_pair_view` **no** expone `deposit_paid_at`.
+
+### D. Supabase Auth (Slice 5 — confirmación + reset) — lo más invasivo, hacer todo junto
+- [ ] **SMTP custom → Resend** en Auth → SMTP Settings (host/usuario/clave de Resend).
+- [ ] **`mailer_autoconfirm = false`** (hoy en DEV está en `true`). ⚠️ Al apagarlo, registrarse pasa a
+  **exigir confirmar el email**: si los pasos de abajo no están listos, nadie puede entrar. Por eso
+  este bloque se cierra **de una sola vez**.
+- [ ] **Site URL** = dominio de producción; **Redirect URLs** incluyendo local
+  (`http://localhost:3000/**`) y Cloudflare, con las rutas `/auth/confirm` y `/update-password`.
+- [ ] **Templates de Auth** (*Confirm signup* + *Reset password*) reescritos al flujo `token_hash`:
+  `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type={{ .Type }}`
+  (el de *recovery* agrega `&next=/update-password`). **Crítico:** sin este cambio el link por defecto
+  usa el flujo **PKCE** (`?code=…`) y el route handler (`verifyOtp`) **no** lo resuelve. (Pasar los
+  templates a es-AR es opcional pero recomendado.)
+
+### E. Verificación end-to-end (recién con A–D hechos)
+- [ ] **Inscripción pendiente** (Slice 1): inscribir una pareja → el J1 con email recibe el mail
+  "pendiente" con link a `/inscription/<token>`; un J1 sin email no rompe el alta.
+- [ ] **Cambio de estado** (Slices 2 + 6): rechazar → mail de rechazo automático; aceptar → **no**
+  manda mail solo; "Avisar por email/WhatsApp" dispara el aviso de aceptado+seña; marcar/deshacer seña
+  refleja el badge; "Pendiente de seña" filtra las aceptadas sin pago.
+- [ ] **Auth** (Slice 5): registrar organizer nuevo → llega mail de confirmación → el link deja
+  logueado en `/dashboard`; "Olvidé mi contraseña" → recovery → `/update-password` setea la nueva y
+  entra; token inválido/expirado → `/login?error=auth`.
+- [ ] **Share** (Slices 3 + 4): botones de WhatsApp e Instagram (imagen 1080×1920) funcionan en torneo,
+  calendario público y campeón; en mobile el share sheet abre con la imagen.
+
+> Cuando A–E queden tildados, marcar también el último criterio del Slice 5
+> (`mailer_autoconfirm=false confirmado`) y v3 queda **cerrada de punta a punta**.
+
+---
+
 ## WhatsApp: factibilidad (decisión registrada)
 
 Se separan dos cosas distintas que conviene no confundir:

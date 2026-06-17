@@ -66,10 +66,11 @@ imagen generada (`next/og`, fuente Archivo embebida), (5) auth por email del org
 real + reset de contraseña; rutas `/auth/confirm`, `/forgot-password`, `/update-password`), (6) seña /
 pendiente de pago (sub-estado de `accepted`, migración `0018_pair_deposit.sql`). Decisiones: Resend (no
 Gmail SMTP); mails solo al jugador 1; WhatsApp **automático** pospuesto (solo el botón de compartir
-entra); transmisiones/streaming diferido a la última versión. **Pendiente NO-código (config manual en
-Supabase Auth, ver `spec-v3.md` Slice 5):** SMTP→Resend, `mailer_autoconfirm=false`, Site/Redirect URLs
-y templates es-AR con el flujo `token_hash` apuntando a `/auth/confirm`. Hasta cerrar esa config, en DEV
-sigue `mailer_autoconfirm=true`. Especificación completa en `spec-v3.md`.
+entra); transmisiones/streaming diferido a la última versión. **Pendiente NO-código para que v3 ande
+end-to-end** (env vars + Resend + migración `0018` + config de Supabase Auth): checklist autoritativo
+en `spec-v3.md` → sección **"Pendientes para funcionamiento end-to-end (handoff — cierre de v3)"**.
+Hasta cerrar la config de Auth, en DEV sigue `mailer_autoconfirm=true`. Especificación completa en
+`spec-v3.md`.
 
 ## Convenciones de implementación (v1)
 > No revertir sin discusión; reflejan decisiones ya validadas en código y verificadas e2e.
