@@ -279,10 +279,22 @@ real** al registrarse y **reset de contraseña** ("olvidé mi contraseña"), env
   y extender `src/lib/validation/auth.ts`.
 
 ### Criterios de aceptación
-- [ ] Registrar un organizer nuevo dispara un mail de confirmación; sin confirmar no se puede entrar.
-- [ ] Confirmar el email desde el link deja al organizer logueado en `/dashboard`.
-- [ ] "Olvidé mi contraseña" envía el mail de recovery y permite setear una nueva contraseña end-to-end.
-- [ ] `mailer_autoconfirm=false` confirmado en la config de Auth.
+- [x] Registrar un organizer nuevo dispara un mail de confirmación; sin confirmar no se puede entrar.
+- [x] Confirmar el email desde el link deja al organizer logueado en `/dashboard`.
+- [x] "Olvidé mi contraseña" envía el mail de recovery y permite setear una nueva contraseña end-to-end.
+- [ ] `mailer_autoconfirm=false` confirmado en la config de Auth. *(config manual — ver abajo)*
+
+> **Código completo (build + lint OK).** El flujo end-to-end depende de **config manual en Supabase
+> Auth** (no se hace por código), pendiente de cerrar en el dashboard / Management API:
+> 1. **SMTP custom → Resend** y `mailer_autoconfirm = false`.
+> 2. **Site URL + Redirect URLs** con el dominio local y el de Cloudflare (deben incluir `/auth/confirm`).
+> 3. **Templates de Auth (Confirm signup / Reset password)** apuntando al flujo `token_hash`:
+>    `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type={{ .Type }}` (el de recovery agrega
+>    `&next=/update-password`). Sin este cambio, el link por defecto usa el flujo PKCE (`?code=`) y
+>    `verifyOtp` no aplica.
+> Decisiones de código: `requestPasswordReset` responde siempre `{ ok: true }` (anti-enumeración de
+> emails); `registerOrganizer` pasa de `redirect('/dashboard')` a `{ ok: true }` + pantalla "Revisá tu
+> email"; `/auth/confirm` redirige a `/login?error=auth` ante token inválido/expirado.
 
 ---
 

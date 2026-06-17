@@ -58,14 +58,18 @@ de zonas funcional (`/t/[id]/zones`), rediseño del manager de zonas (tarjetas d
 sección "Partidos" separada de parejas/posiciones). Pendiente: botón "compartir campeón".
 Especificación en `spec-v2.md`; el detalle granular por slice vive en la memoria del asistente.
 
-**v3 — comunicaciones (especificada, sin implementar).** Eje: email transaccional vía Resend.
-Slices: (0) infra de email + helper de URL absoluta, (1) email de inscripción pendiente con link de
-seguimiento, (2) emails de cambio de estado aceptado/rechazado, (3) auth por email del organizer
-(confirmación real + reset de contraseña; reemplaza `mailer_autoconfirm`), (4) botón "Compartir en
-WhatsApp" en torneo/calendario/campeón, (5) "Compartir en historia de Instagram" con imagen generada
-(`next/og`). Decisiones: Resend (no Gmail SMTP); mails solo al jugador 1; WhatsApp **automático**
-pospuesto (solo el botón de compartir entra); transmisiones/streaming diferido a la última versión.
-Especificación completa en `spec-v3.md`.
+**v3 — comunicaciones: TODOS los slices implementados (build + lint OK, commiteados).** Eje: email
+transaccional vía Resend. Hechos: (0) infra de email + `getBaseUrl()`, (1) email de inscripción
+pendiente con link de seguimiento, (2) emails de cambio de estado aceptado/rechazado, (3) botón
+"Compartir en WhatsApp" en torneo/calendario/campeón, (4) "Compartir en historia de Instagram" con
+imagen generada (`next/og`, fuente Archivo embebida), (5) auth por email del organizer (confirmación
+real + reset de contraseña; rutas `/auth/confirm`, `/forgot-password`, `/update-password`), (6) seña /
+pendiente de pago (sub-estado de `accepted`, migración `0018_pair_deposit.sql`). Decisiones: Resend (no
+Gmail SMTP); mails solo al jugador 1; WhatsApp **automático** pospuesto (solo el botón de compartir
+entra); transmisiones/streaming diferido a la última versión. **Pendiente NO-código (config manual en
+Supabase Auth, ver `spec-v3.md` Slice 5):** SMTP→Resend, `mailer_autoconfirm=false`, Site/Redirect URLs
+y templates es-AR con el flujo `token_hash` apuntando a `/auth/confirm`. Hasta cerrar esa config, en DEV
+sigue `mailer_autoconfirm=true`. Especificación completa en `spec-v3.md`.
 
 ## Convenciones de implementación (v1)
 > No revertir sin discusión; reflejan decisiones ya validadas en código y verificadas e2e.

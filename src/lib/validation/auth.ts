@@ -24,3 +24,21 @@ export const loginSchema = z.object({
 })
 
 export type LoginInput = z.infer<typeof loginSchema>
+
+export const forgotPasswordSchema = z.object({
+  email: z.email('Email inválido'),
+})
+
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>
+
+export const updatePasswordSchema = z
+  .object({
+    password: z.string().min(8, 'Mínimo 8 caracteres'),
+    confirm: z.string(),
+  })
+  .refine((d) => d.password === d.confirm, {
+    message: 'Las contraseñas no coinciden',
+    path: ['confirm'],
+  })
+
+export type UpdatePasswordInput = z.infer<typeof updatePasswordSchema>
