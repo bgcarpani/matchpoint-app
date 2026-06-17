@@ -2,7 +2,12 @@
 
 import { revalidatePath } from 'next/cache'
 import { requireUser } from '@/lib/supabase/auth'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { canManageRegistrations } from '@/lib/domain/tournament'
+import {
+  registerPairSchema,
+  type RegisterPairInput,
+} from '@/lib/validation/registration'
 import { sendEmail } from '@/lib/email/send'
 import { acceptedEmail, rejectedEmail } from '@/lib/email/templates'
 import { getBaseUrl } from '@/lib/url'
@@ -207,5 +212,127 @@ export async function notifyAcceptedByEmail(
     return { error: 'La pareja no está aceptada.' }
 
   await notifyStatusChange(supabase, pair, 'accepted')
+  return { ok: true }
+}
+
+// --- Carga manual de parejas (organizer) ------------------------------------
+// El organizer carga una pareja a mano (ej. inscripción que llegó por WhatsApp/DM)
+// directo desde la página de inscripciones. A diferencia del alta pública
+// (register_pair, anon): NO exige inscripción abierta (sirve en cualquier estado
+// gestionable), NO consume el cupo de pendientes y entra ACEPTADA directa (un solo
+// paso). Respeta el tope `max_pairs`. No manda mail automático (igual que aceptar
+// en el Slice 6): el aviso queda a cargo del organizer con los botones existentes.
+
+/** Recolecta los emails de los players de las parejas vigentes del torneo. */
+async function takenEmails(
+  admin: Client,
+  tournamentId: string
+): Promise<Set<string>> {
+  const { data: existing } = await admin
+    .from('pairs')
+    .select('player1_id, player2_id')
+    .eq('tournament_id', tournamentId)
+    .in('status', ['pending', 'accepted'])
+
+  const ids = (existing ?? []).flatMap((p) => [p.player1_id, p.player2_id])
+  if (!ids.length) return new Set()
+
+  const { data: players } = await admin
+    .from('players')
+    .select('email')
+    .in('id', ids)
+
+  return new Set(
+    (players ?? [])
+      .map((p) => p.email?.trim().toLowerCase())
+      .filter((e): e is string => !!e)
+  )
+}
+
+export async function addPairManually(
+  input: RegisterPairInput
+): Promise<ActionResult> {
+  const parsed = registerPairSchema.safeParse(input)
+  if (!parsed.success)
+    return { error: parsed.error.issues[0]?.message ?? 'Datos inválidos.' }
+  const { tournament_id, player1, player2 } = parsed.data
+
+  const { supabase } = await requireUser()
+
+  // Verifica propiedad + estado: RLS (tournaments) scopea a los torneos del
+  // organizer, así que si la lectura devuelve la fila, es suya.
+  const { data: tournament } = await supabase
+    .from('tournaments')
+    .select('status, max_pairs')
+    .eq('id', tournament_id)
+    .maybeSingle()
+  if (!tournament) return { error: 'No se encontró el torneo.' }
+  if (!canManageRegistrations(tournament.status)) return { error: LOCKED_MSG }
+
+  // Entra aceptada → respeta el cupo real del torneo (max_pairs sobre accepted).
+  const { count } = await supabase
+    .from('pairs')
+    .select('id', { count: 'exact', head: true })
+    .eq('tournament_id', tournament_id)
+    .eq('status', 'accepted')
+  if (count != null && count >= tournament.max_pairs)
+    return { error: 'Se alcanzó el cupo de parejas del torneo.' }
+
+  // Inserción con service-role: `players` no tiene policy de INSERT para
+  // authenticated (la base se carga vía RPC/admin). La propiedad ya se validó.
+  const admin = createAdminClient()
+
+  // Anti-duplicado por email (espeja register_pair): evita cargar dos veces al
+  // mismo jugador. Solo aplica a los emails efectivamente cargados.
+  const newEmails = [player1.email, player2.email]
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean)
+  if (newEmails.length) {
+    const taken = await takenEmails(admin, tournament_id)
+    if (newEmails.some((e) => taken.has(e)))
+      return { error: 'Ya hay una inscripción vigente con ese email.' }
+  }
+
+  // Inserts separados (no batch) para garantizar qué id es player1 vs player2:
+  // player1 es el contacto principal y el orden de un insert múltiple no está
+  // garantizado por PostgREST.
+  const toRow = (p: typeof player1) => ({
+    full_name: p.full_name,
+    email: p.email || null,
+    phone: p.phone || null,
+    dni: p.dni || null,
+  })
+  const { data: p1, error: e1 } = await admin
+    .from('players')
+    .insert(toRow(player1))
+    .select('id')
+    .single()
+  if (e1 || !p1) return { error: 'No se pudieron cargar los jugadores.' }
+
+  const { data: p2, error: e2 } = await admin
+    .from('players')
+    .insert(toRow(player2))
+    .select('id')
+    .single()
+  if (e2 || !p2) {
+    await admin.from('players').delete().eq('id', p1.id)
+    return { error: 'No se pudieron cargar los jugadores.' }
+  }
+
+  const token = crypto.randomUUID().replace(/-/g, '')
+  const { error: pairError } = await admin.from('pairs').insert({
+    tournament_id,
+    player1_id: p1.id,
+    player2_id: p2.id,
+    lookup_token: token,
+    status: 'accepted',
+  })
+  if (pairError) {
+    // Limpia los players huérfanos si falló la creación de la pareja.
+    await admin.from('players').delete().in('id', [p1.id, p2.id])
+    return { error: 'No se pudo crear la pareja.' }
+  }
+
+  revalidate(tournament_id)
   return { ok: true }
 }

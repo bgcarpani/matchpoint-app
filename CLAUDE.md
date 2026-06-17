@@ -72,6 +72,14 @@ en `spec-v3.md` → sección **"Pendientes para funcionamiento end-to-end (hando
 Hasta cerrar la config de Auth, en DEV sigue `mailer_autoconfirm=true`. Especificación completa en
 `spec-v3.md`.
 
+**Mejoras post-v3.** *Carga manual de parejas por el organizer:* en `/tournaments/[id]/registrations`,
+botón "Agregar pareja" → form inline (`add-pair-form.tsx`) + action `addPairManually`. A diferencia del
+alta pública (`register_pair`, anon): no exige inscripción abierta (sirve mientras
+`canManageRegistrations`), no consume el cupo de pendientes, entra **aceptada directa** (respeta
+`max_pairs`) y no manda mail automático. Inserta con **admin client** (la tabla `players` no tiene policy
+de INSERT para `authenticated`; la propiedad del torneo se valida antes vía RLS de `tournaments`).
+Mantiene el anti-duplicado por email y el requisito de nombre + un contacto por jugador.
+
 ## Convenciones de implementación (v1)
 > No revertir sin discusión; reflejan decisiones ya validadas en código y verificadas e2e.
 

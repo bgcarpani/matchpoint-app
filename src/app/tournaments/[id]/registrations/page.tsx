@@ -9,6 +9,7 @@ import {
   RegistrationTable,
   type RegistrationRow,
 } from '@/components/tournaments/registration-table'
+import { AddPairForm } from '@/components/tournaments/add-pair-form'
 
 export const metadata: Metadata = { title: 'Inscripciones — Matchpoint' }
 
@@ -105,7 +106,11 @@ export default async function RegistrationsPage({
           />
         </div>
 
-        {!canManageRegistrations(tournament.status) && (
+        {canManageRegistrations(tournament.status) ? (
+          <div className="mt-8">
+            <AddPairForm tournamentId={tournament.id} />
+          </div>
+        ) : (
           <p className="mt-6 rounded-xl border border-border bg-card/40 px-4 py-3 text-sm text-muted-foreground">
             El torneo está {tournament.status === 'finished' ? 'finalizado' : 'en curso'}: las
             inscripciones quedaron congeladas y no se pueden modificar.
