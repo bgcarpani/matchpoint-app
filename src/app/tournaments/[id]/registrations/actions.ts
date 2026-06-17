@@ -113,9 +113,9 @@ export async function acceptPair(pairId: string): Promise<ActionResult> {
     .eq('id', pairId)
   if (error) return { error: 'No se pudo aceptar la solicitud.' }
 
-  // Solo notificar si el estado realmente cambió (evita mails por reclics).
-  if (pair.status !== 'accepted')
-    await notifyStatusChange(supabase, pair, 'accepted')
+  // Slice 6 (seña): aceptar ya NO manda mail automático. El aviso de aceptado +
+  // pendiente de seña lo dispara el organizer a mano (notifyAcceptedByEmail /
+  // botón de WhatsApp), para poder no avisar si la seña ya fue pagada.
 
   revalidate(pair.tournament_id)
   return { ok: true }
@@ -153,5 +153,59 @@ export async function removePair(pairId: string): Promise<ActionResult> {
   if (error) return { error: 'No se pudo remover la pareja.' }
 
   revalidate(pair.tournament_id)
+  return { ok: true }
+}
+
+// --- Seña (Slice 6) ---------------------------------------------------------
+// "Pendiente de seña" es un sub-estado de `accepted`: la columna deposit_paid_at
+// no toca status (cupo/zonas siguen igual). El organizer marca la seña a mano.
+
+/** Marca la seña como recibida (registra el cuándo). Solo sobre parejas propias. */
+export async function markDepositPaid(pairId: string): Promise<ActionResult> {
+  const { supabase } = await requireUser()
+  const pair = await loadOwnedPair(supabase, pairId)
+  if (!pair) return { error: 'No se encontró la solicitud.' }
+
+  const { error } = await supabase
+    .from('pairs')
+    .update({ deposit_paid_at: new Date().toISOString() })
+    .eq('id', pairId)
+  if (error) return { error: 'No se pudo marcar la seña.' }
+
+  revalidate(pair.tournament_id)
+  return { ok: true }
+}
+
+/** Deshace la marca de seña (vuelve a "pendiente de seña"). */
+export async function unmarkDepositPaid(pairId: string): Promise<ActionResult> {
+  const { supabase } = await requireUser()
+  const pair = await loadOwnedPair(supabase, pairId)
+  if (!pair) return { error: 'No se encontró la solicitud.' }
+
+  const { error } = await supabase
+    .from('pairs')
+    .update({ deposit_paid_at: null })
+    .eq('id', pairId)
+  if (error) return { error: 'No se pudo deshacer la seña.' }
+
+  revalidate(pair.tournament_id)
+  return { ok: true }
+}
+
+/**
+ * Envía a mano el mail de "aceptada + pendiente de seña" al jugador 1. Reusa
+ * `acceptedEmail` (que pasó de automático a manual en el Slice 6). Best-effort:
+ * si el J1 no tiene email, no hace nada; un fallo de envío no rompe nada.
+ */
+export async function notifyAcceptedByEmail(
+  pairId: string
+): Promise<ActionResult> {
+  const { supabase } = await requireUser()
+  const pair = await loadOwnedPair(supabase, pairId)
+  if (!pair) return { error: 'No se encontró la solicitud.' }
+  if (pair.status !== 'accepted')
+    return { error: 'La pareja no está aceptada.' }
+
+  await notifyStatusChange(supabase, pair, 'accepted')
   return { ok: true }
 }

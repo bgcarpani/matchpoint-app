@@ -117,7 +117,12 @@ export function pendingEmail(input: {
   }
 }
 
-/** Inscripción aceptada por el organizador. */
+/**
+ * Inscripción aceptada + pendiente de seña. Desde el Slice 6 (seña) este mail pasa
+ * de envío automático a manual (lo dispara el organizer con un botón), para poder
+ * no avisar si la seña ya fue pagada. Copy sutil: menciona la seña pero sin monto
+ * ni datos de pago (eso lo coordina el organizer en la conversación).
+ */
 export function acceptedEmail(input: {
   playerName: string
   tournamentName: string
@@ -134,8 +139,11 @@ export function acceptedEmail(input: {
         p(
           `Buenas noticias: tu inscripción al torneo <strong>${tournament}</strong> fue <strong>aceptada</strong>. 🎾`
         ) +
+        p(
+          `Quedó <strong>pendiente de seña</strong>: coordinamos el pago para confirmar tu lugar.`
+        ) +
         muted(
-          'Próximamente vas a recibir más información (zona, horarios y partidos). Podés seguir el estado de tu inscripción desde el siguiente enlace.'
+          'El organizador se va a contactar para coordinar la seña. Próximamente vas a recibir más información (zona, horarios y partidos). Podés seguir el estado de tu inscripción desde el siguiente enlace.'
         ),
       cta: { label: 'Ver mi inscripción', url: input.trackUrl },
     }),

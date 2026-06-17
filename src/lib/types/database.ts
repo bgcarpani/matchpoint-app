@@ -129,12 +129,13 @@ export interface Database {
           player2_id: string
           lookup_token: string
           status: PairStatus
+          deposit_paid_at: string | null
           created_at: string
           updated_at: string
         }
         Insert: WithDefaults<
           Database['public']['Tables']['pairs']['Row'],
-          'id' | 'status' | 'created_at' | 'updated_at'
+          'id' | 'status' | 'deposit_paid_at' | 'created_at' | 'updated_at'
         >
         Update: Partial<Database['public']['Tables']['pairs']['Row']>
         Relationships: []

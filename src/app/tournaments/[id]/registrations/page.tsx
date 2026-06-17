@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
+import { getBaseUrl } from '@/lib/url'
 import { OrganizerHeader } from '@/components/organizer/organizer-header'
 import { canManageRegistrations } from '@/lib/domain/tournament'
 import {
@@ -38,7 +39,9 @@ export default async function RegistrationsPage({
       // RLS (pairs_all_owner) limita a las parejas de torneos del organizador.
       supabase
         .from('pairs')
-        .select('id, status, created_at, player1_id, player2_id')
+        .select(
+          'id, status, created_at, player1_id, player2_id, lookup_token, deposit_paid_at'
+        )
         .eq('tournament_id', id)
         .order('created_at', { ascending: true }),
     ])
@@ -61,9 +64,13 @@ export default async function RegistrationsPage({
     id: p.id,
     status: p.status,
     created_at: p.created_at,
+    lookup_token: p.lookup_token,
+    deposit_paid_at: p.deposit_paid_at,
     player1: byId.get(p.player1_id) ?? empty,
     player2: byId.get(p.player2_id) ?? empty,
   }))
+
+  const baseUrl = await getBaseUrl()
 
   const accepted = rows.filter((r) => r.status === 'accepted').length
   // El cupo de solicitudes cuenta solo pendientes: aceptar/rechazar libera lugar.
@@ -108,6 +115,8 @@ export default async function RegistrationsPage({
         <div className="mt-8">
           <RegistrationTable
             rows={rows}
+            tournamentName={tournament.name}
+            baseUrl={baseUrl}
             locked={!canManageRegistrations(tournament.status)}
           />
         </div>

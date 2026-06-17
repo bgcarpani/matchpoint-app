@@ -4,10 +4,14 @@ import { useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import type { PairStatus } from '@/lib/types/database'
 import { PAIR_STATUS_LABELS } from '@/lib/domain/pair'
+import { depositWhatsappText, toWhatsappNumber } from '@/lib/share/messages'
 import {
   acceptPair,
   rejectPair,
   removePair,
+  markDepositPaid,
+  unmarkDepositPaid,
+  notifyAcceptedByEmail,
 } from '@/app/tournaments/[id]/registrations/actions'
 
 export interface RegistrationPlayer {
@@ -21,6 +25,8 @@ export interface RegistrationRow {
   id: string
   status: PairStatus
   created_at: string
+  lookup_token: string
+  deposit_paid_at: string | null
   player1: RegistrationPlayer
   player2: RegistrationPlayer
 }
@@ -39,33 +45,56 @@ const STATUS_ORDER: Record<PairStatus, number> = {
   rejected: 2,
 }
 
-type Filter = 'all' | PairStatus
+// "deposit_pending" no es un status: son las aceptadas sin seña (accepted &&
+// deposit_paid_at == null). Permite ver de un vistazo quién debe la seña.
+type Filter = 'all' | PairStatus | 'deposit_pending'
 
 const FILTERS: { value: Filter; label: string }[] = [
   { value: 'all', label: 'Todas' },
   { value: 'pending', label: 'Pendientes' },
   { value: 'accepted', label: 'Aceptadas' },
+  { value: 'deposit_pending', label: 'Pendiente de seña' },
   { value: 'rejected', label: 'Rechazadas' },
 ]
 
+const isDepositPending = (r: RegistrationRow) =>
+  r.status === 'accepted' && !r.deposit_paid_at
+
 export function RegistrationTable({
   rows,
+  tournamentName,
+  baseUrl,
   locked = false,
 }: {
   rows: RegistrationRow[]
+  tournamentName: string
+  baseUrl: string
   locked?: boolean
 }) {
   const [filter, setFilter] = useState<Filter>('all')
 
   const counts = useMemo(() => {
-    const c = { all: rows.length, pending: 0, accepted: 0, rejected: 0 }
-    for (const r of rows) c[r.status]++
+    const c = {
+      all: rows.length,
+      pending: 0,
+      accepted: 0,
+      rejected: 0,
+      deposit_pending: 0,
+    }
+    for (const r of rows) {
+      c[r.status]++
+      if (isDepositPending(r)) c.deposit_pending++
+    }
     return c
   }, [rows])
 
   const visible = useMemo(() => {
     const filtered =
-      filter === 'all' ? rows : rows.filter((r) => r.status === filter)
+      filter === 'all'
+        ? rows
+        : filter === 'deposit_pending'
+          ? rows.filter(isDepositPending)
+          : rows.filter((r) => r.status === filter)
     return [...filtered].sort(
       (a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status]
     )
@@ -115,7 +144,13 @@ export function RegistrationTable({
       ) : (
         <ul className="mt-4 space-y-2">
           {visible.map((row) => (
-            <RegistrationItem key={row.id} row={row} locked={locked} />
+            <RegistrationItem
+              key={row.id}
+              row={row}
+              tournamentName={tournamentName}
+              baseUrl={baseUrl}
+              locked={locked}
+            />
           ))}
         </ul>
       )}
@@ -125,13 +160,18 @@ export function RegistrationTable({
 
 function RegistrationItem({
   row,
+  tournamentName,
+  baseUrl,
   locked,
 }: {
   row: RegistrationRow
+  tournamentName: string
+  baseUrl: string
   locked: boolean
 }) {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
+  const [emailSent, setEmailSent] = useState(false)
   const [pending, startTransition] = useTransition()
 
   function run(
@@ -150,6 +190,32 @@ function RegistrationItem({
     })
   }
 
+  // Aviso por email manual (Slice 6): muestra "Enviado" sin refrescar la tabla.
+  function sendEmailNotice() {
+    setError(null)
+    startTransition(async () => {
+      const res = await notifyAcceptedByEmail(row.id)
+      if ('error' in res) {
+        setError(res.error)
+        return
+      }
+      setEmailSent(true)
+    })
+  }
+
+  const accepted = row.status === 'accepted'
+  const depositPaid = accepted && !!row.deposit_paid_at
+
+  // Aviso de WhatsApp: mismo copy que el email; dirigido al J1 si tiene teléfono.
+  const trackUrl = `${baseUrl}/inscription/${row.lookup_token}`
+  const waNumber = toWhatsappNumber(row.player1.phone)
+  const waText = depositWhatsappText({
+    playerName: row.player1.full_name,
+    tournamentName,
+    trackUrl,
+  })
+  const waHref = `https://wa.me/${waNumber ?? ''}?text=${encodeURIComponent(waText)}`
+
   return (
     <li className="rounded-xl border border-border bg-card/40 px-4 py-3">
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
@@ -157,11 +223,24 @@ function RegistrationItem({
           <PlayerCell n={1} p={row.player1} />
           <PlayerCell n={2} p={row.player2} />
         </div>
-        <span
-          className={`inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.12em] ${STATUS_PILL[row.status]}`}
-        >
-          {PAIR_STATUS_LABELS[row.status]}
-        </span>
+        <div className="flex shrink-0 items-center gap-1.5">
+          {accepted && (
+            <span
+              className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.12em] ${
+                depositPaid
+                  ? 'border border-emerald-500/40 text-emerald-400'
+                  : 'border border-amber-500/40 text-amber-400'
+              }`}
+            >
+              {depositPaid ? 'Seña recibida' : 'Pendiente de seña'}
+            </span>
+          )}
+          <span
+            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.12em] ${STATUS_PILL[row.status]}`}
+          >
+            {PAIR_STATUS_LABELS[row.status]}
+          </span>
+        </div>
       </div>
 
       {!locked && (
@@ -175,11 +254,55 @@ function RegistrationItem({
             Aceptar
           </ActionButton>
         )}
-        {row.status === 'pending' && (
+
+        {accepted && (
+          <>
+            <a
+              href={waHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-lg border border-[#25D366]/40 bg-[#25D366]/10 px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:bg-[#25D366]/20"
+            >
+              Avisar por WhatsApp
+            </a>
+            {row.player1.email && (
+              <ActionButton
+                disabled={pending || emailSent}
+                onClick={sendEmailNotice}
+              >
+                {emailSent ? 'Email enviado' : 'Avisar por email'}
+              </ActionButton>
+            )}
+            {depositPaid ? (
+              <ActionButton
+                disabled={pending}
+                onClick={() => run(() => unmarkDepositPaid(row.id))}
+              >
+                Deshacer seña
+              </ActionButton>
+            ) : (
+              <ActionButton
+                disabled={pending}
+                onClick={() => run(() => markDepositPaid(row.id))}
+                variant="primary"
+              >
+                Seña recibida
+              </ActionButton>
+            )}
+          </>
+        )}
+
+        {/* Rechazar: en pending (alta) y en accepted (rechazo por falta de pago). */}
+        {row.status !== 'rejected' && (
           <ActionButton
             disabled={pending}
             onClick={() =>
-              run(() => rejectPair(row.id), '¿Rechazar esta solicitud?')
+              run(
+                () => rejectPair(row.id),
+                accepted
+                  ? '¿Rechazar esta pareja por falta de pago?'
+                  : '¿Rechazar esta solicitud?'
+              )
             }
           >
             Rechazar

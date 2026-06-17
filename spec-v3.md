@@ -11,6 +11,8 @@ implementación en una sesión nueva. El eje de v3 son las **comunicaciones con 
    quedó con `mailer_autoconfirm`).
 5. **Botones "Compartir en WhatsApp"** en torneo, calendario público y campeón.
 6. **Botón "Compartir en historia de Instagram"** con imagen generada.
+7. **Seña / pendiente de pago de inscripción** — sub-estado de pago tras aceptar, con aviso manual
+   (WhatsApp + email) al jugador 1.
 
 El "qué/por qué" cross-versión vive en `functional-doc.md`. Las convenciones de implementación
 (Next 16, Supabase, RLS, vistas seguras + RPCs, validación/UI) son las mismas de v1/v2 — ver
@@ -25,6 +27,12 @@ El "qué/por qué" cross-versión vive en `functional-doc.md`. Las convenciones 
 > - **WhatsApp como canal de notificación automática: pospuesto** (ver "WhatsApp: factibilidad").
 >   En v3 entra solo el **botón de compartir** por WhatsApp (click-to-chat), no el envío automático.
 > - **Transmisiones / streaming** (antes tentativamente en v3) se **difiere a la última versión**.
+> - **Seña (pago de inscripción de 1 jugador):** el pago ocurre **100% fuera de la app** (transferencia /
+>   MP / efectivo). La app **no** recibe comprobantes ni datos bancarios: solo lleva el **estado** de la
+>   seña. "Pendiente de seña" es un **sub-estado de `accepted`**, no un status nuevo (el enum sigue
+>   manejando cupo y zonas). El aviso es **manual** (botón), no automático, para poder no avisar si ya
+>   pagaron. Mensaje **genérico y sutil**, sin monto ni datos de pago. El organizer marca la seña a mano
+>   y, sin plazo fijo, puede **rechazar por falta de pago**.
 
 ### Orden sugerido de slices
 0. Infra de email (Resend) + helper de URL absoluta — base, bloquea a 1, 2 y 3.
@@ -33,6 +41,7 @@ El "qué/por qué" cross-versión vive en `functional-doc.md`. Las convenciones 
 3. Botones "Compartir en WhatsApp" — Feature 4 (independiente del email, bajo riesgo).
 4. "Compartir en historia de Instagram" con imagen — Feature 5.
 5. Auth por email (confirmación + reset) — Feature 3 (el más invasivo en el flujo de login; al final).
+6. Seña / pendiente de pago — Feature 7 (extiende el Slice 2; única migración SQL de v3).
 
 ---
 
@@ -54,9 +63,9 @@ Se separan dos cosas distintas que conviene no confundir:
 
 ## Modelo de datos — deltas v3
 
-> v3 **no agrega columnas nuevas** a las tablas de negocio. Toda la data necesaria ya existe:
-> `players.email` / `players.phone`, `pairs.lookup_token`, `pairs.status`, `tournaments.name`,
-> `organizers.calendar_slug`. Los cambios de v3 viven en **infraestructura** (proveedor de email,
+> v3 agrega **una sola columna** (`pairs.deposit_paid_at`, en el Slice 6 — seña). El resto de la data
+> ya existe: `players.email` / `players.phone`, `pairs.lookup_token`, `pairs.status`, `tournaments.name`,
+> `organizers.calendar_slug`. Los demás cambios de v3 viven en **infraestructura** (proveedor de email,
 > config de Supabase Auth) y **código de app** (server actions, route handlers, componentes).
 
 ### Config de Supabase Auth (delta — Feature 3)
@@ -154,6 +163,10 @@ estado, **aclarando que en el futuro se sumará información adicional** (horari
 - Dos plantillas: **aceptado** y **rechazado**. Ambas incluyen el link de seguimiento y la aclaración
   de "más información próximamente".
 - `removePair` **no** envía email: borra a los players (el destinatario deja de existir).
+
+> **Modificado por el Slice 6 (seña):** el mail de **aceptado deja de ser automático** y pasa a ser
+> manual (botón), para que el organizer pueda no avisar si la seña ya fue pagada. El de **rechazado
+> sigue automático**. Ver Slice 6 para el detalle.
 
 ### Acceso a datos
 | Operación | Implementación |
@@ -273,12 +286,101 @@ real** al registrarse y **reset de contraseña** ("olvidé mi contraseña"), env
 
 ---
 
+## Slice 6 — Feature 7: Seña / pendiente de pago de inscripción
+
+### Contexto
+La **seña** es el pago de la inscripción de **un** jugador (la mitad de la pareja) que el organizer
+cobra para confirmar el lugar. El **pago ocurre 100% fuera de la app** (transferencia / Mercado Pago /
+efectivo); la app **no** recibe comprobantes ni datos bancarios — solo lleva el **estado** de la seña
+para que el organizer sepa a quién le falta pagar. Hoy las inscripciones llegan por WhatsApp / DM de
+Instagram, así que el aviso se apoya en ese canal (el organizer ya tiene el chat abierto).
+
+### Decisiones cerradas
+- **"Pendiente de seña" es un sub-estado de `accepted`, no un status nuevo.** El enum `pairs.status`
+  (pending/accepted/rejected) sigue manejando **cupo** (`count accepted >= max_pairs`) y **generación de
+  zonas**: una pareja aceptada cuenta y juega aunque no haya pagado. La dimensión de pago es independiente.
+- **Aviso manual, no automático.** Aceptar deja de mandar mail solo (cambia el Slice 2). El organizer
+  dispara el aviso con botones (WhatsApp y/o email) cuando quiere, para poder **no** avisar si ya le
+  pagaron de antemano.
+- **El organizer marca la seña a mano** (`Seña recibida`). **Sin plazo fijo**: queda a su criterio
+  perseguir el pago y, si no llega, **rechazar** la pareja por falta de pago (reusa el flujo de rechazo).
+- **Mensaje genérico y sutil**, sin monto ni datos de pago (eso lo coordina el organizer en la
+  conversación). Sin campos nuevos en el torneo.
+
+### Modelo de datos (única migración SQL de v3)
+`supabase/migrations/0018_pair_deposit.sql`:
+```sql
+alter table pairs add column deposit_paid_at timestamptz;
+```
+- **Semántica:** `status='accepted'` + `deposit_paid_at is null` → *pendiente de seña*;
+  `deposit_paid_at is not null` → *seña recibida* (además registra el cuándo). En pending/rejected la
+  columna es irrelevante (queda null).
+- **Sin exposición pública:** `public_pair_view` (0002) selecciona columnas explícitas → la nueva
+  columna **no** se filtra a anon. RLS cubierta por `pairs_all_owner` (organizer-only).
+- Aplicar con `npm run db:apply -- 0018`. Verificar con la anon key que `deposit_paid_at` no aparezca
+  en `public_pair_view`.
+
+### Reglas de negocio
+- El sub-estado de seña aplica **solo** a parejas `accepted`.
+- `acceptPair` **ya no** envía mail (se elimina `notifyStatusChange(...,'accepted')`). `rejectPair`
+  mantiene su mail automático.
+- Marcar / desmarcar seña: solo sobre parejas propias y `accepted`; best-effort + revalidate.
+- Aviso por **email**: solo si `player1.email` existe; best-effort (try/catch vía `send.ts`), no rompe nada.
+- Aviso por **WhatsApp**: client-side `wa.me`, dirigido a `player1.phone` normalizado si existe; si no,
+  abre WhatsApp sin destinatario (el organizer elige el chat). El teléfono es texto libre →
+  normalización best-effort (solo dígitos); números mal cargados caen al chat manual.
+- **Rechazo por falta de pago:** se habilita el botón **Rechazar** también en parejas `accepted` (hoy
+  solo aparece en `pending`).
+
+### Acceso a datos / acciones (`src/app/tournaments/[id]/registrations/actions.ts`)
+| Operación | Implementación |
+|---|---|
+| Quitar mail automático de aceptado | delta en `acceptPair` (remover la llamada a `notifyStatusChange(...,'accepted')`) |
+| Marcar seña recibida | nueva action `markDepositPaid(pairId)` → `update deposit_paid_at = now()` |
+| Deshacer seña | nueva action `unmarkDepositPaid(pairId)` → `update deposit_paid_at = null` |
+| Avisar aceptado+seña por email | nueva action `notifyAcceptedByEmail(pairId)` (reusa `acceptedEmail`, ahora manual) |
+
+### Plantillas / mensajes
+- `acceptedEmail` (`src/lib/email/templates.ts`): se reescribe el copy → "tu inscripción quedó **aceptada**
+  y **pendiente de seña**, coordinamos el pago" (sutil), conservando el link de seguimiento. Pasa de
+  envío automático a manual.
+- **`src/lib/share/messages.ts`** (nuevo, client-safe, sin deps server):
+  - `depositWhatsappText({ playerName, tournamentName, trackUrl })` → texto plano espejo del email para
+    el `wa.me`. Mantiene email y WhatsApp diciendo lo mismo.
+  - `toWhatsappNumber(phone): string | null` → deja solo dígitos; vacío → `null`.
+
+### UI (`registration-table.tsx` + `registrations/page.tsx`)
+- **`page.tsx`:** el `select` de `pairs` agrega `lookup_token, deposit_paid_at`; `RegistrationRow` suma
+  `lookup_token` y `deposit_paid_at`; se pasan `tournamentName` y `baseUrl` (`getBaseUrl()`) a
+  `<RegistrationTable>`.
+- **Badge de seña** en parejas aceptadas: **Pendiente de seña** (ámbar) / **Seña recibida** (verde),
+  junto al pill de estado.
+- **Acciones nuevas en parejas `accepted`:**
+  - **Avisar por WhatsApp** (link `wa.me`, abre pestaña).
+  - **Avisar por email** (llama `notifyAcceptedByEmail`, feedback "enviado"; oculto si J1 no tiene email).
+  - **Seña recibida** / **Deshacer** (toggle `markDepositPaid` / `unmarkDepositPaid`).
+  - **Rechazar** ahora también disponible (rechazo por falta de pago).
+- **Filtro nuevo "Pendiente de seña"** (aceptadas sin pago) para ver de un vistazo quién debe.
+
+### Criterios de aceptación
+- [x] Aceptar una pareja **no** dispara mail automático; queda `accepted` con badge "Pendiente de seña".
+- [x] El botón WhatsApp abre `wa.me` con el aviso pre-armado (sutil) y, si hay teléfono, dirigido al J1.
+- [x] "Avisar por email" envía el correo de aceptado+seña solo si el J1 tiene email; un fallo no rompe nada.
+- [x] "Seña recibida" marca la pareja (badge verde) y "Deshacer" la vuelve a pendiente.
+- [x] Una pareja aceptada puede **rechazarse** por falta de pago (botón Rechazar disponible en `accepted`).
+- [x] El filtro "Pendiente de seña" lista solo aceptadas sin pago.
+- [x] `public_pair_view` no expone `deposit_paid_at` (vista con columnas explícitas → no se filtra a anon).
+- [x] Build + lint OK.
+
+---
+
 ## Rutas — resumen v3
 
 ### Organizer (autenticada)
 | Ruta | Delta/Nueva | Descripción |
 |---|---|---|
 | `/tournaments/[id]` | delta | Botones de compartir (WhatsApp + Instagram) del link de inscripción |
+| `/tournaments/[id]/registrations` | delta | Badge + acciones de seña (avisar WhatsApp/email, marcar pago, rechazar) |
 | `/dashboard` | delta | Botones de compartir del calendario público |
 | `/register` | delta | Tras signUp, pantalla "revisá tu email" (ya no entra directo) |
 | `/login` | delta | Link "¿Olvidaste tu contraseña?" |
@@ -297,14 +399,18 @@ real** al registrarse y **reset de contraseña** ("olvidé mi contraseña"), env
 ---
 
 ## Resumen de deltas técnicos v3
-- **Sin migraciones SQL de tablas de negocio.** Toda la data necesaria ya existe.
+- **Una sola migración SQL:** `0018_pair_deposit.sql` (`pairs.deposit_paid_at`, Slice 6). El resto sin
+  cambios de tablas.
 - **Config de Supabase Auth** (vía Management API / dashboard): SMTP de Resend, `mailer_autoconfirm=false`,
   Site/Redirect URLs, templates es-AR.
 - **Dependencias nuevas:** `resend` (`next/og` ya viene con Next 16; `qrcode.react` ya está).
 - **Variables de entorno:** `RESEND_API_KEY`, `EMAIL_FROM`, `NEXT_PUBLIC_SITE_URL`.
-- **Capa nueva:** `src/lib/email/` (client/send/templates) + `src/lib/url.ts`.
+- **Capa nueva:** `src/lib/email/` (client/send/templates) + `src/lib/url.ts` + `src/lib/share/messages.ts`
+  (Slice 6).
 - **Server actions con delta:** `registerPair` (Slice 1), `acceptPair`/`rejectPair` + `loadOwnedPair`
-  (Slice 2), `registerOrganizer` (Slice 5).
+  (Slice 2), `registerOrganizer` (Slice 5); `acceptPair` + nuevas `markDepositPaid` /
+  `unmarkDepositPaid` / `notifyAcceptedByEmail` (Slice 6).
 - **Componentes/route handlers nuevos:** `share-buttons.tsx`, `/og/story` (×3), `/auth/confirm`,
-  `forgot-password`, `update-password`.
+  `forgot-password`, `update-password`. **Delta:** `registration-table.tsx` + `registrations/page.tsx`
+  (Slice 6).
 - **Diferido a la última versión:** transmisiones / streaming (sale de v3).
