@@ -143,6 +143,9 @@ viejo no soporta Next 16). Corre en el runtime de Workers (`nodejs_compat`), **n
   (`SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`, `EMAIL_FROM`). Supabase Auth: `site_url` =
   prod + `uri_allow_list` = local + prod (`/**`). `NEXT_PUBLIC_SITE_URL` se deja en localhost: en prod
   `getBaseUrl()` usa el host del request (el fallback no aplica para emails/OG, que corren in-request).
+  ⚠️ **TEMPORAL (2026-06-19): `mailer_autoconfirm = true`** (re-encendido para poder crear cuentas con
+  cualquier mail mientras Resend no tiene dominio verificado). **REVERTIR a `false`** antes de abrir
+  registro real o al verificar el dominio Resend (PATCH `config/auth` `{"mailer_autoconfirm":false}`).
   Subdominio de cuenta cambiado a `match-point` (se hizo desde el dashboard; el API rechaza cambiar uno
   ya existente, error 10036). Al cambiarlo hubo ~minutos de delay por provisión del cert TLS del nuevo
   subdominio + un redeploy para re-publicar el worker.
