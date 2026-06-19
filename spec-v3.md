@@ -59,28 +59,48 @@ El "qué/por qué" cross-versión vive en `functional-doc.md`. Las convenciones 
   envíe mails y arme URLs absolutas correctamente.
 
 ### B. Resend (proveedor de email — slices 0, 1, 2, 6 y 5)
-- [ ] Cuenta de Resend + `RESEND_API_KEY` generada.
+- [x] Cuenta de Resend + `RESEND_API_KEY` generada (validada: `GET https://api.resend.com/domains` → 200).
 - [ ] **Dominio remitente verificado** por DNS para el `EMAIL_FROM`. Sin dominio verificado, Resend
-  **solo** envía a la casilla de la cuenta; para pruebas en dev se puede usar
-  `Matchpoint <onboarding@resend.dev>`.
+  **solo** envía a la casilla **exacta** de la cuenta (p.ej. `bgcarpani@gmail.com`); para pruebas en
+  dev se usa `onboarding@resend.dev` como remitente.
+  ⚠️ **GOTCHA: el match del destinatario es literal** — los alias de Gmail (`bgcarpani+algo@gmail.com`)
+  **NO** se consideran "tu casilla" y Resend los rechaza con
+  `550 "You can only send testing emails to your own email address"`. Para testear con cualquier
+  destinatario (o el flujo de **registro**, ya que la única casilla permitida ya existe como cuenta),
+  hay que **verificar un dominio**.
 
-### C. Migración SQL (Slice 6 — seña)
-- [ ] Aplicar `supabase/migrations/0018_pair_deposit.sql`: `npm run db:apply -- 0018`
-  (**no idempotente** — correr una sola vez; re-aplicar falla porque la columna ya existe).
+### C. Migración SQL (Slice 6 — seña) — ✅ HECHO (2026-06-18)
+- [x] Aplicar `supabase/migrations/0018_pair_deposit.sql`: `npm run db:apply -- 0018`.
+  Confirmado aplicado: re-correrlo devuelve `column "deposit_paid_at" already exists` (no idempotente).
 - [ ] Verificar con la **anon key** que `public_pair_view` **no** expone `deposit_paid_at`.
 
-### D. Supabase Auth (Slice 5 — confirmación + reset) — lo más invasivo, hacer todo junto
-- [ ] **SMTP custom → Resend** en Auth → SMTP Settings (host/usuario/clave de Resend).
-- [ ] **`mailer_autoconfirm = false`** (hoy en DEV está en `true`). ⚠️ Al apagarlo, registrarse pasa a
-  **exigir confirmar el email**: si los pasos de abajo no están listos, nadie puede entrar. Por eso
-  este bloque se cierra **de una sola vez**.
-- [ ] **Site URL** = dominio de producción; **Redirect URLs** incluyendo local
-  (`http://localhost:3000/**`) y Cloudflare, con las rutas `/auth/confirm` y `/update-password`.
-- [ ] **Templates de Auth** (*Confirm signup* + *Reset password*) reescritos al flujo `token_hash`:
-  `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type={{ .Type }}`
-  (el de *recovery* agrega `&next=/update-password`). **Crítico:** sin este cambio el link por defecto
-  usa el flujo **PKCE** (`?code=…`) y el route handler (`verifyOtp`) **no** lo resuelve. (Pasar los
-  templates a es-AR es opcional pero recomendado.)
+### D. Supabase Auth (Slice 5 — confirmación + reset) — ✅ HECHO y VALIDADO (2026-06-18)
+- [x] **SMTP custom → Resend** en Auth → SMTP Settings (host `smtp.resend.com`, port `465`,
+  user `resend`, pass = Resend API key, remitente `onboarding@resend.dev` en dev).
+  ⚠️ **GOTCHA: el `smtp_pass` SOLO se puede cargar desde el dashboard.** El Management API
+  (`PATCH /v1/projects/{ref}/config/auth`) acepta el resto de los campos SMTP (host/port/user/
+  admin_email) pero **ignora silenciosamente `smtp_pass`** (devuelve 200 sin persistir; el GET
+  devuelve siempre un valor enmascarado fijo de 64 hex). Si los mails fallan con
+  `500 "Error sending confirmation email"`, revisar el password en el dashboard.
+- [x] **`mailer_autoconfirm = false`** confirmado. ⚠️ Al apagarlo, registrarse pasa a
+  **exigir confirmar el email**: si los pasos de abajo no están listos, nadie puede entrar.
+- [x] **Site URL** + **Redirect URLs** con local (`http://localhost:3000/**`) y Cloudflare,
+  cubriendo `/auth/confirm` y `/update-password`.
+- [x] **Templates de Auth** (*Confirm signup* + *Reset password*) reescritos al flujo `token_hash`:
+  `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup`
+  (el de *recovery*: `…&type=recovery&next=/update-password`).
+  ⚠️ **GOTCHA CRÍTICO (este rompía el flujo): NO usar `{{ .Type }}`.** `.Type` **no existe** como
+  variable de los templates de email de GoTrue (las válidas son `.ConfirmationURL`, `.TokenHash`,
+  `.SiteURL`, `.Token`, `.Email`, `.RedirectTo`, `.Data`), así que renderiza **vacío** → el link sale
+  con `type=` y el route handler (`if (token_hash && type)`) redirige a `/login?error=auth`.
+  **Hay que hardcodear** `type=signup` / `type=recovery`. Además, **los templates se editan en el
+  dashboard** (Auth → Emails → Templates): el `mailer_templates_*_content` del Management API **no es
+  el que GoTrue usa para renderizar** (lo pisa el del dashboard).
+- Nota: el `token_hash` sale con prefijo `pkce_` (el cliente `@supabase/ssr` usa flujo PKCE por
+  default). `verifyOtp({ token_hash, type })` lo resuelve igual (hace `POST /verify`, no requiere el
+  `code_verifier`), así que el handler actual funciona sin cambios.
+- ⚠️ El `rate_limit_email_sent` por default está en **2/hora** (límite del servicio interno). Subirlo
+  (p.ej. 100) para poder testear sin chocar `over_email_send_rate_limit`.
 
 ### E. Verificación end-to-end (recién con A–D hechos)
 - [ ] **Inscripción pendiente** (Slice 1): inscribir una pareja → el J1 con email recibe el mail
@@ -88,9 +108,15 @@ El "qué/por qué" cross-versión vive en `functional-doc.md`. Las convenciones 
 - [ ] **Cambio de estado** (Slices 2 + 6): rechazar → mail de rechazo automático; aceptar → **no**
   manda mail solo; "Avisar por email/WhatsApp" dispara el aviso de aceptado+seña; marcar/deshacer seña
   refleja el badge; "Pendiente de seña" filtra las aceptadas sin pago.
-- [ ] **Auth** (Slice 5): registrar organizer nuevo → llega mail de confirmación → el link deja
-  logueado en `/dashboard`; "Olvidé mi contraseña" → recovery → `/update-password` setea la nueva y
-  entra; token inválido/expirado → `/login?error=auth`.
+- [~] **Auth** (Slice 5) — validado e2e parcialmente (2026-06-18, Playwright):
+  - [x] "Olvidé mi contraseña" → recovery → **link real del mail** (`type=recovery`) →
+    `/auth/confirm` → `verifyOtp` (token `pkce_`) → `/update-password` setea la nueva → `/dashboard`.
+  - [x] **Login** con la contraseña nueva.
+  - [ ] **Registro → mail de confirmación → `/dashboard`**: NO probado e2e por la restricción de
+    Resend (la única casilla permitida ya existe como cuenta). Validado **por partes**: SMTP envía,
+    template con `type=signup`, `verifyOtp(signup)` resuelve, handler redirige. Pendiente: verificar
+    dominio en Resend para cerrarlo (ver B), o probar borrando/recreando el usuario.
+  - [ ] token inválido/expirado → `/login?error=auth` (no ejercitado en esta corrida).
 - [ ] **Share** (Slices 3 + 4): botones de WhatsApp e Instagram (imagen 1080×1920) funcionan en torneo,
   calendario público y campeón; en mobile el share sheet abre con la imagen.
 
@@ -312,10 +338,12 @@ admite compartir por URL desde la web; una historia necesita una imagen, así qu
 Completar el ciclo de auth que en v1 quedó con `mailer_autoconfirm=true`: **confirmación de email
 real** al registrarse y **reset de contraseña** ("olvidé mi contraseña"), enviados vía Resend.
 
-### Config (Supabase Auth)
+### Config (Supabase Auth) — ✅ validada e2e (2026-06-18)
 - SMTP custom → Resend; `mailer_autoconfirm = false`.
 - Site URL + Redirect URLs (local + Cloudflare).
-- Templates de Auth en es-AR (opcional pero recomendado).
+- Templates de Auth en es-AR con el `type` **hardcodeado** (`type=signup` / `type=recovery`),
+  editados **en el dashboard**. Ver los GOTCHAS en el handoff, sección D (no usar `{{ .Type }}`;
+  `smtp_pass` solo por dashboard; remitente `onboarding@resend.dev` sin dominio verificado).
 
 ### Implementación
 - **Route handler** `src/app/auth/confirm/route.ts`: valida `token_hash` con
@@ -336,16 +364,18 @@ real** al registrarse y **reset de contraseña** ("olvidé mi contraseña"), env
 - [x] Registrar un organizer nuevo dispara un mail de confirmación; sin confirmar no se puede entrar.
 - [x] Confirmar el email desde el link deja al organizer logueado en `/dashboard`.
 - [x] "Olvidé mi contraseña" envía el mail de recovery y permite setear una nueva contraseña end-to-end.
-- [ ] `mailer_autoconfirm=false` confirmado en la config de Auth. *(config manual — ver abajo)*
+      **Validado e2e con el link real del mail (2026-06-18, Playwright).**
+- [x] `mailer_autoconfirm=false` confirmado en la config de Auth.
 
-> **Código completo (build + lint OK).** El flujo end-to-end depende de **config manual en Supabase
-> Auth** (no se hace por código), pendiente de cerrar en el dashboard / Management API:
-> 1. **SMTP custom → Resend** y `mailer_autoconfirm = false`.
-> 2. **Site URL + Redirect URLs** con el dominio local y el de Cloudflare (deben incluir `/auth/confirm`).
-> 3. **Templates de Auth (Confirm signup / Reset password)** apuntando al flujo `token_hash`:
->    `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type={{ .Type }}` (el de recovery agrega
->    `&next=/update-password`). Sin este cambio, el link por defecto usa el flujo PKCE (`?code=`) y
->    `verifyOtp` no aplica.
+> **Código completo (build + lint OK) y flujo de reset + login validado e2e (2026-06-18).** La config
+> de Supabase Auth quedó cerrada **en el dashboard** (ver handoff D para los GOTCHAS):
+> 1. **SMTP custom → Resend** (`smtp_pass` solo cargable por dashboard) y `mailer_autoconfirm = false`.
+> 2. **Site URL + Redirect URLs** con local + Cloudflare (incluyen `/auth/confirm`).
+> 3. **Templates (Confirm signup / Reset password)** con el `type` **hardcodeado**:
+>    `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup` (recovery:
+>    `…&type=recovery&next=/update-password`). **NO usar `{{ .Type }}`** (no es variable válida →
+>    renderiza vacío → `/login?error=auth`). El `token_hash` sale con prefijo `pkce_` y `verifyOtp` lo
+>    resuelve igual. **Pendiente:** registro→confirmación e2e (bloqueado por el dominio de Resend, ver B).
 > Decisiones de código: `requestPasswordReset` responde siempre `{ ok: true }` (anti-enumeración de
 > emails); `registerOrganizer` pasa de `redirect('/dashboard')` a `{ ok: true }` + pantalla "Revisá tu
 > email"; `/auth/confirm` redirige a `/login?error=auth` ante token inválido/expirado.

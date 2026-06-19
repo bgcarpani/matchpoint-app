@@ -49,3 +49,7 @@ public/swe-worker*
 .open-next/
 .wrangler/
 .dev.vars
+
+# artefactos locales (no son código de la app)
+.playwright-mcp/
+presentacion/
