@@ -44,3 +44,8 @@ next-env.d.ts
 # pwa (service worker generado por serwist)
 public/sw.js
 public/swe-worker*
+
+# cloudflare / opennext (build artifacts + secrets locales)
+.open-next/
+.wrangler/
+.dev.vars

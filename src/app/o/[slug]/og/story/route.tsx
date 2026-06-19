@@ -9,8 +9,6 @@ import {
 import { getBaseUrl } from '@/lib/url'
 import { buildStory } from '@/lib/og/story'
 
-export const runtime = 'edge'
-
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ slug: string }> }

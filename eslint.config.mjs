@@ -15,6 +15,12 @@ const eslintConfig = defineConfig([
     // Service worker generado por serwist (bundle minificado, no lintear).
     "public/sw.js",
     "public/swe-worker*",
+    // Bundle del worker generado por OpenNext/Cloudflare (no lintear).
+    ".open-next/**",
+    // Artefactos temporales de wrangler (build/preview).
+    ".wrangler/**",
+    // Fuentes embebidas en base64 (generado por scripts/generate-og-fonts.mjs).
+    "src/lib/og/fonts.generated.ts",
   ]),
 ]);
 

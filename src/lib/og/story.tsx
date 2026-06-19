@@ -5,11 +5,13 @@
  * los route handlers `/og/story` de torneo, campeón y calendario.
  *
  * Consistencia con la app:
- * - **Tipografía Archivo** (la misma que la app vía `next/font`). Satori corre en
- *   edge y no ve las fuentes del navegador, así que bundleamos los .ttf estáticos
- *   (400/700/800) en `./fonts` y se los pasamos a `ImageResponse`. Los títulos y
- *   el wordmark replican la clase `.font-display` (Archivo 800 uppercase, tracking
- *   tight) de `globals.css`.
+ * - **Tipografía Archivo** (la misma que la app vía `next/font`). Satori no ve las
+ *   fuentes del navegador, así que los .ttf (400/700/800) van **embebidos en
+ *   base64** (`fonts.generated.ts`, generado desde `./fonts/*.ttf`) y se los
+ *   pasamos a `ImageResponse`. Se embeben (en vez de `fetch(import.meta.url)`)
+ *   porque en Cloudflare Workers no se puede `fetch` un asset bundleado. Los
+ *   títulos y el wordmark replican la clase `.font-display` (Archivo 800
+ *   uppercase, tracking tight) de `globals.css`.
  * - **Tokens de color** = los de `globals.css` (`--background`, `--foreground`,
  *   `--volt`, `--muted-foreground`).
  *
@@ -22,11 +24,12 @@
  *   El contenido vive en la franja superior/central y el tercio inferior queda
  *   libre para que la persona ubique ahí el sticker de enlace.
  *
- * Corre en edge runtime (Satori). Estilos inline + flexbox: Satori no soporta
- * grid y exige `display:flex` en todo nodo con varios hijos. Sin emojis ni
- * glifos especiales: la fuente puede no tenerlos.
+ * Corre en el runtime de Cloudflare Workers (Satori). Estilos inline + flexbox:
+ * Satori no soporta grid y exige `display:flex` en todo nodo con varios hijos.
+ * Sin emojis ni glifos especiales: la fuente puede no tenerlos.
  */
 import { ImageResponse } from 'next/og'
+import { ARCHIVO_FONTS } from './fonts.generated'
 
 const VOLT = '#3b82f6'
 const BG = '#0b1220'
@@ -34,12 +37,6 @@ const INK = '#ecf0f7'
 const MUTED = '#9aa6bd'
 
 type FontWeight = 400 | 700 | 800
-
-const FONT_FILES: { weight: FontWeight; url: URL }[] = [
-  { weight: 400, url: new URL('./fonts/archivo-400.ttf', import.meta.url) },
-  { weight: 700, url: new URL('./fonts/archivo-700.ttf', import.meta.url) },
-  { weight: 800, url: new URL('./fonts/archivo-800.ttf', import.meta.url) },
-]
 
 type LoadedFont = {
   name: string
@@ -50,17 +47,27 @@ type LoadedFont = {
 
 let fontsCache: LoadedFont[] | null = null
 
-/** Carga (y cachea por módulo) los .ttf de Archivo bundleados. */
-async function loadFonts(): Promise<LoadedFont[]> {
+/** Decodifica base64 → ArrayBuffer sin depender de Buffer (portable a edge/workerd). */
+function base64ToArrayBuffer(b64: string): ArrayBuffer {
+  const binary = atob(b64)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+  return bytes.buffer
+}
+
+/**
+ * Devuelve (y cachea por módulo) los .ttf de Archivo embebidos como base64
+ * (ver `fonts.generated.ts`). No usa `fetch`/fs: en Cloudflare Workers no se
+ * puede `fetch` un asset bundleado vía `import.meta.url`.
+ */
+function loadFonts(): LoadedFont[] {
   if (fontsCache) return fontsCache
-  fontsCache = await Promise.all(
-    FONT_FILES.map(async ({ weight, url }) => ({
-      name: 'Archivo',
-      data: await fetch(url).then((r) => r.arrayBuffer()),
-      weight,
-      style: 'normal' as const,
-    }))
-  )
+  fontsCache = ARCHIVO_FONTS.map(({ weight, data }) => ({
+    name: 'Archivo',
+    data: base64ToArrayBuffer(data),
+    weight,
+    style: 'normal' as const,
+  }))
   return fontsCache
 }
 
@@ -85,7 +92,7 @@ export async function buildStory({
   caption,
 }: StoryInput): Promise<ImageResponse> {
   const displayUrl = url.replace(/^https?:\/\//, '').replace(/\/$/, '')
-  const fonts = await loadFonts()
+  const fonts = loadFonts()
 
   return new ImageResponse(
     (

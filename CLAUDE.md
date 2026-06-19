@@ -18,7 +18,8 @@ Las primeras versiones son organizer-first.
 - Tailwind CSS + shadcn/ui
 - Supabase (PostgreSQL + Auth)
 - PWA (instalable + offline) vía Serwist
-- Deploy: Cloudflare Pages
+- Deploy: **Cloudflare Workers** (vía `@opennextjs/cloudflare`, no el "Pages" clásico:
+  el adapter `next-on-pages` no soporta Next 16). Ver sección "Deploy (Cloudflare / OpenNext)".
 
 > Regla: cada tecnología/herramienta se instala solo cuando es necesaria, no antes.
 
@@ -47,16 +48,19 @@ Slices completados (build + lint + e2e OK): **Fundación, Auth de Organizer, Can
 (CRUD + ciclo de vida), **Inscripciones** (alta pública + accept/reject/remove + consulta por token),
 **Zonas y partidos** (generación al azar + round-robin vía RPC, reasignación de parejas y cancha
 opcional por partido editables antes de publicar, vista pública en `/t/[id]/zones`).
-**v1 MVP funcionalmente completo.** Pendiente conocido: apertura automática de inscripción
-(`registration_opens_at`) requiere un job programado (Supabase cron) — hoy la apertura es manual.
+**v1 MVP funcionalmente completo.** La apertura de inscripción es **manual** (decisión de producto):
+`registration_opens_at` se conserva como dato, pero no se implementa un job programado de apertura
+automática (no es un pendiente).
 
 **v2 — slices 1 a 5 completados** (build + lint OK, commiteados): calendario público + QR,
 anti-duplicado por email, resultados/scoring, standings de zona + formatos de partido, y fase de
 llaves / bracket. **Feature 6 (Realtime / seguimiento en vivo) SUSPENDIDA** (2026-06-13): postergada
 por decisión de producto; en su lugar se priorizan refinamientos de UI/UX. Hechos: filtrado público
 de zonas funcional (`/t/[id]/zones`), rediseño del manager de zonas (tarjetas de partido compactas +
-sección "Partidos" separada de parejas/posiciones). Pendiente: botón "compartir campeón".
-Especificación en `spec-v2.md`; el detalle granular por slice vive en la memoria del asistente.
+sección "Partidos" separada de parejas/posiciones), y **botón "compartir campeón"** (share del campeón
+en la página de llaves del organizer, `bracket-board.tsx` → `ShareButtons` con `storyUrl` a
+`/t/[id]/bracket/og/story`). Especificación en `spec-v2.md`; el detalle granular por slice vive en la
+memoria del asistente.
 
 **v3 — comunicaciones: TODOS los slices implementados (build + lint OK, commiteados).** Eje: email
 transaccional vía Resend. Hechos: (0) infra de email + `getBaseUrl()`, (1) email de inscripción
@@ -66,11 +70,16 @@ imagen generada (`next/og`, fuente Archivo embebida), (5) auth por email del org
 real + reset de contraseña; rutas `/auth/confirm`, `/forgot-password`, `/update-password`), (6) seña /
 pendiente de pago (sub-estado de `accepted`, migración `0018_pair_deposit.sql`). Decisiones: Resend (no
 Gmail SMTP); mails solo al jugador 1; WhatsApp **automático** pospuesto (solo el botón de compartir
-entra); transmisiones/streaming diferido a la última versión. **Pendiente NO-código para que v3 ande
-end-to-end** (env vars + Resend + migración `0018` + config de Supabase Auth): checklist autoritativo
-en `spec-v3.md` → sección **"Pendientes para funcionamiento end-to-end (handoff — cierre de v3)"**.
-Hasta cerrar la config de Auth, en DEV sigue `mailer_autoconfirm=true`. Especificación completa en
-`spec-v3.md`.
+entra); transmisiones/streaming diferido a la última versión. **Config de Auth cerrada y validada e2e
+(2026-06-18):** SMTP custom → Resend + `mailer_autoconfirm=false`; flujo de **reset de contraseña +
+login probado end-to-end con el link real del mail** (Playwright). Gotchas encontrados (documentados en
+`spec-v3.md` handoff D/B): (a) en los templates de Auth **NO usar `{{ .Type }}`** — no es variable
+válida de GoTrue, renderiza vacío y manda a `/login?error=auth`; hardcodear `type=signup`/`type=recovery`;
+(b) los templates se editan **en el dashboard**, no por Management API; (c) `smtp_pass` solo se carga por
+dashboard (el Management API lo ignora); (d) Resend sin dominio verificado solo entrega a la casilla
+**exacta** de la cuenta (los alias `+` de Gmail se rechazan). **Pendiente:** registro→confirmación e2e
+(bloqueado por el dominio de Resend) y demás verificaciones del checklist. Checklist autoritativo en
+`spec-v3.md` → **"Pendientes para funcionamiento end-to-end (handoff — cierre de v3)"**.
 
 **Mejoras post-v3.** *Carga manual de parejas por el organizer:* en `/tournaments/[id]/registrations`,
 botón "Agregar pareja" → form inline (`add-pair-form.tsx`) + action `addPairManually`. A diferencia del
@@ -84,10 +93,15 @@ Mantiene el anti-duplicado por email y el requisito de nombre + un contacto por 
 > No revertir sin discusión; reflejan decisiones ya validadas en código y verificadas e2e.
 
 ### Next 16
-- El middleware se llama **`proxy`** (breaking change): `src/proxy.ts` + `src/lib/supabase/proxy.ts`;
-  la función exportada es `proxy`, no `middleware`.
+- **Middleware en `src/middleware.ts`** (export `middleware`) + `src/lib/supabase/proxy.ts`.
+  ⚠️ Next 16 renombró Middleware → **Proxy** (`proxy.ts`, export `proxy`), pero el Proxy corre
+  **solo** en runtime Node.js y el adapter de Cloudflare (`@opennextjs/cloudflare`) **aún no soporta
+  Node middleware** (opennextjs-cloudflare#962): el build aborta con *"Node.js middleware is not
+  currently supported"*. Por eso se usa el nombre legacy `middleware.ts`, que Next 16 todavía emite
+  como **edge middleware** (lo único que OpenNext acepta). Volver a `proxy.ts` cuando OpenNext lo
+  soporte. (Decisión 2026-06-19, validada e2e en preview de workerd.)
 - `cookies()` es async; los `params` de página/route son `Promise` → siempre `await`.
-- La protección de rutas del proxy es **optimista**: cada página del área organizer revalida con
+- La protección de rutas del middleware es **optimista**: cada página del área organizer revalida con
   `supabase.auth.getUser()` y redirige a `/login` por su cuenta.
 
 ### PWA (instalable + offline)
@@ -105,6 +119,27 @@ requiere app nativa y ni así da link clickeable, por eso se mantiene el flujo a
 - **Serwist usa webpack, no Turbopack** → `npm run build` corre con `--webpack`. El SW se desactiva
   en dev, así que `npm run dev` sigue con Turbopack; para probar offline: `npm run build && npm run start`.
 - **Pendiente (Fase 2)**: push notifications (Web Push / VAPID) sobre la PWA.
+
+### Deploy (Cloudflare / OpenNext)
+La app se despliega a **Cloudflare Workers** con `@opennextjs/cloudflare` (no "Pages": el adapter
+viejo no soporta Next 16). Corre en el runtime de Workers (`nodejs_compat`), **no edge**.
+- **Config**: `wrangler.jsonc` (`nodejs_compat` + `global_fetch_strictly_public`, compat date
+  `2024-12-30`, binding `ASSETS`) + `open-next.config.ts` (mínima, sin caché incremental R2 por ahora).
+  `next.config.ts` llama `initOpenNextCloudflareForDev()` (solo afecta `next dev`).
+- **Scripts**: `npm run preview` (build + workerd local), `npm run deploy` (build + deploy),
+  `npm run cf-typegen`. El `build` interno sigue siendo `next build --webpack` (Serwist). Generado:
+  `.open-next/` (gitignored, ESLint-ignored). Secrets locales del preview: `.dev.vars` (gitignored).
+- ⚠️ **Edge runtime no soportado**: se quitó `export const runtime = 'edge'` de las 3 rutas OG/story
+  (`*/og/story/route.tsx`); `ImageResponse` corre igual en el runtime de Workers.
+- ⚠️ **Fuentes OG embebidas**: en Workers no se puede `fetch(new URL(..., import.meta.url))` un asset,
+  así que los .ttf de Archivo van en base64 en `src/lib/og/fonts.generated.ts` (regenerar con
+  `node scripts/generate-og-fonts.mjs` si cambian; fuente de verdad: `src/lib/og/fonts/*.ttf`).
+- ⚠️ **Windows**: el preview local tira warning de incompatibilidad y puede fallar de forma errática;
+  el deploy real (Workers Builds, corre en Linux) no se ve afectado. Validado e2e igual en workerd
+  local (2026-06-19): home/login/register 200, redirect de auth, y las 3 OG renderizan PNG.
+- **Pendiente (lado Cloudflare, no en repo)**: crear el Worker / conectar el repo (Workers Builds),
+  cargar env vars + secrets (Production + Preview), y setear `NEXT_PUBLIC_SITE_URL` + las Redirect URLs
+  de Supabase Auth al dominio del deploy.
 
 ### Supabase — clientes y claves
 - `src/lib/supabase/{client,server,admin}.ts`: navegador (publishable) / SSR con cookies (async) /

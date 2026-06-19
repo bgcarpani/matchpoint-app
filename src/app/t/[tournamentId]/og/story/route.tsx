@@ -8,8 +8,6 @@ import { buildStory } from '@/lib/og/story'
 import { categoryLabel, GENDER_LABELS } from '@/lib/domain/tournament'
 import { formatDate } from '@/lib/format'
 
-export const runtime = 'edge'
-
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ tournamentId: string }> }
