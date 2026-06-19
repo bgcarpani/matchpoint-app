@@ -138,13 +138,15 @@ viejo no soporta Next 16). Corre en el runtime de Workers (`nodejs_compat`), **n
   el deploy real (Workers Builds, corre en Linux) no se ve afectado. Validado e2e igual en workerd
   local (2026-06-19): home/login/register 200, redirect de auth, y las 3 OG renderizan PNG.
 - **LIVE (2026-06-19)**: worker `app` deployado vía `npm run deploy` (local, `wrangler login`) en
-  **`https://app.bgcarpani.workers.dev`**. Smoke test e2e en prod OK: home/login/register 200,
+  **`https://app.match-point.workers.dev`**. Smoke test e2e en prod OK: home/login/register 200,
   redirect de auth, OG/story PNG. Secrets de runtime seteados con `wrangler secret put`
   (`SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`, `EMAIL_FROM`). Supabase Auth: `site_url` =
   prod + `uri_allow_list` = local + prod (`/**`). `NEXT_PUBLIC_SITE_URL` se deja en localhost: en prod
   `getBaseUrl()` usa el host del request (el fallback no aplica para emails/OG, que corren in-request).
-- **Pendientes (lado Cloudflare, opcionales)**: (a) cambiar el subdominio de cuenta `bgcarpani`
-  (dashboard → Workers → Subdomain) si se quiere otra URL; (b) borrar el worker huérfano `matchpoint-app`
+  Subdominio de cuenta cambiado a `match-point` (se hizo desde el dashboard; el API rechaza cambiar uno
+  ya existente, error 10036). Al cambiarlo hubo ~minutos de delay por provisión del cert TLS del nuevo
+  subdominio + un redeploy para re-publicar el worker.
+- **Pendientes (lado Cloudflare, opcionales)**: (b) borrar el worker huérfano `matchpoint-app`
   (de un deploy fallido previo al rename); (c) dominio propio (Custom Domain) para el lanzamiento;
   (d) migrar a Workers Builds (CI desde GitHub) si se quiere deploy automático por push; (e) dominio
   verificado en Resend para mandar mails a cualquier destinatario (hoy solo a la casilla de la cuenta).
