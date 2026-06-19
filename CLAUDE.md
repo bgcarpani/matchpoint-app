@@ -33,6 +33,8 @@ npm run dev                 # desarrollo local
 npm run build              # build de producción
 npm run start              # servir build de producción
 npm run lint               # linting
+npm run preview            # build OpenNext + corre el worker en workerd (local, prod-like)
+npm run deploy             # build OpenNext + deploy a Cloudflare Workers (producción)
 npm run db:apply           # aplica migraciones SQL pendientes vía Supabase Management API
 npm run seed:registrations # carga data fake de solicitudes en un torneo (testing)
 ```
@@ -89,6 +91,19 @@ alta pública (`register_pair`, anon): no exige inscripción abierta (sirve mien
 de INSERT para `authenticated`; la propiedad del torneo se valida antes vía RLS de `tournaments`).
 Mantiene el anti-duplicado por email y el requisito de nombre + un contacto por jugador.
 
+## Cierre de MVP y deploy (2026-06-19) — leer al abrir sesión nueva
+**El código en `master` es el MVP y está deployado en producción** (`https://app.match-point.workers.dev`).
+`master` == `origin/master` == lo deployado. La rama `v3-comunicaciones` quedó idéntica a `master`.
+- **Próxima etapa (antes de las siguientes versiones): cambios estéticos / UI.** Para el clean start,
+  brancheá desde `master` (ej. `git checkout -b v3-ui`).
+- **Cómo deployar**: ver el runbook en "Convenciones → Deploy (Cloudflare / OpenNext)".
+- **Cosas vivas en la nube (no en el repo) a recordar:**
+  1. ⚠️ `mailer_autoconfirm = true` está **TEMPORAL** en Supabase (para crear cuentas con cualquier mail
+     sin dominio Resend). **Revertir a `false`** antes de abrir registro real.
+  2. **Dominio propio pendiente** — cierra de un saque: emails a cualquiera (Resend verificado), reset de
+     contraseña real, registro seguro, y URL linda (Custom Domain en Cloudflare). Es el último tramo de v3.
+  3. Worker huérfano `matchpoint-app` (de un deploy fallido) — borrar del dashboard cuando quieras.
+
 ## Convenciones de implementación (v1)
 > No revertir sin discusión; reflejan decisiones ya validadas en código y verificadas e2e.
 
@@ -123,6 +138,19 @@ requiere app nativa y ni así da link clickeable, por eso se mantiene el flujo a
 ### Deploy (Cloudflare / OpenNext)
 La app se despliega a **Cloudflare Workers** con `@opennextjs/cloudflare` (no "Pages": el adapter
 viejo no soporta Next 16). Corre en el runtime de Workers (`nodejs_compat`), **no edge**.
+
+> **Cómo deployar a producción** (`https://app.match-point.workers.dev`):
+> 1. `git checkout master` — pará en la rama que represente prod. **El deploy usa el working tree en
+>    disco, no git**, y pisa la **única** producción (un solo worker `app`, sin staging). Revisá
+>    `git status` para saber qué cambios sin commitear se van a colar.
+> 2. `rm -rf .open-next` — (Windows) evita el error `EPERM` por lock de la carpeta de build.
+> 3. `npm run deploy` — buildea (`next build --webpack`) + sube el worker.
+> 4. Verificá: `curl -s -o /dev/null -w "%{http_code}\n" https://app.match-point.workers.dev/` → `200`.
+>
+> No hace falta re-cargar secrets (persisten en el worker entre deploys). Requiere `wrangler login`
+> hecho una vez (auth OAuth guardada local). Si cambiás de **dominio/subdominio**: redeploy + actualizar
+> `site_url` y `uri_allow_list` en Supabase Auth (Management API) al dominio nuevo, o se rompe el auth.
+
 - **Config**: `wrangler.jsonc` (`nodejs_compat` + `global_fetch_strictly_public`, compat date
   `2024-12-30`, binding `ASSETS`) + `open-next.config.ts` (mínima, sin caché incremental R2 por ahora).
   `next.config.ts` llama `initOpenNextCloudflareForDev()` (solo afecta `next dev`).
