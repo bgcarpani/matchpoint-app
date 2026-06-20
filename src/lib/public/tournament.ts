@@ -34,6 +34,86 @@ export interface PublicTournamentView {
   zones_published: boolean
 }
 
+export interface PublicLiveMatch {
+  id: string
+  team1Label: string
+  team2Label: string
+  courtName: string | null
+  zoneName: string
+}
+
+export interface PublicMatchPulse {
+  /** zonas publicadas (para el stat strip) */
+  zonesCount: number
+  /** partidos aún por jugar en zonas publicadas (con cancha primero) */
+  pending: PublicLiveMatch[]
+}
+
+const pairLabel = (p1: string, p2: string) => `${p1} / ${p2}`
+
+/**
+ * "Pulso" del torneo en vivo para la página pública: cantidad de zonas
+ * publicadas + los partidos que todavía no se jugaron. Los partidos no tienen
+ * estado `in_progress` ni horario en el modelo (van de `pending` a `finished`),
+ * así que "lo que se está jugando" se representa con los `pending` —los
+ * asignados a una cancha se muestran primero (son los que están en juego ahora).
+ */
+export async function getPublicMatchPulse(
+  tournamentId: string
+): Promise<PublicMatchPulse> {
+  if (!/^[0-9a-f-]{36}$/i.test(tournamentId)) return { zonesCount: 0, pending: [] }
+
+  const supabase = await createClient()
+
+  // RLS limita a zonas publicadas del torneo.
+  const { data: zones } = await supabase
+    .from('zones')
+    .select('id, name')
+    .eq('tournament_id', tournamentId)
+
+  if (!zones || zones.length === 0) return { zonesCount: 0, pending: [] }
+
+  const zoneIds = zones.map((z) => z.id)
+  const zoneName = new Map(zones.map((z) => [z.id, z.name]))
+
+  const [{ data: matches }, { data: pairView }, { data: courts }] =
+    await Promise.all([
+      supabase
+        .from('matches')
+        .select('id, zone_id, court_id, team1_pair_id, team2_pair_id, status')
+        .in('zone_id', zoneIds)
+        .eq('status', 'pending'),
+      supabase
+        .from('public_pair_view')
+        .select('id, player1_name, player2_name')
+        .eq('tournament_id', tournamentId),
+      supabase
+        .from('public_court_view')
+        .select('id, name')
+        .eq('tournament_id', tournamentId),
+    ])
+
+  const label = new Map(
+    (pairView ?? []).map((p) => [p.id, pairLabel(p.player1_name, p.player2_name)])
+  )
+  const courtName = new Map((courts ?? []).map((c) => [c.id, c.name]))
+
+  const pending: PublicLiveMatch[] = (matches ?? [])
+    // sólo cruces ya definidos (ambas parejas presentes)
+    .filter((m) => m.team1_pair_id && m.team2_pair_id)
+    .map((m) => ({
+      id: m.id,
+      team1Label: label.get(m.team1_pair_id ?? '') ?? '—',
+      team2Label: label.get(m.team2_pair_id ?? '') ?? '—',
+      courtName: m.court_id ? (courtName.get(m.court_id) ?? null) : null,
+      zoneName: zoneName.get(m.zone_id ?? '') ?? '—',
+    }))
+    // con cancha asignada primero (los que están sobre la cancha)
+    .sort((a, b) => Number(Boolean(b.courtName)) - Number(Boolean(a.courtName)))
+
+  return { zonesCount: zones.length, pending }
+}
+
 export async function getPublicTournament(
   id: string
 ): Promise<PublicTournamentView | null> {

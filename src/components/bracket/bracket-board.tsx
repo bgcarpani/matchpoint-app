@@ -10,6 +10,7 @@ import { BracketMatchCard } from '@/components/bracket/bracket-match-card'
 import { ShareButtons } from '@/components/share/share-buttons'
 import { PrintButton } from '@/components/share/print-button'
 import { BracketViewToggle, type BracketViewMode } from '@/components/bracket/bracket-view-toggle'
+import { PrintFit } from '@/components/print/print-fit'
 import {
   generateBracket,
   generateEmptyBracket,
@@ -299,7 +300,8 @@ export function BracketBoard({
       {/* Cuadro (árbol): cada ronda una columna; los cruces se centran entre sus
           dos alimentadores y los conectores `]` los unen. Scroll horizontal. */}
       {hasBracket && view === 'cuadro' && (
-        <div className="mt-6 overflow-x-auto pb-4">
+        <PrintFit>
+        <div className="bracket-scroll mt-6 overflow-x-auto pb-4">
           <div className="flex min-w-max items-stretch">
             {rounds.map(({ round, matches: ms }, ri) => (
               <Fragment key={round}>
@@ -323,11 +325,12 @@ export function BracketBoard({
             ))}
           </div>
         </div>
+        </PrintFit>
       )}
 
       {/* Lista: rondas apiladas (vista compacta / imprimible linealmente). */}
       {hasBracket && view === 'lista' && (
-        <>
+        <PrintFit>
           {rounds.length > 1 && (
             <div className="no-print sticky top-0 z-10 mt-6 -mx-1 flex flex-wrap gap-2 bg-background/80 px-1 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/60">
               <RoundChip
@@ -368,7 +371,7 @@ export function BracketBoard({
               )
             })}
           </div>
-        </>
+        </PrintFit>
       )}
     </div>
   )

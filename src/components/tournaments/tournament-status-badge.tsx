@@ -3,12 +3,13 @@ import type { TournamentStatus } from '@/lib/types/database'
 import { cn } from '@/lib/utils'
 
 const STYLES: Record<TournamentStatus, string> = {
-  draft: 'border border-border text-muted-foreground',
-  published: 'border border-volt/40 text-volt',
-  registration_open: 'bg-volt text-volt-foreground',
+  draft: 'bg-secondary text-muted-foreground',
+  published: 'bg-[color:var(--volt-tint)] text-[color:var(--volt-deep)]',
+  registration_open:
+    'bg-[color:var(--success-tint)] text-[color:var(--success-deep)]',
   registration_closed: 'bg-secondary text-secondary-foreground',
-  in_progress: 'border border-volt/40 text-volt',
-  finished: 'border border-border text-muted-foreground/70',
+  in_progress: 'bg-[color:var(--volt-tint)] text-[color:var(--volt-deep)]',
+  finished: 'bg-secondary text-muted-foreground/80',
 }
 
 export function TournamentStatusBadge({
@@ -29,12 +30,8 @@ export function TournamentStatusBadge({
     >
       <span
         className={cn(
-          'size-1.5 rounded-full',
-          status === 'registration_open'
-            ? 'animate-pulse bg-volt-foreground'
-            : active
-              ? 'animate-pulse bg-volt'
-              : 'bg-current opacity-50'
+          'size-1.5 rounded-full bg-current',
+          active ? 'animate-pulse' : 'opacity-50'
         )}
         aria-hidden
       />

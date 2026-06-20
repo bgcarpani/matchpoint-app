@@ -7,7 +7,6 @@
  */
 import { createClient } from '@/lib/supabase/server'
 import type { MatchFormat, ScoringMode } from '@/lib/types/database'
-import { formatResult } from '@/lib/domain/match'
 import type { StandingRow } from '@/lib/domain/zone'
 
 export interface PublicZoneMatch {
@@ -16,8 +15,12 @@ export interface PublicZoneMatch {
   team1Label: string
   team2Label: string
   courtName: string | null
-  /** marcador formateado si el partido terminó; null si no */
-  score: string | null
+  /** true si el partido ya se jugó (tiene resultado cargado) */
+  played: boolean
+  /** marcador estructurado (mismo formato que el lado organizer) */
+  team1Score: number | null
+  team2Score: number | null
+  scoreDetail: number[][] | null
   winner: 'team1' | 'team2' | null
 }
 
@@ -25,6 +28,7 @@ export interface PublicZoneView {
   id: string
   name: string
   matchFormat: MatchFormat
+  scoringMode: ScoringMode
   standingsFrozen: boolean
   standings: StandingRow[]
   pairs: { pairId: string; label: string }[]
@@ -108,6 +112,7 @@ export async function getPublicZones(
     id: z.id,
     name: z.name,
     matchFormat: z.match_format,
+    scoringMode,
     standingsFrozen: z.standings_frozen,
     standings: (zonePairs ?? [])
       .filter((zp) => zp.zone_id === z.id)
@@ -140,15 +145,10 @@ export async function getPublicZones(
         team1Label: pairLabel.get(m.team1_pair_id ?? '') ?? '—',
         team2Label: pairLabel.get(m.team2_pair_id ?? '') ?? '—',
         courtName: m.court_id ? (courtName.get(m.court_id) ?? null) : null,
-        score:
-          m.status === 'finished'
-            ? formatResult(
-                scoringMode,
-                m.team1_score,
-                m.team2_score,
-                m.score_detail
-              )
-            : null,
+        played: m.status === 'finished',
+        team1Score: m.team1_score,
+        team2Score: m.team2_score,
+        scoreDetail: m.score_detail,
         winner: m.winner_pair_id
           ? m.winner_pair_id === m.team1_pair_id
             ? ('team1' as const)

@@ -43,30 +43,50 @@ export function ZoneStandings({
           </tr>
         </thead>
         <tbody>
-          {sorted.map((row, i) => (
-            <tr
-              key={row.pairId}
-              className="border-t border-border text-foreground"
-            >
-              <td className="px-3 py-2 tnum text-muted-foreground">
-                {row.position ?? i + 1}
-              </td>
-              <td className="px-3 py-2">{row.label}</td>
-              <td className="px-2 py-2 text-center tnum text-muted-foreground">
-                {row.played}
-              </td>
-              <td className="px-2 py-2 text-center tnum">{row.won}</td>
-              <td className="px-2 py-2 text-center tnum text-muted-foreground">
-                {row.lost}
-              </td>
-              <td className="px-2 py-2 text-center tnum">
-                {row.gamesDiff > 0 ? `+${row.gamesDiff}` : row.gamesDiff}
-              </td>
-              <td className="px-2 py-2 text-center font-semibold tnum">
-                {row.points}
-              </td>
-            </tr>
-          ))}
+          {sorted.map((row, i) => {
+            const rank = row.position ?? i + 1
+            const isLeader = rank === 1
+            const dgColor =
+              row.gamesDiff > 0
+                ? 'text-[color:var(--success)]'
+                : row.gamesDiff < 0
+                  ? 'text-destructive'
+                  : 'text-muted-foreground'
+            return (
+              <tr
+                key={row.pairId}
+                className={`border-t border-border text-foreground ${
+                  isLeader ? 'bg-[color:var(--volt-surface)]' : ''
+                }`}
+              >
+                <td
+                  className={`px-3 py-2 font-mono tnum ${
+                    isLeader
+                      ? 'border-l-2 border-l-volt font-bold text-volt'
+                      : 'text-muted-foreground'
+                  }`}
+                >
+                  {rank}
+                </td>
+                <td className="px-3 py-2 font-semibold">{row.label}</td>
+                <td className="px-2 py-2 text-center font-mono tnum text-muted-foreground">
+                  {row.played}
+                </td>
+                <td className="px-2 py-2 text-center font-mono tnum">
+                  {row.won}
+                </td>
+                <td className="px-2 py-2 text-center font-mono tnum text-muted-foreground">
+                  {row.lost}
+                </td>
+                <td className={`px-2 py-2 text-center font-mono tnum ${dgColor}`}>
+                  {row.gamesDiff > 0 ? `+${row.gamesDiff}` : row.gamesDiff}
+                </td>
+                <td className="px-2 py-2 text-center font-mono font-bold tnum">
+                  {row.points}
+                </td>
+              </tr>
+            )
+          })}
         </tbody>
       </table>
       {frozen && (
