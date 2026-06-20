@@ -26,9 +26,13 @@ export default async function DashboardPage() {
       .select('full_name, establishment_name, calendar_slug')
       .eq('id', user.id)
       .single(),
+    // Filtrar por dueño explícitamente: la policy tournaments_public_read deja
+    // leer a cualquier `authenticated` los torneos no-draft, así que NO alcanza
+    // con confiar en RLS para acotar la lista a los del organizador logueado.
     supabase
       .from('tournaments')
       .select('*')
+      .eq('organizer_id', user.id)
       .order('created_at', { ascending: false }),
   ])
 

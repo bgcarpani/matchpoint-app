@@ -53,8 +53,16 @@ export async function registerOrganizer(
   })
 
   if (error) return { error: translateAuthError(error.message) }
-  // signUp ya NO crea sesión (confirmación obligatoria) → no redirigimos al
-  // dashboard; el form muestra "revisá tu email para confirmar tu cuenta".
+
+  // Defensa: con mailer_autoconfirm=false signUp NO crea sesión, pero si la
+  // config de Supabase tiene autoconfirm=true (estado TEMPORAL en prod) signUp
+  // deja una sesión activa de inmediato. La pantalla de "revisá tu email" asume
+  // que NO hay sesión; si la dejáramos abierta, "Ingresar" rebotaría al
+  // dashboard (proxy redirige authenticated→/dashboard) logueado sin confirmar.
+  // signOut es no-op cuando no hay sesión, así que es seguro en ambos casos.
+  await supabase.auth.signOut()
+
+  // No redirigimos: el form muestra "revisá tu email para confirmar tu cuenta".
   return { ok: true }
 }
 
