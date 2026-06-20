@@ -7,7 +7,7 @@ const STATUS_STYLE: Record<
   { dot: string; pill: string; note: string }
 > = {
   pending: {
-    dot: 'bg-amber-400',
+    dot: 'bg-[color:var(--warning)]',
     pill: 'border border-border text-foreground',
     note: 'Tu solicitud fue recibida y está a la espera de que el organizador la revise.',
   },

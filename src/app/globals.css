@@ -54,58 +54,114 @@
 }
 
 /*
- * Court Blue — tema deportivo azul noche profundo, con halo.
- * bg #0B1220 · ink #ECF0F7 · acento azul #3B82F6.
- * Fondo azul noche profundo + un halo radial azul sutil (ver `.glow` abajo) para
- * un look premium e intencional, manteniendo la paleta azul.
- * Dark por defecto: los tokens viven en :root y se replican en .dark para
- * que los componentes shadcn que usan la variante dark resuelvan igual.
- * Nota: el token de acento se sigue llamando `--volt` por compatibilidad con
- * los componentes existentes (clases text-volt/bg-volt); su valor ahora es azul.
+ * Court Side — "El Scoreboard Limpio". Tema claro deportivo con craft de SaaS.
+ * page #F4F5F8 (off-white FRÍO, nunca crema) · ink #0D1020 · acento azul real #2D52E8.
+ * Claro por defecto: los tokens L2 viven en :root. .dark define una variante oscura
+ * coherente (Court Side dark) por si se aplica la clase `dark` (no es el default).
+ * Sistema y reglas en DESIGN.md. El token de acento se sigue llamando `--volt` por
+ * compatibilidad con los componentes existentes (text-volt/bg-volt); su valor es azul real.
  */
-:root,
-.dark {
-  --background: #0b1220;
-  --foreground: #ecf0f7;
-  --card: #131c30;
-  --card-foreground: #ecf0f7;
-  --popover: #131c30;
-  --popover-foreground: #ecf0f7;
-  --primary: #3b82f6;
+:root {
+  --background: #e7ebf2;
+  --foreground: #0d1020;
+  --card: #ffffff;
+  --card-foreground: #0d1020;
+  --popover: #ffffff;
+  --popover-foreground: #0d1020;
+  --primary: #2d52e8;
   --primary-foreground: #ffffff;
-  --secondary: #1c2a44;
-  --secondary-foreground: #ecf0f7;
-  --muted: #16223a;
-  --muted-foreground: #9aa6bd;
-  --accent: #213251;
-  --accent-foreground: #60a5fa;
-  --destructive: #f4524a;
-  --border: rgba(234, 238, 245, 0.11);
-  --input: rgba(234, 238, 245, 0.15);
-  --ring: #3b82f6;
+  --secondary: #edeff3;
+  --secondary-foreground: #0d1020;
+  --muted: #eef0f4;
+  --muted-foreground: #69728a;
+  --accent: #dbe3fb;
+  --accent-foreground: #1e3fae;
+  --destructive: #dc4b43;
+  --border: #dde1ea;
+  --input: #dde1e9;
+  --ring: #2d52e8;
 
-  --volt: #3b82f6;
+  --volt: #2d52e8;
   --volt-foreground: #ffffff;
-  --court-line: rgba(234, 238, 245, 0.06);
+  --volt-deep: #1e3fae;
+  --volt-tint: #dbe3fb;
+  --volt-surface: #f5f8ff;
+  --court-line: rgba(13, 16, 32, 0.05);
 
-  --chart-1: #3b82f6;
-  --chart-2: #6b7a90;
-  --chart-3: #3a4456;
-  --chart-4: #232c3a;
-  --chart-5: #1a2433;
+  --success: #0e9c77;
+  --success-deep: #0e6e55;
+  --success-tint: #d6f2e8;
+  --warning: #c77b12;
+  --warning-tint: #faeeda;
 
-  --radius: 0.5rem;
+  --chart-1: #2d52e8;
+  --chart-2: #5b8cff;
+  --chart-3: #0e9c77;
+  --chart-4: #c77b12;
+  --chart-5: #b4bac6;
 
-  --sidebar: #131c30;
-  --sidebar-foreground: #ecf0f7;
-  --sidebar-primary: #3b82f6;
+  --radius: 0.75rem;
+
+  --sidebar: #ffffff;
+  --sidebar-foreground: #0d1020;
+  --sidebar-primary: #2d52e8;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #213251;
-  --sidebar-accent-foreground: #60a5fa;
-  --sidebar-border: rgba(234, 238, 245, 0.11);
-  --sidebar-ring: #3b82f6;
+  --sidebar-accent: #dbe3fb;
+  --sidebar-accent-foreground: #1e3fae;
+  --sidebar-border: #e3e5ec;
+  --sidebar-ring: #2d52e8;
 
-  --font-mono-stack: ui-monospace, "SFMono-Regular", "Menlo", monospace;
+  --font-mono-stack: var(--font-jetbrains), ui-monospace, "SFMono-Regular",
+    "Menlo", monospace;
+}
+
+.dark {
+  --background: #0a0e16;
+  --foreground: #eceff6;
+  --card: #121826;
+  --card-foreground: #eceff6;
+  --popover: #121826;
+  --popover-foreground: #eceff6;
+  --primary: #4f7bff;
+  --primary-foreground: #ffffff;
+  --secondary: #1b2336;
+  --secondary-foreground: #eceff6;
+  --muted: #161d2e;
+  --muted-foreground: #8a94a6;
+  --accent: #1f2c47;
+  --accent-foreground: #8fb0ff;
+  --destructive: #f4524a;
+  --border: rgba(236, 239, 246, 0.1);
+  --input: rgba(236, 239, 246, 0.14);
+  --ring: #4f7bff;
+
+  --volt: #4f7bff;
+  --volt-foreground: #ffffff;
+  --volt-deep: #8fb0ff;
+  --volt-tint: rgba(79, 123, 255, 0.16);
+  --volt-surface: rgba(79, 123, 255, 0.08);
+  --court-line: rgba(236, 239, 246, 0.05);
+
+  --success: #2dd29e;
+  --success-deep: #7fe7c8;
+  --success-tint: rgba(45, 210, 158, 0.14);
+  --warning: #e0a23c;
+  --warning-tint: rgba(224, 162, 60, 0.14);
+
+  --chart-1: #4f7bff;
+  --chart-2: #8fb0ff;
+  --chart-3: #2dd29e;
+  --chart-4: #e0a23c;
+  --chart-5: #3a4456;
+
+  --sidebar: #121826;
+  --sidebar-foreground: #eceff6;
+  --sidebar-primary: #4f7bff;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #1f2c47;
+  --sidebar-accent-foreground: #8fb0ff;
+  --sidebar-border: rgba(236, 239, 246, 0.1);
+  --sidebar-ring: #4f7bff;
 }
 
 @layer base {
@@ -144,8 +200,8 @@
     font-stretch: 88%;
   }
 
-  /* Halo radial azul: glow sutil desde arriba para dar profundidad al fondo.
-     Capa fija detrás del contenido (z-0), por encima del fondo sólido. */
+  /* Halo radial azul: tinte muy sutil desde arriba para dar profundidad al
+     off-white sin ensuciarlo. Capa fija detrás del contenido (z-0). */
   .glow::after {
     content: "";
     position: fixed;
@@ -154,10 +210,10 @@
     pointer-events: none;
     background:
       radial-gradient(
-        120% 75% at 50% -12%,
-        rgba(59, 130, 246, 0.2),
-        rgba(59, 130, 246, 0.05) 38%,
-        transparent 62%
+        120% 70% at 50% -10%,
+        rgba(45, 82, 232, 0.07),
+        rgba(45, 82, 232, 0.02) 40%,
+        transparent 64%
       );
   }
 
@@ -179,6 +235,15 @@
       linear-gradient(to bottom, var(--court-line) 1px, transparent 1px);
     background-size: 64px 64px;
   }
+
+  /* Elevación de tarjeta (fondo frío Opción B): sombra suave para que las
+     superficies blancas se despeguen del fondo gris-azulado. */
+  .elevate {
+    box-shadow: 0 8px 20px -14px rgba(13, 16, 32, 0.3);
+  }
+  .elevate-lg {
+    box-shadow: 0 16px 36px -22px rgba(13, 16, 32, 0.35);
+  }
 }
 
 /* react-day-picker (calendario) adaptado al tema. Sin @layer a propósito: deben
@@ -191,7 +256,7 @@
     --rdp-day-height: 2.25rem;
     --rdp-day_button-width: 2.25rem;
     --rdp-day_button-height: 2.25rem;
-    --rdp-day_button-border-radius: 0.5rem;
+    --rdp-day_button-border-radius: 6px;
     --rdp-selected-border: none;
     --rdp-disabled-opacity: 0.3;
     --rdp-outside-opacity: 0.4;
@@ -213,7 +278,7 @@
   }
   .rdp-day_button {
     border: none;
-    border-radius: 0.5rem;
+    border-radius: 6px;
     color: var(--foreground);
   }
   .rdp-day_button:hover:not([disabled]) {
@@ -233,7 +298,7 @@
   }
   .rdp-button_previous,
   .rdp-button_next {
-    border-radius: 0.5rem;
+    border-radius: 6px;
     color: var(--foreground);
   }
   .rdp-button_previous:hover,
@@ -315,6 +380,20 @@
   /* Chrome que no va al papel (headers, navegación, botones de acción) */
   .no-print {
     display: none !important;
+  }
+
+  /* PrintFit: el cuadro de llaves se escala a una sola hoja (ver print-fit.tsx).
+     El contenedor con scroll horizontal debe mostrar TODO el ancho (no recortar)
+     y los wrappers no deben clipear el contenido escalado. */
+  .bracket-scroll {
+    overflow: visible !important;
+  }
+  .print-fit-outer {
+    overflow: visible !important;
+  }
+  .print-fit-inner {
+    /* el alto/ancho se controlan vía transform; el origen lo fija el JS */
+    display: block;
   }
 
   /* Que los colores de fondo de chips/badges sí salgan impresos */

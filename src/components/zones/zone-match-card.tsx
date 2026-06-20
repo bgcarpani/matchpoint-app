@@ -109,7 +109,7 @@ export function ZoneMatchCard({
       : (showInputs ? [0, 1, 2] : (match.scoreDetail ?? []).map((_, i) => i))
 
   return (
-    <div className="rounded-lg border border-border bg-secondary">
+    <div className="rounded-lg border border-border bg-card">
       {/* Marcador: parejas apiladas + casilleros a la derecha */}
       <div className="flex items-stretch gap-3 px-3 py-2">
         <div className="min-w-0 flex-1 space-y-1">
@@ -222,7 +222,7 @@ export function ZoneMatchCard({
               </>
             ) : (
               <>
-                <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-400">
+                <span className="inline-flex items-center gap-1 text-xs font-semibold text-[color:var(--success)]">
                   <CheckIcon className="h-3.5 w-3.5" /> Jugado
                 </span>
                 <button
@@ -302,7 +302,7 @@ function ScoreCell({
             ? setG(e.target.value)
             : setSetValue(col, idx as 0 | 1, e.target.value)
         }
-        className="h-[30px] w-[38px] rounded-md border border-border bg-background text-center text-sm text-foreground tnum outline-none focus:border-volt/60 disabled:opacity-50"
+        className="h-[30px] w-[38px] rounded-md border border-border bg-background text-center text-sm text-foreground font-mono tnum outline-none focus:border-volt focus:ring-2 focus:ring-volt/20 disabled:opacity-50"
       />
     )
   }
@@ -316,8 +316,10 @@ function ScoreCell({
       : match.scoreDetail?.[col]?.[idx]
   return (
     <span
-      className={`inline-flex h-[30px] w-[38px] items-center justify-center rounded-md bg-card text-sm tnum ring-1 ring-border ${
-        winner ? 'font-semibold text-foreground' : 'text-muted-foreground'
+      className={`inline-flex h-[30px] w-[38px] items-center justify-center rounded-md text-sm font-mono tnum ring-1 ${
+        winner
+          ? 'bg-[color:var(--volt-surface)] font-bold text-volt ring-volt/30'
+          : 'bg-secondary text-muted-foreground ring-border'
       }`}
     >
       {fixed ?? '–'}

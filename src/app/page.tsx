@@ -4,53 +4,268 @@ import { cn } from '@/lib/utils'
 
 export default function HomePage() {
   return (
-    <main className="relative z-[2] mx-auto flex min-h-dvh w-full max-w-5xl flex-col px-5 sm:px-8">
+    <main className="relative z-[2] mx-auto flex min-h-dvh w-full max-w-6xl flex-col px-5 sm:px-8">
       <header className="flex items-center justify-between py-6">
         <span className="font-display text-lg text-foreground">
           Match<span className="text-volt">point</span>
         </span>
-        <Link
-          href="/login"
-          className="text-sm font-medium text-muted-foreground hover:text-foreground"
-        >
-          Ingresar
-        </Link>
-      </header>
-
-      <div className="flex flex-1 flex-col justify-center py-16">
-        <p className="text-xs uppercase tracking-[0.24em] text-volt">
-          Comunidad de pádel
-        </p>
-        <h1 className="font-display mt-5 text-[clamp(3rem,11vw,8rem)] text-foreground">
-          Organizá tu
-          <br />
-          torneo
-        </h1>
-        <p className="mt-6 max-w-xl text-base text-muted-foreground">
-          Creá torneos, gestioná inscripciones de parejas y armá las zonas.
-          Todo en un solo lugar, pensado para organizadores.
-        </p>
-        <div className="mt-9 flex flex-wrap gap-3">
-          <Link
-            href="/register"
-            className={cn(
-              buttonVariants({ size: 'lg' }),
-              'font-display h-12 px-6 text-base'
-            )}
-          >
-            Crear cuenta →
-          </Link>
+        <div className="flex items-center gap-3">
           <Link
             href="/login"
-            className={cn(
-              buttonVariants({ variant: 'outline', size: 'lg' }),
-              'h-12 px-6 text-base'
-            )}
+            className="text-sm font-medium text-muted-foreground hover:text-foreground"
           >
-            Ya tengo cuenta
+            Ingresar
+          </Link>
+          <Link
+            href="/register"
+            className={cn(buttonVariants({ size: 'sm' }), 'font-display')}
+          >
+            Crear cuenta
           </Link>
         </div>
+      </header>
+
+      <div className="grid flex-1 items-center gap-10 py-12 lg:grid-cols-[1fr_minmax(340px,440px)] lg:py-16">
+        {/* Texto */}
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-volt">
+            Comunidad de pádel
+          </p>
+          <h1 className="font-display mt-5 text-[clamp(2.75rem,8vw,6rem)] leading-[0.92] text-foreground">
+            Gestioná tu
+            <br />
+            organización
+          </h1>
+          <p className="mt-6 max-w-md text-base text-muted-foreground">
+            Inscripciones, zonas, partidos y llaves. Todo en un solo lugar,
+            pensado para organizadores.
+          </p>
+          <div className="mt-9 flex flex-wrap gap-3">
+            <Link
+              href="/register"
+              className={cn(
+                buttonVariants({ size: 'lg' }),
+                'font-display h-12 px-6 text-base'
+              )}
+            >
+              Crear cuenta →
+            </Link>
+            <Link
+              href="/login"
+              className={cn(
+                buttonVariants({ variant: 'outline', size: 'lg' }),
+                'h-12 px-6 text-base'
+              )}
+            >
+              Ya tengo cuenta
+            </Link>
+          </div>
+        </div>
+
+        {/* Visual: cuadro de llaves (ejemplo ilustrativo) */}
+        <BracketShowcase />
+      </div>
+
+      {/* Tira de features */}
+      <div className="grid gap-4 pb-14 sm:grid-cols-3">
+        <FeatureCard
+          title="Inscripciones"
+          desc="Las parejas se anotan solas; vos aceptás."
+          icon={<ClipboardIcon />}
+        />
+        <FeatureCard
+          title="Zonas y partidos"
+          desc="Round-robin y posiciones en vivo."
+          icon={<GridIcon />}
+        />
+        <FeatureCard
+          title="Llaves y campeón"
+          desc="Cuadro de eliminación y final."
+          icon={<TrophyIcon />}
+        />
       </div>
     </main>
+  )
+}
+
+/* --------------------------- piezas de la home --------------------------- */
+
+function FeatureCard({
+  title,
+  desc,
+  icon,
+}: {
+  title: string
+  desc: string
+  icon: React.ReactNode
+}) {
+  return (
+    <div className="elevate rounded-2xl border border-border bg-card p-5">
+      <span className="text-volt">{icon}</span>
+      <h3 className="mt-3 text-sm font-bold text-foreground">{title}</h3>
+      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{desc}</p>
+    </div>
+  )
+}
+
+/** Cuadro de llaves estático: imagen del producto (4 → 2 → campeón). */
+function BracketShowcase() {
+  return (
+    <div className="elevate-lg rounded-2xl border border-border bg-card p-5">
+      <p className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+        Llaves · Final
+      </p>
+      <div className="mt-4 grid grid-cols-[1fr_18px_1fr] items-center gap-0">
+        {/* Semis */}
+        <div className="flex flex-col gap-5">
+          <BracketPair top={['Pérez / Gómez', '6']} bottom={['Vega / Mai', '3']} />
+          <BracketPair top={['Ruiz / Sosa', '7']} bottom={['Díaz / Mol', '5']} />
+        </div>
+
+        <div className="flex justify-center text-muted-foreground/50" aria-hidden>
+          <ChevronRight />
+        </div>
+
+        {/* Final + campeón */}
+        <div className="flex flex-col gap-1.5">
+          <ScorePill name="Pérez / Gómez" score="6" winner />
+          <ScorePill name="Ruiz / Sosa" score="4" />
+          <div className="mt-1 rounded-xl bg-volt px-3 py-2.5 text-volt-foreground">
+            <span className="flex items-center gap-1.5 text-[0.6rem] font-semibold uppercase tracking-[0.14em] opacity-90">
+              <TrophyIcon className="h-3 w-3" /> Campeón
+            </span>
+            <span className="font-display mt-1 block text-sm leading-none">
+              Pérez / Gómez
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function BracketPair({
+  top,
+  bottom,
+}: {
+  top: [string, string]
+  bottom: [string, string]
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <ScorePill name={top[0]} score={top[1]} winner />
+      <ScorePill name={bottom[0]} score={bottom[1]} />
+    </div>
+  )
+}
+
+function ScorePill({
+  name,
+  score,
+  winner,
+}: {
+  name: string
+  score: string
+  winner?: boolean
+}) {
+  return (
+    <div
+      className={`flex items-center justify-between rounded-md border px-2 py-1.5 text-xs ${
+        winner
+          ? 'border-volt bg-[color:var(--volt-surface)]'
+          : 'border-border bg-secondary'
+      }`}
+    >
+      <span
+        className={`truncate ${
+          winner ? 'font-bold text-volt-deep' : 'text-muted-foreground'
+        }`}
+      >
+        {name}
+      </span>
+      <span
+        className={`font-mono tnum font-bold ${
+          winner ? 'text-volt-deep' : 'text-muted-foreground'
+        }`}
+      >
+        {score}
+      </span>
+    </div>
+  )
+}
+
+/* ------------------------------- íconos ------------------------------- */
+
+function ClipboardIcon({ className = 'h-5 w-5' }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
+      <rect x="9" y="3" width="6" height="4" rx="1" />
+      <path d="M9 12h6M9 16h4" />
+    </svg>
+  )
+}
+
+function GridIcon({ className = 'h-5 w-5' }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="3" y="3" width="7" height="7" rx="1" />
+      <rect x="14" y="3" width="7" height="7" rx="1" />
+      <rect x="3" y="14" width="7" height="7" rx="1" />
+      <rect x="14" y="14" width="7" height="7" rx="1" />
+    </svg>
+  )
+}
+
+function TrophyIcon({ className = 'h-5 w-5' }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4Z" />
+      <path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3" />
+    </svg>
+  )
+}
+
+function ChevronRight({ className = 'h-4 w-4' }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="m9 18 6-6-6-6" />
+    </svg>
   )
 }

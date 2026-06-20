@@ -48,7 +48,7 @@ export function CalendarSharePanel({
   }
 
   return (
-    <div className="rounded-2xl border border-border bg-card/40 p-6 sm:p-8">
+    <div className="elevate rounded-2xl border border-border bg-card p-6 sm:p-8">
       <h2 className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
         Calendario público
       </h2>

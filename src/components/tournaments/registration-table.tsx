@@ -228,8 +228,8 @@ function RegistrationItem({
             <span
               className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.12em] ${
                 depositPaid
-                  ? 'border border-emerald-500/40 text-emerald-400'
-                  : 'border border-amber-500/40 text-amber-400'
+                  ? 'border border-[color:var(--success)]/40 text-[color:var(--success)]'
+                  : 'border border-[color:var(--warning)]/40 text-[color:var(--warning)]'
               }`}
             >
               {depositPaid ? 'Seña recibida' : 'Pendiente de seña'}

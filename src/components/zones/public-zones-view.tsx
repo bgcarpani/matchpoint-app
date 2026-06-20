@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import type { PublicZoneView } from '@/lib/public/zones'
+import type { ScoringMode } from '@/lib/types/database'
+import type { PublicZoneMatch, PublicZoneView } from '@/lib/public/zones'
 import { ZoneStandings } from '@/components/zones/zone-standings'
 
 /**
@@ -77,54 +78,144 @@ export function PublicZonesView({ zones }: { zones: PublicZoneView[] }) {
             <p className="mt-5 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
               Partidos
             </p>
-            <ul className="mt-2 space-y-2">
-              {zone.matches.length === 0 && (
-                <li className="text-sm text-muted-foreground">Sin partidos.</li>
-              )}
-              {zone.matches.map((m, i) => {
-                const prev = zone.matches[i - 1]
-                const showRoundHeader =
-                  zone.matchFormat === 'winner_vs_loser' &&
-                  (!prev || prev.round !== m.round)
-                return (
-                  <li
-                    key={m.id}
-                    className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-secondary px-3 py-2 text-sm"
-                  >
-                    {showRoundHeader && (
-                      <p className="w-full text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                        Ronda {m.round}
-                      </p>
-                    )}
-                    <span className="text-foreground">
-                      <span className={m.winner === 'team1' ? 'font-semibold' : ''}>
-                        {m.team1Label}
-                      </span>{' '}
-                      <span className="text-muted-foreground">vs</span>{' '}
-                      <span className={m.winner === 'team2' ? 'font-semibold' : ''}>
-                        {m.team2Label}
-                      </span>
-                    </span>
-                    <span className="flex items-center gap-2">
-                      {m.score && (
-                        <span className="rounded-md bg-card px-2 py-0.5 text-xs font-semibold text-foreground tnum ring-1 ring-border">
-                          {m.score}
-                        </span>
+            {zone.matches.length === 0 ? (
+              <p className="mt-2 text-sm text-muted-foreground">Sin partidos.</p>
+            ) : (
+              <div className="mt-2 space-y-2">
+                {zone.matches.map((m, i) => {
+                  const prev = zone.matches[i - 1]
+                  const showRoundHeader =
+                    zone.matchFormat === 'winner_vs_loser' &&
+                    (!prev || prev.round !== m.round)
+                  return (
+                    <div key={m.id}>
+                      {showRoundHeader && (
+                        <p className="mb-1.5 mt-1 text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                          Ronda {m.round}
+                        </p>
                       )}
-                      {m.courtName && (
-                        <span className="rounded-md bg-volt/10 px-2 py-0.5 text-xs font-medium text-volt ring-1 ring-volt/30">
-                          {m.courtName}
-                        </span>
-                      )}
-                    </span>
-                  </li>
-                )
-              })}
-            </ul>
+                      <PublicMatchCard match={m} scoringMode={zone.scoringMode} />
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </article>
         ))}
       </div>
     </>
+  )
+}
+
+/**
+ * Tarjeta de partido (lado público), espejo de lectura del `ZoneMatchCard` del
+ * organizer: las dos parejas apiladas con su casillero de resultado a la derecha
+ * (marcador deportivo), ganador resaltado, y un pie con la cancha si la hay.
+ */
+function PublicMatchCard({
+  match,
+  scoringMode,
+}: {
+  match: PublicZoneMatch
+  scoringMode: ScoringMode
+}) {
+  // Columnas del marcador: 1 en games, una por set en best_of_3.
+  const cols =
+    scoringMode === 'games' ? [0] : (match.scoreDetail ?? []).map((_, i) => i)
+
+  return (
+    <div className="rounded-lg border border-border bg-card">
+      <div className="flex items-stretch gap-3 px-3 py-2">
+        <div className="min-w-0 flex-1 space-y-1">
+          <PublicPairName label={match.team1Label} highlight={match.winner === 'team1'} />
+          <PublicPairName label={match.team2Label} highlight={match.winner === 'team2'} />
+        </div>
+
+        {match.played && (
+          <div className="flex shrink-0 gap-1">
+            {cols.map((col) => (
+              <div key={col} className="flex flex-col gap-1">
+                <PublicScoreCell
+                  value={
+                    scoringMode === 'games'
+                      ? match.team1Score
+                      : (match.scoreDetail?.[col]?.[0] ?? null)
+                  }
+                  winner={match.winner === 'team1'}
+                />
+                <PublicScoreCell
+                  value={
+                    scoringMode === 'games'
+                      ? match.team2Score
+                      : (match.scoreDetail?.[col]?.[1] ?? null)
+                  }
+                  winner={match.winner === 'team2'}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {match.courtName && (
+        <div className="flex items-center gap-1.5 border-t border-border px-3 py-1.5 text-xs text-muted-foreground">
+          <PinIcon className="h-3.5 w-3.5" />
+          {match.courtName}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function PublicPairName({ label, highlight }: { label: string; highlight: boolean }) {
+  return (
+    <div className="flex h-[30px] items-center">
+      <span
+        className={`truncate text-sm ${
+          highlight ? 'font-semibold text-foreground' : 'text-foreground'
+        }`}
+      >
+        {label}
+      </span>
+    </div>
+  )
+}
+
+function PublicScoreCell({
+  value,
+  winner,
+}: {
+  value: number | null
+  winner: boolean
+}) {
+  return (
+    <span
+      className={`inline-flex h-[30px] w-[38px] items-center justify-center rounded-md text-sm font-mono tnum ring-1 ${
+        winner
+          ? 'bg-[color:var(--volt-surface)] font-bold text-volt ring-volt/30'
+          : 'bg-secondary text-muted-foreground ring-border'
+      }`}
+    >
+      {value ?? '–'}
+    </span>
+  )
+}
+
+function PinIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+      <circle cx="12" cy="10" r="3" />
+    </svg>
   )
 }
 

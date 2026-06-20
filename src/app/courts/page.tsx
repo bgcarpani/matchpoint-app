@@ -19,9 +19,13 @@ export default async function CourtsPage() {
       .select('establishment_name')
       .eq('id', user.id)
       .single(),
+    // Defensa en profundidad: `courts` hoy sólo tiene la policy del dueño
+    // (courts_all_own), así que la RLS ya acota; filtramos por organizer_id
+    // explícito igual, por consistencia con el resto del área organizer.
     supabase
       .from('courts')
       .select('*')
+      .eq('organizer_id', user.id)
       .order('created_at', { ascending: true }),
   ])
 

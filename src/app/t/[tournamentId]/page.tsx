@@ -1,6 +1,9 @@
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { getPublicTournament } from '@/lib/public/tournament'
+import {
+  getPublicTournament,
+  getPublicMatchPulse,
+} from '@/lib/public/tournament'
 import {
   CATEGORY_TYPE_LABELS,
   GENDER_LABELS,
@@ -25,6 +28,14 @@ export default async function PublicTournamentPage({
     .select('id', { count: 'exact', head: true })
     .eq('tournament_id', t.id)
   const bracketPublished = (bracketCount ?? 0) > 0
+
+  // Pulso en vivo: zonas publicadas + partidos por jugar (sólo relevante con el
+  // torneo en curso). Los que tienen cancha asignada se muestran como "en juego".
+  const pulse = await getPublicMatchPulse(t.id)
+  const liveNow =
+    t.status === 'in_progress'
+      ? pulse.pending.filter((m) => m.courtName).slice(0, 6)
+      : []
 
   const isOpen = t.status === 'registration_open'
   const requestsFull = t.requested_pairs >= t.max_pair_requests
@@ -63,7 +74,7 @@ export default async function PublicTournamentPage({
       </header>
 
       {/* Hero */}
-      <section className="relative overflow-hidden rounded-2xl border border-border bg-card/40 px-6 py-12 sm:px-12 sm:py-16">
+      <section className="elevate-lg relative overflow-hidden rounded-2xl border border-border bg-card px-6 py-12 sm:px-12 sm:py-16">
         <CourtMotif className="pointer-events-none absolute -right-16 -top-10 hidden h-[120%] w-auto text-court-line sm:block" />
 
         <div className="relative">
@@ -98,7 +109,9 @@ export default async function PublicTournamentPage({
       {/* Cupos / stats strip. La cantidad de solicitudes recibidas no se expone
           públicamente (no incentivar a "llenar" o colapsar los cupos). */}
       <section
-        className="reveal mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2"
+        className={`reveal mt-4 grid grid-cols-1 gap-4 ${
+          pulse.zonesCount > 0 ? 'sm:grid-cols-3' : 'sm:grid-cols-2'
+        }`}
         style={{ animationDelay: '280ms' }}
       >
         <StatCard
@@ -108,14 +121,59 @@ export default async function PublicTournamentPage({
           unit="parejas"
           bar
         />
-        <StatCard label="Canchas" value={t.courts.length} unit="en juego" />
+        {pulse.zonesCount > 0 && (
+          <StatCard label="Zonas" value={pulse.zonesCount} unit="en juego" />
+        )}
+        <StatCard label="Canchas" value={t.courts.length} unit="disponibles" />
       </section>
+
+      {/* En juego ahora: partidos pendientes con cancha asignada (torneo en curso) */}
+      {liveNow.length > 0 && (
+        <section
+          className="reveal elevate mt-4 overflow-hidden rounded-2xl border border-volt/30 bg-card"
+          style={{ animationDelay: '320ms' }}
+        >
+          <div className="flex items-center justify-between border-b border-border px-6 py-3.5">
+            <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-volt">
+              <span className="size-1.5 animate-pulse rounded-full bg-volt" aria-hidden />
+              En juego ahora
+            </span>
+            <span className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
+              {liveNow.length} en cancha
+            </span>
+          </div>
+          <ul className="divide-y divide-border">
+            {liveNow.map((m) => (
+              <li
+                key={m.id}
+                className="flex items-center gap-4 px-6 py-3.5"
+              >
+                <span className="hidden shrink-0 rounded-md bg-volt/10 px-2 py-0.5 text-xs font-semibold text-volt ring-1 ring-volt/30 sm:inline">
+                  {m.courtName}
+                </span>
+                <div className="flex min-w-0 flex-1 items-center justify-center gap-3 text-sm">
+                  <span className="min-w-0 flex-1 truncate text-right font-medium text-foreground">
+                    {m.team1Label}
+                  </span>
+                  <span className="font-mono text-xs text-muted-foreground">VS</span>
+                  <span className="min-w-0 flex-1 truncate font-medium text-foreground">
+                    {m.team2Label}
+                  </span>
+                </div>
+                <span className="hidden shrink-0 text-xs text-muted-foreground sm:inline">
+                  {m.zoneName}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {/* Detalle + inscripción */}
       <section className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[1fr_minmax(380px,460px)]">
         {/* Detalle */}
         <div
-          className="reveal rounded-2xl border border-border bg-card/40 p-6 sm:p-8"
+          className="reveal elevate rounded-2xl border border-border bg-card p-6 sm:p-8"
           style={{ animationDelay: '340ms' }}
         >
           <SectionTitle>Detalles</SectionTitle>
@@ -286,7 +344,7 @@ function StatCard({
 }) {
   const pct = total ? Math.min(Math.round((value / total) * 100), 100) : 0
   return (
-    <div className="rounded-2xl border border-border bg-card/40 p-6">
+    <div className="elevate rounded-2xl border border-border bg-card p-6">
       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
         {label}
       </p>

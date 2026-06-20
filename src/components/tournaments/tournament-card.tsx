@@ -8,7 +8,7 @@ export function TournamentCard({ tournament: t }: { tournament: Tournament }) {
   return (
     <Link
       href={`/tournaments/${t.id}`}
-      className="group block rounded-2xl border border-border bg-card/40 p-6 transition-colors hover:border-volt/40 hover:bg-card/70"
+      className="group block rounded-2xl border border-border bg-card p-6 transition-colors hover:border-volt/50"
     >
       <div className="flex items-start justify-between gap-3">
         <TournamentStatusBadge status={t.status} />
@@ -26,8 +26,11 @@ export function TournamentCard({ tournament: t }: { tournament: Tournament }) {
         <span className="rounded-md bg-secondary px-2 py-0.5 text-muted-foreground">
           {GENDER_LABELS[t.gender]}
         </span>
-        <span className="ml-auto text-xs text-muted-foreground tnum">
-          {t.max_pairs} parejas
+        <span className="ml-auto text-xs text-muted-foreground">
+          <span className="font-mono tnum font-semibold text-foreground">
+            {t.max_pairs}
+          </span>{' '}
+          parejas
         </span>
       </div>
     </Link>

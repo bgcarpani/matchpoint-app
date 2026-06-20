@@ -53,3 +53,4 @@ public/swe-worker*
 # artefactos locales (no son código de la app)
 .playwright-mcp/
 presentacion/
+.claude/

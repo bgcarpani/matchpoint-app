@@ -1,6 +1,7 @@
 'use client'
 
 import { Fragment, useState } from 'react'
+import type { ScoringMode } from '@/lib/types/database'
 import type { PublicBracketRound, PublicBracketMatch } from '@/lib/public/bracket'
 import {
   BracketViewToggle,
@@ -14,7 +15,13 @@ import {
  *   conectores `]`. Scroll horizontal en pantallas chicas.
  * - "Lista": rondas apiladas con filtro por ronda (el formato previo).
  */
-export function PublicBracketView({ rounds }: { rounds: PublicBracketRound[] }) {
+export function PublicBracketView({
+  rounds,
+  scoringMode,
+}: {
+  rounds: PublicBracketRound[]
+  scoringMode: ScoringMode
+}) {
   const [view, setView] = useState<BracketViewMode>('cuadro')
   const [selected, setSelected] = useState<'all' | number>('all')
 
@@ -33,13 +40,13 @@ export function PublicBracketView({ rounds }: { rounds: PublicBracketRound[] }) 
           <div className="flex min-w-max items-stretch">
             {rounds.map((round, ri) => (
               <Fragment key={round.round}>
-                <div className="flex w-[230px] shrink-0 flex-col px-2">
+                <div className="flex w-[288px] shrink-0 flex-col px-2">
                   <div className="mb-3 text-center text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                     {round.label}
                   </div>
                   <div className="flex flex-1 flex-col justify-around gap-3">
                     {round.matches.map((m) => (
-                      <MatchCard key={m.id} match={m} />
+                      <MatchCard key={m.id} match={m} scoringMode={scoringMode} />
                     ))}
                   </div>
                 </div>
@@ -77,38 +84,11 @@ export function PublicBracketView({ rounds }: { rounds: PublicBracketRound[] }) 
                 <h2 className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                   {round.label}
                 </h2>
-                <ul className="mt-2 space-y-2">
+                <div className="mt-2 grid gap-2 sm:grid-cols-2">
                   {round.matches.map((m) => (
-                    <li
-                      key={m.id}
-                      className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-secondary px-3 py-2 text-sm"
-                    >
-                      <span className="min-w-0">
-                        <TeamName
-                          label={m.team1Label}
-                          winner={m.winner === 'team1'}
-                        />{' '}
-                        <span className="text-muted-foreground">vs</span>{' '}
-                        <TeamName
-                          label={m.team2Label}
-                          winner={m.winner === 'team2'}
-                        />
-                      </span>
-                      <span className="flex items-center gap-2">
-                        {m.score && (
-                          <span className="rounded-md bg-card px-2 py-0.5 text-xs font-semibold text-foreground tnum ring-1 ring-border">
-                            {m.score}
-                          </span>
-                        )}
-                        {m.courtName && (
-                          <span className="rounded-md bg-volt/10 px-2 py-0.5 text-xs font-medium text-volt ring-1 ring-volt/30">
-                            {m.courtName}
-                          </span>
-                        )}
-                      </span>
-                    </li>
+                    <MatchCard key={m.id} match={m} scoringMode={scoringMode} />
                   ))}
-                </ul>
+                </div>
               </section>
             ))}
           </div>
@@ -118,62 +98,131 @@ export function PublicBracketView({ rounds }: { rounds: PublicBracketRound[] }) 
   )
 }
 
-function MatchCard({ match: m }: { match: PublicBracketMatch }) {
+/**
+ * Tarjeta de cruce (lado público), espejo de lectura del `BracketMatchCard` del
+ * organizer: las dos parejas apiladas con su casillero de resultado a la derecha,
+ * ganador resaltado, cruces sin definir con placeholder, y la cancha en el pie.
+ */
+function MatchCard({
+  match: m,
+  scoringMode,
+}: {
+  match: PublicBracketMatch
+  scoringMode: ScoringMode
+}) {
+  const pending = !m.team1Label || !m.team2Label
+  const showScores = m.played && !pending
+
+  // Puntajes por equipo (en orden de set; en games es un único valor).
+  const teamScores = (team: 0 | 1): (number | null)[] =>
+    scoringMode === 'games'
+      ? [team === 0 ? m.team1Score : m.team2Score]
+      : (m.scoreDetail ?? []).map((s) => s?.[team] ?? null)
+
   return (
-    <div className="rounded-lg border border-border bg-secondary text-sm">
-      <TeamRow label={m.team1Label} winner={m.winner === 'team1'} />
-      <div className="border-t border-border" />
-      <TeamRow label={m.team2Label} winner={m.winner === 'team2'} />
-      {(m.score || m.courtName) && (
-        <div className="flex flex-wrap items-center gap-1.5 border-t border-border px-2.5 py-1.5">
-          {m.score && (
-            <span className="rounded-md bg-card px-2 py-0.5 text-xs font-semibold text-foreground tnum ring-1 ring-border">
-              {m.score}
-            </span>
-          )}
-          {m.courtName && (
-            <span className="rounded-md bg-volt/10 px-2 py-0.5 text-xs font-medium text-volt ring-1 ring-volt/30">
-              {m.courtName}
-            </span>
-          )}
+    <div className="rounded-lg border border-border bg-card">
+      {/* Grid de 2 columnas: nombre (envuelve) + casilleros, alineados por fila.
+          El nombre completo entra aunque ocupe dos líneas. */}
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1.5 px-3 py-2">
+        <PairName label={m.team1Label} highlight={m.winner === 'team1'} />
+        {showScores ? (
+          <ScoreRow values={teamScores(0)} winner={m.winner === 'team1'} />
+        ) : (
+          <span />
+        )}
+        <PairName label={m.team2Label} highlight={m.winner === 'team2'} />
+        {showScores ? (
+          <ScoreRow values={teamScores(1)} winner={m.winner === 'team2'} />
+        ) : (
+          <span />
+        )}
+      </div>
+
+      {m.courtName && (
+        <div className="flex items-center gap-1.5 border-t border-border px-3 py-1.5 text-xs text-muted-foreground">
+          <PinIcon className="h-3.5 w-3.5" />
+          {m.courtName}
         </div>
       )}
     </div>
   )
 }
 
-function TeamRow({ label, winner }: { label: string | null; winner: boolean }) {
+function PairName({
+  label,
+  highlight,
+}: {
+  label: string | null
+  highlight: boolean
+}) {
   if (!label)
     return (
-      <div className="px-2.5 py-1.5 text-sm italic text-muted-foreground">
+      <span className="py-1 text-sm italic leading-snug text-muted-foreground">
         A definir
-      </div>
+      </span>
     )
   return (
-    <div
-      className={`flex items-center gap-2 px-2.5 py-1.5 ${
-        winner ? 'font-semibold text-foreground' : 'text-foreground'
+    <span
+      className={`py-1 text-sm leading-snug ${
+        highlight ? 'font-semibold text-foreground' : 'text-foreground'
       }`}
     >
-      {winner && <span className="text-volt">✓</span>}
-      <span className="min-w-0 truncate">{label}</span>
+      {label}
+    </span>
+  )
+}
+
+function ScoreRow({
+  values,
+  winner,
+}: {
+  values: (number | null)[]
+  winner: boolean
+}) {
+  return (
+    <div className="flex shrink-0 gap-1">
+      {values.map((v, i) => (
+        <ScoreCell key={i} value={v} winner={winner} />
+      ))}
     </div>
   )
 }
 
-function TeamName({
-  label,
+function ScoreCell({
+  value,
   winner,
 }: {
-  label: string | null
+  value: number | null
   winner: boolean
 }) {
-  if (!label)
-    return <span className="italic text-muted-foreground">A definir</span>
   return (
-    <span className={winner ? 'font-semibold text-foreground' : 'text-foreground'}>
-      {label}
+    <span
+      className={`inline-flex h-[30px] w-[38px] items-center justify-center rounded-md text-sm font-mono tnum ring-1 ${
+        winner
+          ? 'bg-[color:var(--volt-surface)] font-bold text-volt ring-volt/30'
+          : 'bg-secondary text-muted-foreground ring-border'
+      }`}
+    >
+      {value ?? '–'}
     </span>
+  )
+}
+
+function PinIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+      <circle cx="12" cy="10" r="3" />
+    </svg>
   )
 }
 

@@ -7,7 +7,6 @@
  */
 import { createClient } from '@/lib/supabase/server'
 import type { ScoringMode } from '@/lib/types/database'
-import { formatResult } from '@/lib/domain/match'
 import { bracketRoundLabel } from '@/lib/domain/bracket'
 
 export interface PublicBracketMatch {
@@ -16,7 +15,12 @@ export interface PublicBracketMatch {
   team1Label: string | null
   team2Label: string | null
   courtName: string | null
-  score: string | null
+  /** true si el partido ya se jugó (tiene resultado cargado) */
+  played: boolean
+  /** marcador estructurado (mismo formato que el lado organizer) */
+  team1Score: number | null
+  team2Score: number | null
+  scoreDetail: number[][] | null
   winner: 'team1' | 'team2' | null
 }
 
@@ -28,6 +32,7 @@ export interface PublicBracketRound {
 
 export interface PublicBracketView {
   rounds: PublicBracketRound[]
+  scoringMode: ScoringMode
   champion: string | null
 }
 
@@ -95,15 +100,10 @@ export async function getPublicBracket(
         ? (pairLabel.get(m.team2_pair_id) ?? '—')
         : null,
       courtName: m.court_id ? (courtName.get(m.court_id) ?? null) : null,
-      score:
-        m.status === 'finished'
-          ? formatResult(
-              scoringMode,
-              m.team1_score,
-              m.team2_score,
-              m.score_detail
-            )
-          : null,
+      played: m.status === 'finished',
+      team1Score: m.team1_score,
+      team2Score: m.team2_score,
+      scoreDetail: m.score_detail,
       winner: m.winner_pair_id
         ? m.winner_pair_id === m.team1_pair_id
           ? ('team1' as const)
@@ -128,5 +128,5 @@ export async function getPublicBracket(
     champion = pairLabel.get(final.winner_pair_id) ?? null
   }
 
-  return { rounds, champion }
+  return { rounds, scoringMode, champion }
 }

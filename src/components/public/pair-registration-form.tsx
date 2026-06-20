@@ -83,7 +83,7 @@ export function PairRegistrationForm({
   if (token) {
     const link = `/inscription/${token}`
     return (
-      <div className="rounded-2xl border border-volt/30 bg-card/60 p-6 sm:p-8">
+      <div className="elevate rounded-2xl border border-volt/30 bg-card p-6 sm:p-8">
         <div className="flex size-10 items-center justify-center rounded-full bg-volt text-volt-foreground">
           ✓
         </div>
@@ -124,7 +124,7 @@ export function PairRegistrationForm({
 
   if (!canRegister) {
     return (
-      <div className="rounded-2xl border border-border bg-card/40 p-6 sm:p-8">
+      <div className="elevate rounded-2xl border border-border bg-card p-6 sm:p-8">
         <SectionTitle>Inscripción</SectionTitle>
         <p className="mt-4 text-sm text-foreground">
           {requestsFull
@@ -138,7 +138,7 @@ export function PairRegistrationForm({
   return (
     <form
       onSubmit={onSubmit}
-      className="rounded-2xl border border-border bg-card/40 p-6 sm:p-8"
+      className="elevate rounded-2xl border border-border bg-card p-6 sm:p-8"
     >
       <SectionTitle>Inscribir pareja</SectionTitle>
 

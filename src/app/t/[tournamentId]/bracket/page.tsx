@@ -70,7 +70,10 @@ export default async function PublicBracketPage({
             </div>
           )}
 
-          <PublicBracketView rounds={bracket!.rounds} />
+          <PublicBracketView
+            rounds={bracket!.rounds}
+            scoringMode={bracket!.scoringMode}
+          />
         </>
       )}
     </main>
