@@ -12,6 +12,9 @@ Las primeras versiones son organizer-first.
 - `spec.md` — especificación detallada de implementación de v1
 - `spec-v2.md` — especificación de implementación de v2 (en construcción)
 - `spec-v3.md` — especificación de implementación de v3 (comunicaciones: email + share)
+- `DESIGN.md` — **sistema visual "Court Side" (tema claro)**: tokens, tipografía y reglas. Fuente de
+  verdad del diseño; consultarlo antes de tocar UI.
+- `PRODUCT.md` — documento de producto/estrategia (audiencia, personalidad de marca, principios de diseño).
 
 ## Stack
 - Next.js 16 (App Router) + TypeScript
@@ -91,12 +94,26 @@ alta pública (`register_pair`, anon): no exige inscripción abierta (sirve mien
 de INSERT para `authenticated`; la propiedad del torneo se valida antes vía RLS de `tournaments`).
 Mantiene el anti-duplicado por email y el requisito de nombre + un contacto por jugador.
 
-## Cierre de MVP y deploy (2026-06-19) — leer al abrir sesión nueva
-**El código en `master` es el MVP y está deployado en producción** (`https://app.match-point.workers.dev`).
-`master` == `origin/master` == lo deployado. La rama `v3-comunicaciones` quedó idéntica a `master`.
-- **Próxima etapa (antes de las siguientes versiones): cambios estéticos / UI.** Para el clean start,
-  brancheá desde `master` (ej. `git checkout -b v3-ui`).
-- **Cómo deployar**: ver el runbook en "Convenciones → Deploy (Cloudflare / OpenNext)".
+## Estado de master y deploy (2026-06-20) — leer al abrir sesión nueva
+**El código en `master` está deployado en producción** (`https://app.match-point.workers.dev`).
+`master` == `origin/master` == lo deployado (merge `5ea23c5`; smoke test e2e OK: home/login/register 200).
+- **Rediseño visual "Court Side" (UI) HECHO y deployado (2026-06-20).** Tema claro azul real, fondo frío
+  (Opción B), home nuevo ("Gestioná tu organización" + cuadro de llaves de ejemplo + features), dashboard
+  con barra de nav + KPIs (activos/parejas/pendientes/canchas) + tabla de torneos, y tarjetas de partido
+  tipo marcador en zonas y llaves del **lado público** (espejo de lectura del organizer). Se hizo en
+  `feature/empty-brackets` (que además trae la fase de **llaves en blanco** + hojas de impresión) y se
+  mergeó a `master`. Sistema visual en `DESIGN.md` / `PRODUCT.md`. **UI = solo presentación**, sin cambios
+  de lógica de datos.
+- **Seguridad (re-aplicado, 2026-06-20).** El fix `771926a` (dos fugas: el dashboard listaba torneos de
+  TODOS los organizers porque la policy `tournaments_public_read` deja leer a cualquier `authenticated`
+  los no-draft; y el registro dejaba sesión activa con `mailer_autoconfirm=true`) **faltaba en
+  `feature/empty-brackets`**, y el rediseño del dashboard lo había reintroducido. Se re-aplicó: filtro
+  `.eq('organizer_id', user.id)` en el dashboard + `signOut` tras `signUp`, y por defensa en profundidad
+  `courts/page` también filtra por `organizer_id`. Verificado que `pairs`/`courts` ya son owner-only por
+  RLS (sin policy pública), así que los KPIs nuevos no filtran datos de otros.
+- **Cómo deployar**: ver el runbook en "Convenciones → Deploy (Cloudflare / OpenNext)". ⚠️ En Windows, si
+  `rm -rf .open-next` da *"Device or resource busy"* / EPERM, matar los procesos `node`/`workerd` que
+  tienen lockeada la carpeta (`taskkill //F //IM node.exe`) antes de buildear.
 - **Cosas vivas en la nube (no en el repo) a recordar:**
   1. ⚠️ `mailer_autoconfirm = true` está **TEMPORAL** en Supabase (para crear cuentas con cualquier mail
      sin dominio Resend). **Revertir a `false`** antes de abrir registro real.
@@ -215,14 +232,19 @@ viejo no soporta Next 16). Corre en el runtime de Workers (`nodejs_compat`), **n
 - El `Button` de shadcn usa `@base-ui/react` → **no tiene `asChild`**. Para link-as-button usar
   `buttonVariants()` sobre `<Link>`.
 - **Calendar date picker**: `react-day-picker` + Popover de `@base-ui/react`, captions en español (Intl,
-  sin date-fns), tema oscuro, pasado deshabilitado. Ver `src/components/ui/calendar.tsx` y
-  `src/components/form/date-field.tsx`.
+  sin date-fns), estilado vía los tokens del tema (claro), pasado deshabilitado. Ver
+  `src/components/ui/calendar.tsx` y `src/components/form/date-field.tsx`.
 - **Loading states**: `loading.tsx` en rutas pesadas (dashboard, `/t/[id]`, `/tournaments/[id]`) con
   spinner desde `src/components/ui/spinner.tsx`. Feedback inmediato en navegación.
-- **Tema (branding)**: azul deportivo (`--volt: #3B82F6`) sobre azul noche profundo
-  (`--background: #0B1220`) + halo radial azul (clase `.glow` en `<body>`, capa fija z-0 detrás del
-  contenido — por eso cada página usa `relative z-[2]`). Tokens en `globals.css` (--background,
-  --foreground, --accent, etc.). Cambio de paleta = actualizar variables CSS.
+- **Tema (branding) — "Court Side", CLARO por default** (rediseño 2026-06-20; antes era oscuro):
+  acento azul real (`--volt: #2d52e8`) sobre off-white frío (`--background: #e7ebf2`, tarjetas blancas
+  `--card: #ffffff`). Tipografía: **Archivo** (display expandido en mayúsculas, clase `font-display`) +
+  **JetBrains Mono** para números tabulares de marcador/contadores (clase `font-mono tnum`). `.glow` =
+  halo azul sutil (capa fija z-0; por eso cada página usa `relative z-[2]`); el `court-grid` de fondo se
+  **quitó** del `<body>`. Tarjetas usan `.elevate` / `.elevate-lg` (sombra suave) para despegar del fondo
+  frío. `.dark` sigue existiendo como variante coherente pero **no es el default** (el `<html>` ya no
+  lleva la clase `dark`). Tokens en `globals.css`; **sistema completo, paleta y reglas en `DESIGN.md`**.
+  Cambio de paleta = actualizar variables CSS (y `DESIGN.md`).
 
 ## Entidades clave (v1)
 - **Organizer**: dueño de establecimiento, tiene login, crea y gestiona torneos
