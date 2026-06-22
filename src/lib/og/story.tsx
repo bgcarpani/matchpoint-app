@@ -38,7 +38,7 @@ const MUTED = '#9aa6bd'
 
 type FontWeight = 400 | 700 | 800
 
-type LoadedFont = {
+export type LoadedFont = {
   name: string
   data: ArrayBuffer
   weight: FontWeight
@@ -60,7 +60,7 @@ function base64ToArrayBuffer(b64: string): ArrayBuffer {
  * (ver `fonts.generated.ts`). No usa `fetch`/fs: en Cloudflare Workers no se
  * puede `fetch` un asset bundleado vía `import.meta.url`.
  */
-function loadFonts(): LoadedFont[] {
+export function loadFonts(): LoadedFont[] {
   if (fontsCache) return fontsCache
   fontsCache = ARCHIVO_FONTS.map(({ weight, data }) => ({
     name: 'Archivo',

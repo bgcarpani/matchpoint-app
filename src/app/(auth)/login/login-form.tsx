@@ -7,6 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { loginSchema, type LoginInput } from '@/lib/validation/auth'
 import { loginOrganizer } from '../actions'
 import { TextField } from '@/components/form/text-field'
+import { PasswordField } from '@/components/form/password-field'
 import { Button } from '@/components/ui/button'
 
 export function LoginForm({ authError = false }: { authError?: boolean }) {
@@ -37,9 +38,8 @@ export function LoginForm({ authError = false }: { authError?: boolean }) {
         error={errors.email?.message}
         {...register('email')}
       />
-      <TextField
+      <PasswordField
         label="Contraseña"
-        type="password"
         autoComplete="current-password"
         error={errors.password?.message}
         {...register('password')}

@@ -1,30 +1,50 @@
 /**
- * Imagen de historia (Instagram) del campeón — 1080×1920.
+ * Imagen de historia (Instagram) de la PAREJA CAMPEONA — 1080×1920.
  * Pública: lee la vista segura del bracket; sólo hay imagen si ya hay campeón.
+ *
+ * `?style=a|b|c` elige el diseño (el organizer lo selecciona al compartir):
+ *   a = Marquesina (noche), b = Sello (azul, centrado), c = Editorial (claro).
  */
 import { getPublicTournament } from '@/lib/public/tournament'
 import { getPublicBracket } from '@/lib/public/bracket'
-import { getBaseUrl } from '@/lib/url'
-import { buildStory } from '@/lib/og/story'
+import {
+  buildChampionStory,
+  type ChampionStyle,
+} from '@/lib/og/champion-story'
+import { categoryLabel, GENDER_LABELS } from '@/lib/domain/tournament'
+
+const STYLES: ChampionStyle[] = ['a', 'b', 'c']
 
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ tournamentId: string }> }
 ) {
   const { tournamentId } = await params
-  const [tournament, bracket, baseUrl] = await Promise.all([
+  const [tournament, bracket] = await Promise.all([
     getPublicTournament(tournamentId),
     getPublicBracket(tournamentId),
-    getBaseUrl(),
   ])
 
   if (!bracket?.champion) return new Response('Not found', { status: 404 })
 
-  return buildStory({
-    eyebrow: 'Campeón',
-    title: bracket.champion,
-    subtitle: tournament?.name,
-    url: `${baseUrl}/t/${tournamentId}/bracket`,
+  const styleParam = new URL(req.url).searchParams.get('style')
+  const style: ChampionStyle = STYLES.includes(styleParam as ChampionStyle)
+    ? (styleParam as ChampionStyle)
+    : 'a'
+
+  // El campeón viene como "Jugador 1 / Jugador 2" (nombres completos).
+  const [name1, name2 = ''] = bracket.champion.split(' / ')
+
+  const category = tournament
+    ? `${categoryLabel(tournament.category_type, tournament.category_value)} · ${GENDER_LABELS[tournament.gender]}`
+    : ''
+
+  return buildChampionStory({
+    style,
+    name1,
+    name2,
+    tournamentName: tournament?.name ?? '',
+    category,
     caption: 'Mirá las llaves',
   })
 }

@@ -8,6 +8,7 @@ import { bracketRoundLabel } from '@/lib/domain/bracket'
 import { type CourtOption } from '@/components/zones/match-court-select'
 import { BracketMatchCard } from '@/components/bracket/bracket-match-card'
 import { ShareButtons } from '@/components/share/share-buttons'
+import { ChampionStoryShare } from '@/components/share/champion-story-share'
 import { PrintButton } from '@/components/share/print-button'
 import { BracketViewToggle, type BracketViewMode } from '@/components/bracket/bracket-view-toggle'
 import { PrintFit } from '@/components/print/print-fit'
@@ -258,12 +259,23 @@ export function BracketBoard({
             Campeón {categoryGender}
           </p>
           <p className="font-display mt-1 text-2xl text-foreground">{champion}</p>
-          <div className="no-print mt-4 flex flex-wrap justify-center gap-2">
+          <div className="no-print mt-4 flex flex-wrap items-start justify-center gap-2">
             <ShareButtons
               url={shareUrl}
               text={`🏆 Campeón ${categoryGender} — ${champion} se consagró en ${tournamentName}. Mirá las llaves en Matchpoint:`}
-              storyUrl={published ? (storyUrl ?? undefined) : undefined}
             />
+            {published && storyUrl ? (
+              <ChampionStoryShare
+                storyUrl={storyUrl}
+                url={shareUrl}
+                text={`🏆 Campeón ${categoryGender} — ${champion} se consagró en ${tournamentName}.`}
+              />
+            ) : (
+              <p className="basis-full text-xs text-muted-foreground">
+                Publicá las llaves para compartir la historia del campeón en
+                Instagram.
+              </p>
+            )}
           </div>
         </div>
       )}

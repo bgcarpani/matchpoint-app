@@ -5,33 +5,20 @@ import { cn } from '@/lib/utils'
 export default function HomePage() {
   return (
     <main className="relative z-[2] mx-auto flex min-h-dvh w-full max-w-6xl flex-col px-5 sm:px-8">
-      <header className="flex items-center justify-between py-6">
+      {/* Solo el logo: los CTAs (Ingresar / Crear cuenta) viven en el hero para no duplicarlos. */}
+      <header className="flex items-center py-6">
         <span className="font-display text-lg text-foreground">
           Match<span className="text-volt">point</span>
         </span>
-        <div className="flex items-center gap-3">
-          <Link
-            href="/login"
-            className="text-sm font-medium text-muted-foreground hover:text-foreground"
-          >
-            Ingresar
-          </Link>
-          <Link
-            href="/register"
-            className={cn(buttonVariants({ size: 'sm' }), 'font-display')}
-          >
-            Crear cuenta
-          </Link>
-        </div>
       </header>
 
-      <div className="grid flex-1 items-center gap-10 py-12 lg:grid-cols-[1fr_minmax(340px,440px)] lg:py-16">
+      <div className="grid flex-1 items-center gap-10 py-12 xl:grid-cols-[1fr_minmax(320px,400px)] xl:py-16">
         {/* Texto */}
-        <div>
+        <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-volt">
             Comunidad de pádel
           </p>
-          <h1 className="font-display mt-5 text-[clamp(2.75rem,8vw,6rem)] leading-[0.92] text-foreground">
+          <h1 className="font-display mt-5 text-[clamp(2rem,6vw,3.75rem)] leading-[0.92] text-foreground">
             Gestioná tu
             <br />
             organización
@@ -115,9 +102,9 @@ function BracketShowcase() {
       <p className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
         Llaves · Final
       </p>
-      <div className="mt-4 grid grid-cols-[1fr_18px_1fr] items-center gap-0">
+      <div className="mt-4 grid grid-cols-[minmax(0,1fr)_18px_minmax(0,1fr)] items-center gap-0">
         {/* Semis */}
-        <div className="flex flex-col gap-5">
+        <div className="flex min-w-0 flex-col gap-5">
           <BracketPair top={['Pérez / Gómez', '6']} bottom={['Vega / Mai', '3']} />
           <BracketPair top={['Ruiz / Sosa', '7']} bottom={['Díaz / Mol', '5']} />
         </div>
@@ -127,7 +114,7 @@ function BracketShowcase() {
         </div>
 
         {/* Final + campeón */}
-        <div className="flex flex-col gap-1.5">
+        <div className="flex min-w-0 flex-col gap-1.5">
           <ScorePill name="Pérez / Gómez" score="6" winner />
           <ScorePill name="Ruiz / Sosa" score="4" />
           <div className="mt-1 rounded-xl bg-volt px-3 py-2.5 text-volt-foreground">
@@ -152,7 +139,7 @@ function BracketPair({
   bottom: [string, string]
 }) {
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex min-w-0 flex-col gap-1.5">
       <ScorePill name={top[0]} score={top[1]} winner />
       <ScorePill name={bottom[0]} score={bottom[1]} />
     </div>
@@ -177,14 +164,14 @@ function ScorePill({
       }`}
     >
       <span
-        className={`truncate ${
+        className={`min-w-0 flex-1 truncate ${
           winner ? 'font-bold text-volt-deep' : 'text-muted-foreground'
         }`}
       >
         {name}
       </span>
       <span
-        className={`font-mono tnum font-bold ${
+        className={`ml-2 shrink-0 font-mono tnum font-bold ${
           winner ? 'text-volt-deep' : 'text-muted-foreground'
         }`}
       >
