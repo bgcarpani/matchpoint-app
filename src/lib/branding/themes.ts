@@ -101,6 +101,15 @@ export const THEMES: Record<ThemeKey, ThemePalette> = {
 /** Lista ordenada para la grilla de swatches del picker. */
 export const THEME_LIST: ThemePalette[] = Object.values(THEMES)
 
+/** Acento de marca para las imágenes de difusión (OG/historia, Satori). */
+export type OgAccent = { base: string; deep: string; tint: string; rgb: string }
+
+/** Deriva el acento OG del preset (mismo color de marca que la app). */
+export function themeAccent(key: string | null | undefined): OgAccent {
+  const p = getTheme(key)
+  return { base: p.volt, deep: p.voltDeep, tint: p.voltTint, rgb: p.glowRgb }
+}
+
 /** Resuelve una key (posiblemente null/inválida) al preset, con fallback al default. */
 export function getTheme(key: string | null | undefined): ThemePalette {
   return THEMES[(key ?? '') as ThemeKey] ?? THEMES[DEFAULT_THEME]

@@ -1,37 +1,34 @@
 /**
  * Builder compartido de la imagen de "historia" (Instagram) con next/og.
  *
- * Formato 1080×1920, branding Matchpoint (azul noche + acento volt). Lo consumen
- * los route handlers `/og/story` de torneo, campeón y calendario.
+ * Formato 1080×1920, fondo noche + acento de marca del organizador (v3.2: la
+ * paleta elegida tiñe también las imágenes de difusión). Lo consumen los route
+ * handlers `/og/story` de torneo y calendario.
  *
  * Consistencia con la app:
  * - **Tipografía Archivo** (la misma que la app vía `next/font`). Satori no ve las
  *   fuentes del navegador, así que los .ttf (400/700/800) van **embebidos en
  *   base64** (`fonts.generated.ts`, generado desde `./fonts/*.ttf`) y se los
  *   pasamos a `ImageResponse`. Se embeben (en vez de `fetch(import.meta.url)`)
- *   porque en Cloudflare Workers no se puede `fetch` un asset bundleado. Los
- *   títulos y el wordmark replican la clase `.font-display` (Archivo 800
- *   uppercase, tracking tight) de `globals.css`.
- * - **Tokens de color** = los de `globals.css` (`--background`, `--foreground`,
- *   `--volt`, `--muted-foreground`).
+ *   porque en Cloudflare Workers no se puede `fetch` un asset bundleado.
+ * - **Acento** = la paleta de marca del organizador (`themeAccent`); el resto de
+ *   los neutros del tema noche quedan fijos.
+ * - **Logo**: si el organizador subió uno (raster), reemplaza al wordmark.
  *
  * Decisiones de diseño:
- * - **Sin QR**: la historia se ve desde el mismo celular que la comparte, así que
- *   un QR es inescaneable. En su lugar se imprime la URL legible como CTA y la
- *   persona agrega el *sticker de Enlace* de Instagram (la URL ya queda copiada
- *   al portapapeles desde el botón de compartir → es un solo pegar).
- * - **Safe zones**: Instagram tapa ~280px arriba y ~330px abajo con su propia UI.
- *   El contenido vive en la franja superior/central y el tercio inferior queda
- *   libre para que la persona ubique ahí el sticker de enlace.
+ * - **Sin QR**: la historia se ve desde el mismo celular que la comparte. En su
+ *   lugar se imprime la URL legible como CTA y la persona agrega el *sticker de
+ *   Enlace* de Instagram (la URL ya queda copiada al portapapeles).
+ * - **Safe zones**: Instagram tapa ~280px arriba y ~330px abajo; el contenido
+ *   vive en la franja superior/central y el tercio inferior queda libre.
  *
- * Corre en el runtime de Cloudflare Workers (Satori). Estilos inline + flexbox:
- * Satori no soporta grid y exige `display:flex` en todo nodo con varios hijos.
+ * Corre en el runtime de Cloudflare Workers (Satori). Estilos inline + flexbox.
  * Sin emojis ni glifos especiales: la fuente puede no tenerlos.
  */
 import { ImageResponse } from 'next/og'
 import { ARCHIVO_FONTS } from './fonts.generated'
+import type { OgAccent } from '@/lib/branding/themes'
 
-const VOLT = '#3b82f6'
 const BG = '#0b1220'
 const INK = '#ecf0f7'
 const MUTED = '#9aa6bd'
@@ -55,6 +52,34 @@ function base64ToArrayBuffer(b64: string): ArrayBuffer {
   return bytes.buffer
 }
 
+/** ArrayBuffer → base64 (para embeber el logo como data URL). */
+function arrayBufferToBase64(buf: ArrayBuffer): string {
+  const bytes = new Uint8Array(buf)
+  let bin = ''
+  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i])
+  return btoa(bin)
+}
+
+/**
+ * Carga el logo del organizador como data URL para incrustarlo en la imagen OG.
+ * Defensivo: cualquier fallo (fetch, tipo no soportado) devuelve null y la pieza
+ * cae al wordmark. **Sólo raster** (PNG/JPG/WEBP): Satori no rinde SVG en `<img>`.
+ */
+export async function loadLogoDataUrl(
+  url: string | null | undefined
+): Promise<string | null> {
+  if (!url) return null
+  try {
+    const res = await fetch(url)
+    if (!res.ok) return null
+    const ct = res.headers.get('content-type') ?? ''
+    if (!/^image\/(png|jpe?g|webp)$/i.test(ct)) return null
+    return `data:${ct};base64,${arrayBufferToBase64(await res.arrayBuffer())}`
+  } catch {
+    return null
+  }
+}
+
 /**
  * Devuelve (y cachea por módulo) los .ttf de Archivo embebidos como base64
  * (ver `fonts.generated.ts`). No usa `fetch`/fs: en Cloudflare Workers no se
@@ -71,8 +96,44 @@ export function loadFonts(): LoadedFont[] {
   return fontsCache
 }
 
+/** Wordmark "Matchpoint" o, si hay logo, el logo del club. */
+function Brand({
+  logoDataUrl,
+  accent,
+}: {
+  logoDataUrl: string | null | undefined
+  accent: string
+}) {
+  if (logoDataUrl) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element -- Satori (OG image)
+      <img
+        src={logoDataUrl}
+        alt=""
+        width={104}
+        height={104}
+        style={{ objectFit: 'contain', borderRadius: 20 }}
+      />
+    )
+  }
+  return (
+    <div
+      style={{
+        display: 'flex',
+        fontSize: 50,
+        fontWeight: 800,
+        textTransform: 'uppercase',
+        letterSpacing: -1,
+      }}
+    >
+      <span>Match</span>
+      <span style={{ color: accent }}>point</span>
+    </div>
+  )
+}
+
 export interface StoryInput {
-  /** Etiqueta superior, ej. "Torneo" / "Campeón" / "Calendario". */
+  /** Etiqueta superior, ej. "Torneo" / "Calendario". */
   eyebrow: string
   /** Título principal grande. */
   title: string
@@ -82,6 +143,10 @@ export interface StoryInput {
   url: string
   /** Llamado a la acción bajo la URL, ej. "Inscribite online". */
   caption: string
+  /** Acento de marca del organizador. */
+  accent: OgAccent
+  /** Logo del club (data URL) o null → wordmark. */
+  logoDataUrl?: string | null
 }
 
 export async function buildStory({
@@ -90,6 +155,8 @@ export async function buildStory({
   subtitle,
   url,
   caption,
+  accent,
+  logoDataUrl,
 }: StoryInput): Promise<ImageResponse> {
   const displayUrl = url.replace(/^https?:\/\//, '').replace(/\/$/, '')
   const fonts = loadFonts()
@@ -104,26 +171,14 @@ export async function buildStory({
           width: '1080px',
           height: '1920px',
           backgroundColor: BG,
-          backgroundImage: `radial-gradient(circle at 50% 18%, rgba(59,130,246,0.26), rgba(59,130,246,0) 55%)`,
+          backgroundImage: `radial-gradient(circle at 50% 18%, rgba(${accent.rgb},0.26), rgba(${accent.rgb},0) 55%)`,
           color: INK,
           // Safe zones: 280 arriba (UI de IG), 0 abajo (tercio libre para sticker).
           padding: '280px 96px 0',
           fontFamily: 'Archivo',
         }}
       >
-        {/* Wordmark — replica `.font-display`: Archivo 800 uppercase, tracking tight */}
-        <div
-          style={{
-            display: 'flex',
-            fontSize: 50,
-            fontWeight: 800,
-            textTransform: 'uppercase',
-            letterSpacing: -1,
-          }}
-        >
-          <span>Match</span>
-          <span style={{ color: VOLT }}>point</span>
-        </div>
+        <Brand logoDataUrl={logoDataUrl} accent={accent.base} />
 
         {/* Bloque central */}
         <div
@@ -139,7 +194,7 @@ export async function buildStory({
               fontSize: 34,
               letterSpacing: 8,
               textTransform: 'uppercase',
-              color: VOLT,
+              color: accent.base,
               fontWeight: 700,
             }}
           >
@@ -192,8 +247,8 @@ export async function buildStory({
               width: '100%',
               marginTop: 26,
               borderRadius: 24,
-              border: `3px solid ${VOLT}`,
-              backgroundColor: 'rgba(59,130,246,0.12)',
+              border: `3px solid ${accent.base}`,
+              backgroundColor: `rgba(${accent.rgb},0.12)`,
               padding: '24px 36px',
             }}
           >
@@ -201,7 +256,7 @@ export async function buildStory({
               style={{
                 fontSize: 38,
                 fontWeight: 700,
-                color: VOLT,
+                color: accent.base,
                 lineHeight: 1.3,
                 wordBreak: 'break-all',
               }}

@@ -4,7 +4,9 @@
  */
 import { getPublicTournament } from '@/lib/public/tournament'
 import { getBaseUrl } from '@/lib/url'
-import { buildStory } from '@/lib/og/story'
+import { buildStory, loadLogoDataUrl } from '@/lib/og/story'
+import { themeAccent } from '@/lib/branding/themes'
+import { logoPublicUrl } from '@/lib/branding/logo'
 import { categoryLabel, GENDER_LABELS } from '@/lib/domain/tournament'
 import { formatDate } from '@/lib/format'
 
@@ -16,7 +18,10 @@ export async function GET(
   const tournament = await getPublicTournament(tournamentId)
   if (!tournament) return new Response('Not found', { status: 404 })
 
-  const baseUrl = await getBaseUrl()
+  const [baseUrl, logoDataUrl] = await Promise.all([
+    getBaseUrl(),
+    loadLogoDataUrl(logoPublicUrl(tournament.logo_path)),
+  ])
   const subtitle = [
     tournament.establishment_name,
     `${categoryLabel(tournament.category_type, tournament.category_value)} · ${GENDER_LABELS[tournament.gender]}`,
@@ -31,5 +36,7 @@ export async function GET(
     subtitle,
     url: `${baseUrl}/t/${tournamentId}`,
     caption: 'Inscribite online',
+    accent: themeAccent(tournament.theme_key),
+    logoDataUrl,
   })
 }

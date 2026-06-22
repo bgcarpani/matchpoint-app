@@ -11,6 +11,9 @@ import {
   buildChampionStory,
   type ChampionStyle,
 } from '@/lib/og/champion-story'
+import { loadLogoDataUrl } from '@/lib/og/story'
+import { themeAccent } from '@/lib/branding/themes'
+import { logoPublicUrl } from '@/lib/branding/logo'
 import { categoryLabel, GENDER_LABELS } from '@/lib/domain/tournament'
 
 const STYLES: ChampionStyle[] = ['a', 'b', 'c']
@@ -39,6 +42,10 @@ export async function GET(
     ? `${categoryLabel(tournament.category_type, tournament.category_value)} · ${GENDER_LABELS[tournament.gender]}`
     : ''
 
+  const logoDataUrl = await loadLogoDataUrl(
+    logoPublicUrl(tournament?.logo_path ?? null)
+  )
+
   return buildChampionStory({
     style,
     name1,
@@ -46,5 +53,7 @@ export async function GET(
     tournamentName: tournament?.name ?? '',
     category,
     caption: 'Mirá las llaves',
+    accent: themeAccent(tournament?.theme_key),
+    logoDataUrl,
   })
 }

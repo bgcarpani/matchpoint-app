@@ -7,7 +7,9 @@ import {
   getActiveTournaments,
 } from '@/lib/public/calendar'
 import { getBaseUrl } from '@/lib/url'
-import { buildStory } from '@/lib/og/story'
+import { buildStory, loadLogoDataUrl } from '@/lib/og/story'
+import { themeAccent } from '@/lib/branding/themes'
+import { logoPublicUrl } from '@/lib/branding/logo'
 
 export async function GET(
   _req: Request,
@@ -17,9 +19,10 @@ export async function GET(
   const organizer = await getPublicOrganizerBySlug(slug)
   if (!organizer) return new Response('Not found', { status: 404 })
 
-  const [tournaments, baseUrl] = await Promise.all([
+  const [tournaments, baseUrl, logoDataUrl] = await Promise.all([
     getActiveTournaments(organizer.id),
     getBaseUrl(),
+    loadLogoDataUrl(logoPublicUrl(organizer.logo_path)),
   ])
 
   const count = tournaments.length
@@ -34,5 +37,7 @@ export async function GET(
     subtitle,
     url: `${baseUrl}/o/${slug}`,
     caption: 'Mirá los torneos',
+    accent: themeAccent(organizer.theme_key),
+    logoDataUrl,
   })
 }

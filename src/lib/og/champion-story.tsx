@@ -1,25 +1,21 @@
 /**
  * Builder de la imagen de "historia" (Instagram) de la PAREJA CAMPEONA — 1080×1920.
  *
- * A diferencia del builder genérico (`story.tsx`), este es específico del campeón
- * y soporta 3 estilos que el organizer elige al compartir (`?style=a|b|c`):
+ * Soporta 3 estilos que el organizer elige al compartir (`?style=a|b|c`):
  *   - 'a' Marquesina: fondo noche, alineado a la izquierda, banda de categoría sólida.
- *   - 'b' Sello: azul degradé, centrado tipo medalla, categoría en píldora con borde.
+ *   - 'b' Sello: acento degradé, centrado tipo medalla, categoría en píldora con borde.
  *   - 'c' Editorial: claro (off-white), categoría como titular arriba.
  *
- * Reglas heredadas de `story.tsx` (ver ese archivo para el detalle):
- * - Tipografía **Archivo** embebida en base64 (pesos 400/700/800; NO hay 900 ni
- *   JetBrains Mono en el bundle de OG, así que todo va en Archivo).
- * - Sin URL "quemada": el tercio inferior queda libre para el sticker de Enlace
- *   de Instagram. Sin animación (es un PNG), sin emojis ni glifos especiales.
- * - Satori: estilos inline + flexbox (todo nodo con varios hijos lleva `display:flex`).
- *   Corre en el runtime de Cloudflare Workers.
+ * v3.2: el **acento** lo aporta la paleta de marca del organizador (`themeAccent`);
+ * si subió **logo** (raster), reemplaza al wordmark. El dorado de copa es fijo.
  *
- * Paleta = tokens "Court Side" de `DESIGN.md` (azul real #2D52E8, profundo #1E3FAE,
- * ink #0D1020, off-white #F4F5F8) + dorado de copa para la celebración.
+ * Reglas heredadas de `story.tsx`: tipografía Archivo embebida (400/700/800), sin
+ * URL quemada (tercio inferior libre para el sticker de Enlace), sin animación ni
+ * emojis. Satori: estilos inline + flexbox; corre en Cloudflare Workers.
  */
 import { ImageResponse } from 'next/og'
 import { loadFonts } from './story'
+import type { OgAccent } from '@/lib/branding/themes'
 
 export type ChampionStyle = 'a' | 'b' | 'c'
 
@@ -35,6 +31,10 @@ export interface ChampionStoryInput {
   category: string
   /** CTA bajo el bloque principal, ej. "Mirá las llaves". */
   caption: string
+  /** Acento de marca del organizador. */
+  accent: OgAccent
+  /** Logo del club (data URL) o null → wordmark. */
+  logoDataUrl?: string | null
 }
 
 const GOLD_A = '#FFD75E'
@@ -143,6 +143,33 @@ function Wordmark({ ink, accent, size = 52 }: { ink: string; accent: string; siz
   )
 }
 
+/** Logo del club si lo subió (raster), si no el wordmark Matchpoint. */
+function Brand({
+  logoDataUrl,
+  ink,
+  accent,
+  size = 52,
+}: {
+  logoDataUrl: string | null | undefined
+  ink: string
+  accent: string
+  size?: number
+}) {
+  if (logoDataUrl) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element -- Satori (OG image)
+      <img
+        src={logoDataUrl}
+        alt=""
+        width={96}
+        height={96}
+        style={{ objectFit: 'contain', borderRadius: 18 }}
+      />
+    )
+  }
+  return <Wordmark ink={ink} accent={accent} size={size} />
+}
+
 const EYEBROW = 'Pareja campeona'
 
 export async function buildChampionStory({
@@ -152,6 +179,8 @@ export async function buildChampionStory({
   tournamentName,
   category,
   caption,
+  accent,
+  logoDataUrl,
 }: ChampionStoryInput): Promise<ImageResponse> {
   const fonts = loadFonts()
   const cat = category.toUpperCase()
@@ -159,7 +188,7 @@ export async function buildChampionStory({
   let content: React.ReactNode
 
   if (style === 'b') {
-    // Sello centrado sobre azul degradé.
+    // Sello centrado sobre acento degradé.
     content = (
       <div
         style={{
@@ -169,15 +198,15 @@ export async function buildChampionStory({
           justifyContent: 'flex-start',
           width: '1080px',
           height: '1920px',
-          backgroundColor: '#1E3FAE',
-          backgroundImage: 'linear-gradient(160deg, #2D52E8, #1E3FAE)',
+          backgroundColor: accent.deep,
+          backgroundImage: `linear-gradient(160deg, ${accent.base}, ${accent.deep})`,
           color: '#ffffff',
           textAlign: 'center',
           padding: '210px 96px 0',
           fontFamily: 'Archivo',
         }}
       >
-        <Wordmark ink="#ffffff" accent="#DBE3FB" />
+        <Brand logoDataUrl={logoDataUrl} ink="#ffffff" accent={accent.tint} />
         <div
           style={{
             display: 'flex',
@@ -193,7 +222,7 @@ export async function buildChampionStory({
               fontWeight: 800,
               letterSpacing: 8,
               textTransform: 'uppercase',
-              color: '#DBE3FB',
+              color: accent.tint,
               marginTop: 40,
             }}
           >
@@ -229,7 +258,7 @@ export async function buildChampionStory({
             style={{
               fontSize: 38,
               fontWeight: 400,
-              color: '#DBE3FB',
+              color: accent.tint,
               marginTop: 30,
             }}
           >
@@ -261,14 +290,13 @@ export async function buildChampionStory({
           width: '1080px',
           height: '1920px',
           backgroundColor: '#F4F5F8',
-          backgroundImage:
-            'radial-gradient(circle at 80% 28%, rgba(45,82,232,0.18), rgba(45,82,232,0) 60%)',
+          backgroundImage: `radial-gradient(circle at 80% 28%, rgba(${accent.rgb},0.18), rgba(${accent.rgb},0) 60%)`,
           color: '#0D1020',
           padding: '210px 96px 0',
           fontFamily: 'Archivo',
         }}
       >
-        <Wordmark ink="#0D1020" accent="#2D52E8" />
+        <Brand logoDataUrl={logoDataUrl} ink="#0D1020" accent={accent.base} />
         <div
           style={{
             display: 'flex',
@@ -283,7 +311,7 @@ export async function buildChampionStory({
               fontWeight: 800,
               textTransform: 'uppercase',
               letterSpacing: 2,
-              color: '#2D52E8',
+              color: accent.base,
             }}
           >
             {cat}
@@ -305,7 +333,7 @@ export async function buildChampionStory({
               name1={name1}
               name2={name2}
               ink="#0D1020"
-              accent="#2D52E8"
+              accent={accent.base}
               size={86}
             />
           </div>
@@ -334,7 +362,7 @@ export async function buildChampionStory({
               fontWeight: 800,
               textTransform: 'uppercase',
               letterSpacing: 4,
-              color: '#2D52E8',
+              color: accent.base,
               marginTop: 72,
             }}
           >
@@ -354,8 +382,7 @@ export async function buildChampionStory({
           width: '1080px',
           height: '1920px',
           backgroundColor: '#0D1020',
-          backgroundImage:
-            'radial-gradient(circle at 22% 40%, rgba(45,82,232,0.5), rgba(45,82,232,0) 55%)',
+          backgroundImage: `radial-gradient(circle at 22% 40%, rgba(${accent.rgb},0.5), rgba(${accent.rgb},0) 55%)`,
           color: '#ffffff',
           padding: '210px 96px 0',
           fontFamily: 'Archivo',
@@ -368,7 +395,7 @@ export async function buildChampionStory({
             justifyContent: 'space-between',
           }}
         >
-          <Wordmark ink="#ffffff" accent="#2D52E8" />
+          <Brand logoDataUrl={logoDataUrl} ink="#ffffff" accent={accent.base} />
           <TrophyBadge size={84} glow="rgba(255,215,94,0.5)" />
         </div>
         <div
@@ -385,7 +412,7 @@ export async function buildChampionStory({
               fontWeight: 800,
               letterSpacing: 6,
               textTransform: 'uppercase',
-              color: '#2D52E8',
+              color: accent.base,
             }}
           >
             {EYEBROW}
@@ -395,7 +422,7 @@ export async function buildChampionStory({
               name1={name1}
               name2={name2}
               ink="#ffffff"
-              accent="#2D52E8"
+              accent={accent.base}
               size={86}
             />
           </div>
@@ -413,7 +440,7 @@ export async function buildChampionStory({
             style={{
               display: 'flex',
               marginTop: 40,
-              backgroundColor: '#2D52E8',
+              backgroundColor: accent.base,
               borderRadius: 16,
               padding: '18px 32px',
               fontSize: 42,
@@ -431,7 +458,7 @@ export async function buildChampionStory({
               fontWeight: 800,
               textTransform: 'uppercase',
               letterSpacing: 4,
-              color: '#DBE3FB',
+              color: accent.tint,
               marginTop: 72,
             }}
           >
