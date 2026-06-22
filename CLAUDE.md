@@ -14,7 +14,8 @@ Las primeras versiones son organizer-first.
 - `spec-v3.md` — especificación de implementación de v3 (comunicaciones: email + share)
 - `spec-v3-2.md` — especificación de v3 (parte 2): branding del organizador (logo/Storage,
   dirección, paletas de marca) + refinamientos del index (promo + "próximamente" + carousel) +
-  transiciones de página. En desarrollo en `feature/organizer-branding` (spec para revisión).
+  transiciones de página. **Implementado y deployado a producción (2026-06-22)**; la branch
+  `feature/organizer-branding` quedó mergeada a `master` (no borrada).
 - `DESIGN.md` — **sistema visual "Court Side" (tema claro)**: tokens, tipografía y reglas. Fuente de
   verdad del diseño; consultarlo antes de tocar UI.
 - `PRODUCT.md` — documento de producto/estrategia (audiencia, personalidad de marca, principios de diseño).
@@ -97,9 +98,27 @@ alta pública (`register_pair`, anon): no exige inscripción abierta (sirve mien
 de INSERT para `authenticated`; la propiedad del torneo se valida antes vía RLS de `tournaments`).
 Mantiene el anti-duplicado por email y el requisito de nombre + un contacto por jugador.
 
-## Estado de master y deploy (2026-06-20) — leer al abrir sesión nueva
+**v3 (parte 2) — branding del organizador + refinamientos estéticos: TODO implementado, mergeado y
+deployado (2026-06-22).** Spec en `spec-v3-2.md`. Hechos (6 fases): (1) **paletas de marca curadas**
+(6 presets en `src/lib/branding/themes.ts`; sólo swappean la familia `--volt*`, la estructura Court
+Side queda fija) + migración `0019` (columnas `logo_path/address/maps_url/theme_key` en `organizers`,
+bucket Storage `org-logos`); (2) página **`/settings`** (upload de logo, dirección + link de mapa,
+picker de paleta con preview en vivo + "volver al default"), theming del área organizer vía
+`ThemeStyle` (inyecta `:root`, tiñe header+contenido+glow) y **logo en el header** conviviendo con el
+nombre; (3a) branding en **páginas públicas** (`/t/[id]`, zonas, llaves, `/o/[slug]`) + migración
+`0020` (branding en `public_tournament_view`); (3b) acento + logo en las **imágenes OG/historia** (3
+estilos); (4) **landing** con más promo + sección "Próximamente"; (5) **carousel** animado del hero
+(4 slides, auto-play, `prefers-reduced-motion`); (6) **transiciones de página** (`src/app/template.tsx`
++ `.page-enter`). Decisiones: presets (no picker libre), una sola paleta de marca para app + imágenes,
+Storage **adelantado** (logos) respecto del plan original. **Adicional:** fix de naming del formato de
+zona `winner_vs_loser` → label "Ganador vs Ganador". ⚠️ **Pendiente de verificación visual logueada**
+(no hecha por el asistente, sin credenciales): subir logo + elegir paleta en `/settings`, ver una
+pública con tema/logo, y una imagen OG real con logo + paleta no-default.
+
+## Estado de master y deploy (2026-06-22) — leer al abrir sesión nueva
 **El código en `master` está deployado en producción** (`https://app.match-point.workers.dev`).
-`master` == `origin/master` == lo deployado (merge `5ea23c5`; smoke test e2e OK: home/login/register 200).
+`master` == `origin/master` == lo deployado (merge `e595e7c`, Version ID `413331bd`; smoke test OK:
+home/login/register 200, `/settings` 307→login). **Último deploy: v3.2 (branding + landing), 2026-06-22.**
 - **Rediseño visual "Court Side" (UI) HECHO y deployado (2026-06-20).** Tema claro azul real, fondo frío
   (Opción B), home nuevo ("Gestioná tu organización" + cuadro de llaves de ejemplo + features), dashboard
   con barra de nav + KPIs (activos/parejas/pendientes/canchas) + tabla de torneos, y tarjetas de partido
@@ -287,7 +306,8 @@ Americano + Llaves, con **parejas fijas** durante todo el torneo:
 - Notificaciones por email: v3 (en desarrollo — ver `spec-v3.md`)
 - Notificaciones por WhatsApp (envío automático): pospuesto (botón de compartir sí entra en v3)
 - Supabase Realtime: v2
-- Supabase Storage / streaming / transmisiones: última versión (diferido fuera de v3)
+- Supabase Storage: **logos de organización adelantados a v3 (parte 2)** — bucket `org-logos`
+  (decisión consciente). Streaming / transmisiones / multimedia siguen diferidos a la última versión.
 - Rankings y stats: v4
 - Gestión de turnos de canchas: v5
 - Stripe / pagos: v5

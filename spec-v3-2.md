@@ -1,6 +1,9 @@
 # spec-v3-2.md — v3 (parte 2): Branding del organizador + refinamientos estéticos
 
-> **Estado:** spec para revisión (no implementado). Branch: `feature/organizer-branding`.
+> **Estado:** ✅ IMPLEMENTADO, mergeado a `master` y **deployado a producción (2026-06-22)**.
+> Branch `feature/organizer-branding` (no borrada). Migraciones `0019` y `0020` aplicadas.
+> Pendiente: pase visual logueado (subir logo + elegir paleta en `/settings`, ver pública con
+> tema/logo, imagen OG real). Branch original: `feature/organizer-branding`.
 > Eje: features estéticos para el organizador (marca propia) + mejoras de presentación del
 > index + fluidez de navegación. **No toca la lógica de negocio** (torneos, inscripciones,
 > zonas, llaves) — es capa de presentación, branding y landing.
