@@ -10,6 +10,8 @@ import {
   STATUS_LABELS,
 } from '@/lib/domain/tournament'
 import { PairRegistrationForm } from '@/components/public/pair-registration-form'
+import { ThemeStyle } from '@/components/branding/theme-style'
+import { logoPublicUrl } from '@/lib/branding/logo'
 
 export default async function PublicTournamentPage({
   params,
@@ -41,6 +43,8 @@ export default async function PublicTournamentPage({
   const requestsFull = t.requested_pairs >= t.max_pair_requests
   const canRegister = isOpen && !requestsFull
 
+  const logoUrl = logoPublicUrl(t.logo_path)
+
   const categoryLabel =
     t.category_type === 'individual'
       ? t.category_value
@@ -63,12 +67,21 @@ export default async function PublicTournamentPage({
 
   return (
     <main className="relative z-[2] mx-auto w-full max-w-6xl px-5 pb-24 sm:px-8">
+      <ThemeStyle themeKey={t.theme_key} />
       {/* Top bar */}
       <header className="flex items-center justify-between py-6">
         <span className="font-display text-lg text-foreground">
           Match<span className="text-volt">point</span>
         </span>
-        <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+        <span className="flex items-center gap-2.5 text-xs uppercase tracking-[0.2em] text-muted-foreground">
+          {logoUrl && (
+            // eslint-disable-next-line @next/next/no-img-element -- logo del CDN de Storage
+            <img
+              src={logoUrl}
+              alt=""
+              className="size-7 rounded-full border border-border object-cover"
+            />
+          )}
           {t.establishment_name}
         </span>
       </header>
@@ -183,7 +196,19 @@ export default async function PublicTournamentPage({
             <DetailRow label="Fecha" value={dateLabel} />
             <DetailRow label="Apertura de inscripción" value={openLabel} />
             <DetailRow label="Estado" value={STATUS_LABELS[t.status]} />
+            {t.address && <DetailRow label="Dónde" value={t.address} />}
           </dl>
+
+          {t.maps_url && (
+            <a
+              href={t.maps_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-volt hover:underline"
+            >
+              Cómo llegar →
+            </a>
+          )}
 
           <SectionTitle className="mt-10">Canchas</SectionTitle>
           <ul className="mt-5 flex flex-wrap gap-2">

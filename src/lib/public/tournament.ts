@@ -25,6 +25,11 @@ export interface PublicTournamentView {
   max_pairs: number
   max_pair_requests: number
   establishment_name: string
+  /** Branding del organizador (v3.2): paleta, logo, dirección. */
+  theme_key: string
+  logo_path: string | null
+  address: string | null
+  maps_url: string | null
   courts: { id: string; name: string; type: CourtType }[]
   /** parejas aceptadas (cupos confirmados ocupados) */
   accepted_pairs: number

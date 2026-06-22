@@ -11,6 +11,8 @@ import {
   STATUS_LABELS,
   categoryLabel,
 } from '@/lib/domain/tournament'
+import { ThemeStyle } from '@/components/branding/theme-style'
+import { logoPublicUrl } from '@/lib/branding/logo'
 
 export async function generateMetadata({
   params,
@@ -37,9 +39,11 @@ export default async function PublicCalendarPage({
   if (!organizer) notFound()
 
   const tournaments = await getActiveTournaments(organizer.id)
+  const logoUrl = logoPublicUrl(organizer.logo_path)
 
   return (
     <main className="relative z-[2] mx-auto w-full max-w-4xl px-5 pb-24 sm:px-8">
+      <ThemeStyle themeKey={organizer.theme_key} />
       {/* Top bar */}
       <header className="flex items-center justify-between py-6">
         <span className="font-display text-lg text-foreground">
@@ -52,9 +56,18 @@ export default async function PublicCalendarPage({
 
       {/* Hero */}
       <section className="rounded-2xl border border-border bg-card/40 px-6 py-12 sm:px-12 sm:py-16">
-        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-          Torneos de
-        </p>
+        {logoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element -- logo del CDN de Storage
+          <img
+            src={logoUrl}
+            alt={organizer.establishment_name}
+            className="mb-6 size-16 rounded-2xl border border-border object-cover"
+          />
+        ) : (
+          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+            Torneos de
+          </p>
+        )}
         <h1 className="font-display mt-3 text-[clamp(2.25rem,8vw,5rem)] text-foreground">
           {organizer.establishment_name}
         </h1>
@@ -63,6 +76,21 @@ export default async function PublicCalendarPage({
             ? 'Elegí un torneo para ver los detalles e inscribirte.'
             : 'No hay torneos activos en este momento.'}
         </p>
+        {organizer.address && (
+          <p className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+            <span>{organizer.address}</span>
+            {organizer.maps_url && (
+              <a
+                href={organizer.maps_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-volt hover:underline"
+              >
+                Cómo llegar →
+              </a>
+            )}
+          </p>
+        )}
       </section>
 
       {/* Lista de torneos activos */}

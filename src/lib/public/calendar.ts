@@ -20,6 +20,11 @@ export interface PublicOrganizer {
   id: string
   establishment_name: string
   calendar_slug: string
+  /** Branding del organizador (v3.2). */
+  theme_key: string
+  logo_path: string | null
+  address: string | null
+  maps_url: string | null
 }
 
 export interface CalendarTournament {
@@ -41,7 +46,9 @@ export async function getPublicOrganizerBySlug(
   const supabase = await createClient()
   const { data, error } = await supabase
     .from('public_organizer_view')
-    .select('id, establishment_name, calendar_slug')
+    .select(
+      'id, establishment_name, calendar_slug, theme_key, logo_path, address, maps_url'
+    )
     .eq('calendar_slug', slug)
     .maybeSingle()
 

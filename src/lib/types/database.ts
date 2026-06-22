@@ -265,6 +265,10 @@ export interface Database {
           max_pairs: number
           max_pair_requests: number
           establishment_name: string
+          theme_key: string
+          logo_path: string | null
+          address: string | null
+          maps_url: string | null
           accepted_pairs: number
           requested_pairs: number
           zones_published: boolean

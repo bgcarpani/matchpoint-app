@@ -3,6 +3,8 @@ import type { Metadata } from 'next'
 import { getPublicTournament } from '@/lib/public/tournament'
 import { getPublicBracket } from '@/lib/public/bracket'
 import { PublicBracketView } from '@/components/bracket/public-bracket-view'
+import { ThemeStyle } from '@/components/branding/theme-style'
+import { logoPublicUrl } from '@/lib/branding/logo'
 
 export const metadata: Metadata = { title: 'Llaves — Matchpoint' }
 
@@ -18,15 +20,25 @@ export default async function PublicBracketPage({
   ])
 
   const available = bracket && bracket.rounds.length > 0
+  const logoUrl = logoPublicUrl(tournament?.logo_path ?? null)
 
   return (
     <main className="relative z-[2] mx-auto w-full max-w-5xl px-5 pb-24 sm:px-8">
+      <ThemeStyle themeKey={tournament?.theme_key} />
       <header className="flex items-center justify-between py-6">
         <span className="font-display text-lg text-foreground">
           Match<span className="text-volt">point</span>
         </span>
         {tournament && (
-          <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+          <span className="flex items-center gap-2.5 text-xs uppercase tracking-[0.2em] text-muted-foreground">
+            {logoUrl && (
+              // eslint-disable-next-line @next/next/no-img-element -- logo del CDN de Storage
+              <img
+                src={logoUrl}
+                alt=""
+                className="size-7 rounded-full border border-border object-cover"
+              />
+            )}
             {tournament.establishment_name}
           </span>
         )}
