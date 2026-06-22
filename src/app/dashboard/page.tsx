@@ -35,7 +35,7 @@ export default async function DashboardPage() {
     await Promise.all([
       supabase
         .from('organizers')
-        .select('full_name, establishment_name, calendar_slug')
+        .select('full_name, establishment_name, calendar_slug, theme_key, logo_path')
         .eq('id', user.id)
         .single(),
       // Filtrar por dueño explícitamente: la policy tournaments_public_read deja
@@ -93,7 +93,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="relative z-[2] mx-auto w-full max-w-6xl px-5 pt-6 sm:px-8">
-      <OrganizerHeader establishmentName={organizer?.establishment_name} />
+      <OrganizerHeader establishmentName={organizer?.establishment_name} themeKey={organizer?.theme_key} logoPath={organizer?.logo_path} />
 
       <div className="py-8">
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">

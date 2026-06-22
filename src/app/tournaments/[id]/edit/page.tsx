@@ -22,7 +22,7 @@ export default async function EditTournamentPage({
   const [{ data: organizer }, { data: t }] = await Promise.all([
     supabase
       .from('organizers')
-      .select('establishment_name')
+      .select('establishment_name, theme_key, logo_path')
       .eq('id', user.id)
       .single(),
     supabase.from('tournaments').select('*').eq('id', id).single(),
@@ -34,7 +34,7 @@ export default async function EditTournamentPage({
 
   return (
     <div className="relative z-[2] mx-auto w-full max-w-2xl px-5 py-8 sm:px-8">
-      <OrganizerHeader establishmentName={organizer?.establishment_name} />
+      <OrganizerHeader establishmentName={organizer?.establishment_name} themeKey={organizer?.theme_key} logoPath={organizer?.logo_path} />
 
       <section className="mt-10">
         <Link

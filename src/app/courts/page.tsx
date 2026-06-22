@@ -16,7 +16,7 @@ export default async function CourtsPage() {
   const [{ data: organizer }, { data: courts }] = await Promise.all([
     supabase
       .from('organizers')
-      .select('establishment_name')
+      .select('establishment_name, theme_key, logo_path')
       .eq('id', user.id)
       .single(),
     // Defensa en profundidad: `courts` hoy sólo tiene la policy del dueño
@@ -31,7 +31,7 @@ export default async function CourtsPage() {
 
   return (
     <div className="relative z-[2] mx-auto w-full max-w-4xl px-5 py-8 sm:px-8">
-      <OrganizerHeader establishmentName={organizer?.establishment_name} />
+      <OrganizerHeader establishmentName={organizer?.establishment_name} themeKey={organizer?.theme_key} logoPath={organizer?.logo_path} />
 
       <section className="mt-10">
         <h1 className="font-display text-[clamp(2rem,6vw,3.5rem)] text-foreground">

@@ -16,13 +16,13 @@ export default async function NewTournamentPage() {
 
   const { data: organizer } = await supabase
     .from('organizers')
-    .select('establishment_name')
+    .select('establishment_name, theme_key, logo_path')
     .eq('id', user.id)
     .single()
 
   return (
     <div className="relative z-[2] mx-auto w-full max-w-2xl px-5 py-8 sm:px-8">
-      <OrganizerHeader establishmentName={organizer?.establishment_name} />
+      <OrganizerHeader establishmentName={organizer?.establishment_name} themeKey={organizer?.theme_key} logoPath={organizer?.logo_path} />
 
       <section className="mt-10">
         <Link

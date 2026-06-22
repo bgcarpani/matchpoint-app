@@ -3,9 +3,11 @@
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LogOut, Menu, X } from 'lucide-react'
+import { LogOut, Menu, Settings, X } from 'lucide-react'
 import { signOut } from '@/app/(auth)/actions'
 import { SignOutButton } from '@/components/auth/sign-out-button'
+import { ThemeStyle } from '@/components/branding/theme-style'
+import { logoPublicUrl } from '@/lib/branding/logo'
 import { cn } from '@/lib/utils'
 
 const NAV = [
@@ -22,138 +24,200 @@ function initialsOf(name?: string | null): string {
   return (words[0][0] + words[words.length - 1][0]).toUpperCase()
 }
 
+/** Avatar del organizador: logo si lo subió, si no las iniciales sobre tinte. */
+function OrgAvatar({
+  logoUrl,
+  establishmentName,
+  className,
+}: {
+  logoUrl: string | null
+  establishmentName?: string | null
+  className?: string
+}) {
+  if (logoUrl) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element -- logo del CDN de Storage; next/image es innecesario para un avatar
+      <img
+        src={logoUrl}
+        alt={establishmentName ?? 'Logo'}
+        className={cn(
+          'size-8 shrink-0 rounded-full border border-border object-cover',
+          className
+        )}
+      />
+    )
+  }
+  return (
+    <span
+      className={cn(
+        'grid size-8 shrink-0 place-items-center rounded-full bg-[color:var(--volt-tint)] text-xs font-bold text-[color:var(--volt-deep)]',
+        className
+      )}
+      aria-hidden
+      title={establishmentName ?? undefined}
+    >
+      {initialsOf(establishmentName)}
+    </span>
+  )
+}
+
 export function OrganizerHeader({
   establishmentName,
+  themeKey,
+  logoPath,
 }: {
   establishmentName?: string | null
+  themeKey?: string | null
+  logoPath?: string | null
 }) {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
+  const logoUrl = logoPublicUrl(logoPath)
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(`${href}/`)
 
   return (
-    <header className="relative flex items-center justify-between gap-3 border-b border-border">
-      {/* Izquierda: logo + nav (la nav inline sólo desde sm). */}
-      <div className="flex min-w-0 items-center gap-4 sm:gap-8">
-        <Link
-          href="/dashboard"
-          className="font-display shrink-0 text-lg tracking-tight text-foreground"
-        >
-          Match<span className="text-volt">point</span>
-        </Link>
-        <nav className="hidden items-center gap-1 sm:flex">
-          {NAV.map((item) => {
-            const active = isActive(item.href)
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  'relative px-1 py-4 text-sm font-semibold transition-colors',
-                  active
-                    ? 'text-foreground'
-                    : 'text-muted-foreground hover:text-foreground'
-                )}
-              >
-                {item.label}
-                {active && (
-                  <span
-                    className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-volt"
-                    aria-hidden
-                  />
-                )}
-              </Link>
-            )
-          })}
-        </nav>
-      </div>
-
-      {/* Derecha (desktop): nombre + avatar + cerrar sesión. */}
-      <div className="hidden shrink-0 items-center gap-2 sm:flex sm:gap-3">
-        {establishmentName && (
-          <span className="hidden text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground sm:inline">
-            {establishmentName}
-          </span>
-        )}
-        <span
-          className="grid size-8 shrink-0 place-items-center rounded-full bg-[color:var(--volt-tint)] text-xs font-bold text-[color:var(--volt-deep)]"
-          aria-hidden
-          title={establishmentName ?? undefined}
-        >
-          {initialsOf(establishmentName)}
-        </span>
-        <SignOutButton />
-      </div>
-
-      {/* Mobile: botón hamburguesa. */}
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        aria-label={open ? 'Cerrar menú' : 'Abrir menú'}
-        aria-expanded={open}
-        className="grid size-9 shrink-0 place-items-center rounded-lg border border-border text-foreground sm:hidden"
-      >
-        {open ? (
-          <X className="size-5" aria-hidden />
-        ) : (
-          <Menu className="size-5" aria-hidden />
-        )}
-      </button>
-
-      {/* Mobile: panel desplegable. */}
-      {open && (
-        <>
-          {/* Backdrop para cerrar tocando afuera. */}
-          <button
-            type="button"
-            aria-hidden
-            tabIndex={-1}
-            onClick={() => setOpen(false)}
-            className="fixed inset-0 z-40 cursor-default sm:hidden"
-          />
-          <div className="elevate-lg absolute right-0 top-full z-50 mt-2 w-60 overflow-hidden rounded-xl border border-border bg-card sm:hidden">
-            {establishmentName && (
-              <div className="flex items-center gap-3 border-b border-border px-4 py-3">
-                <span
-                  className="grid size-8 shrink-0 place-items-center rounded-full bg-[color:var(--volt-tint)] text-xs font-bold text-[color:var(--volt-deep)]"
-                  aria-hidden
+    <>
+      <ThemeStyle themeKey={themeKey} />
+      <header className="relative flex items-center justify-between gap-3 border-b border-border">
+        {/* Izquierda: logo + nav (la nav inline sólo desde sm). */}
+        <div className="flex min-w-0 items-center gap-4 sm:gap-8">
+          <Link
+            href="/dashboard"
+            className="font-display shrink-0 text-lg tracking-tight text-foreground"
+          >
+            Match<span className="text-volt">point</span>
+          </Link>
+          <nav className="hidden items-center gap-1 sm:flex">
+            {NAV.map((item) => {
+              const active = isActive(item.href)
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    'relative px-1 py-4 text-sm font-semibold transition-colors',
+                    active
+                      ? 'text-foreground'
+                      : 'text-muted-foreground hover:text-foreground'
+                  )}
                 >
-                  {initialsOf(establishmentName)}
-                </span>
-                <span className="min-w-0 truncate text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
-                  {establishmentName}
-                </span>
-              </div>
+                  {item.label}
+                  {active && (
+                    <span
+                      className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-volt"
+                      aria-hidden
+                    />
+                  )}
+                </Link>
+              )
+            })}
+          </nav>
+        </div>
+
+        {/* Derecha (desktop): logo + nombre + configuración + cerrar sesión. */}
+        <div className="hidden shrink-0 items-center gap-2 sm:flex sm:gap-3">
+          {establishmentName && (
+            <span className="hidden text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground sm:inline">
+              {establishmentName}
+            </span>
+          )}
+          <OrgAvatar logoUrl={logoUrl} establishmentName={establishmentName} />
+          <Link
+            href="/settings"
+            aria-label="Configuración"
+            className={cn(
+              'grid size-8 shrink-0 place-items-center rounded-lg border border-border transition-colors',
+              isActive('/settings')
+                ? 'border-volt text-volt'
+                : 'text-muted-foreground hover:text-foreground'
             )}
-            <nav className="p-1">
-              {NAV.map((item) => {
-                const active = isActive(item.href)
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setOpen(false)}
-                    className={cn(
-                      'block rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors',
-                      active
-                        ? 'bg-secondary text-foreground'
-                        : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
-                    )}
-                  >
-                    {item.label}
-                  </Link>
-                )
-              })}
-            </nav>
-            <div className="border-t border-border p-1">
-              <MobileSignOut />
+          >
+            <Settings className="size-4" aria-hidden />
+          </Link>
+          <SignOutButton />
+        </div>
+
+        {/* Mobile: botón hamburguesa. */}
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          aria-label={open ? 'Cerrar menú' : 'Abrir menú'}
+          aria-expanded={open}
+          className="grid size-9 shrink-0 place-items-center rounded-lg border border-border text-foreground sm:hidden"
+        >
+          {open ? (
+            <X className="size-5" aria-hidden />
+          ) : (
+            <Menu className="size-5" aria-hidden />
+          )}
+        </button>
+
+        {/* Mobile: panel desplegable. */}
+        {open && (
+          <>
+            {/* Backdrop para cerrar tocando afuera. */}
+            <button
+              type="button"
+              aria-hidden
+              tabIndex={-1}
+              onClick={() => setOpen(false)}
+              className="fixed inset-0 z-40 cursor-default sm:hidden"
+            />
+            <div className="elevate-lg absolute right-0 top-full z-50 mt-2 w-60 overflow-hidden rounded-xl border border-border bg-card sm:hidden">
+              {establishmentName && (
+                <div className="flex items-center gap-3 border-b border-border px-4 py-3">
+                  <OrgAvatar
+                    logoUrl={logoUrl}
+                    establishmentName={establishmentName}
+                  />
+                  <span className="min-w-0 truncate text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                    {establishmentName}
+                  </span>
+                </div>
+              )}
+              <nav className="p-1">
+                {NAV.map((item) => {
+                  const active = isActive(item.href)
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setOpen(false)}
+                      className={cn(
+                        'block rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors',
+                        active
+                          ? 'bg-secondary text-foreground'
+                          : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
+                      )}
+                    >
+                      {item.label}
+                    </Link>
+                  )
+                })}
+                <Link
+                  href="/settings"
+                  onClick={() => setOpen(false)}
+                  className={cn(
+                    'flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors',
+                    isActive('/settings')
+                      ? 'bg-secondary text-foreground'
+                      : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
+                  )}
+                >
+                  <Settings className="size-4 shrink-0" aria-hidden />
+                  Configuración
+                </Link>
+              </nav>
+              <div className="border-t border-border p-1">
+                <MobileSignOut />
+              </div>
             </div>
-          </div>
-        </>
-      )}
-    </header>
+          </>
+        )}
+      </header>
+    </>
   )
 }
 
