@@ -48,11 +48,20 @@ export interface Database {
           full_name: string
           establishment_name: string
           calendar_slug: string
+          logo_path: string | null
+          address: string | null
+          maps_url: string | null
+          theme_key: string
           created_at: string
         }
         Insert: WithDefaults<
           Database['public']['Tables']['organizers']['Row'],
-          'calendar_slug' | 'created_at'
+          | 'calendar_slug'
+          | 'logo_path'
+          | 'address'
+          | 'maps_url'
+          | 'theme_key'
+          | 'created_at'
         >
         Update: Partial<Database['public']['Tables']['organizers']['Row']>
         Relationships: []
@@ -223,6 +232,10 @@ export interface Database {
           id: string
           establishment_name: string
           calendar_slug: string
+          logo_path: string | null
+          address: string | null
+          maps_url: string | null
+          theme_key: string
         }
         Relationships: []
       }

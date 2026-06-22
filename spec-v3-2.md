@@ -154,7 +154,9 @@ export function themeVars(key: ThemeKey): React.CSSProperties { /* devuelve el s
   `themeVars(organizer.theme_key)` al `style` del contenedor `max-w-6xl` (o a un wrapper común).
   Conviene un **layout** del área organizer que centralice esto en vez de repetirlo por página.
 - **Páginas públicas** (`/t/[id]/*`, `/o/[slug]`): resolver el organizer dueño y aplicar
-  `themeVars(theme_key)` al wrapper de la página. Así el jugador ve la marca del club.
+  `themeVars(theme_key)` al wrapper de la página. **Esto es el corazón del feature:** la identidad
+  del club (color + logo) tiene que verse en las páginas que ve el **jugador** — es lo que le da
+  identidad a la organización frente a su comunidad, no sólo en su panel privado.
 - **`.glow`:** hoy hardcodea `rgba(45,82,232,...)`. Parametrizar el color del halo para que use el
   acento (exponer un `--glow-rgb` derivado del preset, o aceptar que el glow quede azul fijo como
   detalle de la app — **decisión menor a confirmar**; recomiendo parametrizarlo para coherencia).
@@ -183,7 +185,8 @@ Nueva ruta **`/settings`** (área organizer, protegida): "Perfil de organizació
 2. **Ubicación:** `address` (textarea corta) + `maps_url` (input URL opcional, validado con zod).
 3. **Paleta de marca:** grilla de swatches (una por preset) con **preview en vivo** — al elegir,
    re-tiñe la propia pantalla de settings (aplicando `themeVars` al vuelo) para que el organizador
-   vea el efecto antes de guardar. Guarda `theme_key`.
+   vea el efecto antes de guardar. Guarda `theme_key`. Incluye botón **"Volver al default"**
+   (resetea a `royal`, el azul real).
 
 - **Acceso:** ítem "Configuración" en el menú del header (desktop: junto al avatar; mobile: en el
   menú colapsable nuevo). Reusar/extender `OrganizerHeader`.
@@ -195,8 +198,9 @@ Nueva ruta **`/settings`** (área organizer, protegida): "Perfil de organizació
 
 ### A.7 Mostrar el branding
 
-- **Logo del organizador:** en `OrganizerHeader` (reemplaza el avatar de iniciales cuando hay
-  logo) y en el header de las páginas públicas de torneo y del calendario público.
+- **Logo del organizador:** en `OrganizerHeader` el logo **convive con el nombre** del
+  establecimiento (logo + nombre, no lo reemplaza). Sin logo, cae al avatar de iniciales. Igual en
+  el header de las páginas públicas de torneo y del calendario público.
 - **Dirección + maps:** en la página pública del torneo (`/t/[id]`) y en el calendario público
   (`/o/[slug]`), como bloque "Dónde" con el `address` y, si hay `maps_url`, un link "Cómo llegar".
   Ayuda real al jugador (contexto: cel, en el club).
@@ -328,6 +332,11 @@ pueden reordenar.
 - **`.glow`/`z-[2]` + `template.tsx`:** verificar que la capa fija de fondo y el `relative z-[2]`
   de cada página sigan funcionando con el wrapper de transición.
 - **Huérfanos en Storage:** manejar borrado del logo viejo al reemplazar con otra extensión.
-- **Bucket por SQL vs dashboard:** confirmar si `db:apply` aplica policies sobre `storage.*`; si no,
-  crear el bucket/policies por dashboard y documentarlo.
+- **Bucket por SQL:** RESUELTO — `apply-migrations.mjs` corre SQL vía Management API como
+  `postgres`, así que crear el bucket (`insert into storage.buckets`) y las policies sobre
+  `storage.objects` por SQL funciona. Va todo en `0019`.
+- **Decisiones confirmadas (2026-06-22):** se mantienen los 6 presets (verde/rojo incluidos),
+  distinguiendo acento (pleno) de estado (tinte+texto); el theming aplica a páginas públicas por
+  organización (identidad frente al jugador); el logo convive con el nombre; hay botón "volver al
+  default"; el glow sigue el acento.
 - **Egress de Storage:** logos chicos + CDN; sin riesgo con el volumen esperado (verificar plan).

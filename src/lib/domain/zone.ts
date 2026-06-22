@@ -7,7 +7,7 @@ import type { MatchFormat } from '@/lib/types/database'
 /** Etiquetas es-AR de cada formato de partido por zona (Feature 4, v2). */
 export const MATCH_FORMAT_LABELS: Record<MatchFormat, string> = {
   round_robin: 'Todos contra todos',
-  winner_vs_loser: 'Ganador vs perdedor',
+  winner_vs_loser: 'Ganador vs Ganador',
   manual: 'Manual',
 }
 
@@ -51,7 +51,7 @@ export const ZONE_ERROR_LABELS: Record<string, string> = {
   MATCHES_PENDING:
     'Cargá el resultado de todos los partidos antes de cerrar las posiciones.',
   WVL_NEEDS_4:
-    'El formato ganador-vs-perdedor necesita exactamente 4 parejas en la zona.',
+    'El formato Ganador vs Ganador necesita exactamente 4 parejas en la zona.',
   WRONG_FORMAT: 'La operación no corresponde al formato de esta zona.',
   ROUND1_PENDING:
     'Cargá el resultado de los dos partidos de la ronda 1 antes de generar la ronda 2.',

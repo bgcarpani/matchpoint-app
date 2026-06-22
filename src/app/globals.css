@@ -87,6 +87,9 @@
   --volt-tint: #dbe3fb;
   --volt-surface: #f5f8ff;
   --court-line: rgba(13, 16, 32, 0.05);
+  /* RGB del acento para el halo .glow. Lo re-define el theming por organizador
+     (themeCss en branding/themes.ts); default = azul real. */
+  --glow-rgb: 45, 82, 232;
 
   --success: #0e9c77;
   --success-deep: #0e6e55;
@@ -141,6 +144,7 @@
   --volt-tint: rgba(79, 123, 255, 0.16);
   --volt-surface: rgba(79, 123, 255, 0.08);
   --court-line: rgba(236, 239, 246, 0.05);
+  --glow-rgb: 79, 123, 255;
 
   --success: #2dd29e;
   --success-deep: #7fe7c8;
@@ -211,8 +215,8 @@
     background:
       radial-gradient(
         120% 70% at 50% -10%,
-        rgba(45, 82, 232, 0.07),
-        rgba(45, 82, 232, 0.02) 40%,
+        rgba(var(--glow-rgb), 0.07),
+        rgba(var(--glow-rgb), 0.02) 40%,
         transparent 64%
       );
   }
