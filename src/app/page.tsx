@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { buttonVariants } from '@/components/ui/button'
+import { ShowcaseCarousel } from '@/components/landing/showcase-carousel'
 import { cn } from '@/lib/utils'
 
 export default function HomePage() {
@@ -49,8 +50,8 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Visual: cuadro de llaves (ejemplo ilustrativo) */}
-        <BracketShowcase />
+        {/* Visual: carousel del producto (llaves, posiciones, calendario, campeón) */}
+        <ShowcaseCarousel />
       </div>
 
       {/* Lo que hacés hoy */}
@@ -182,92 +183,6 @@ function ComingSoonCard({ title, desc }: { title: string; desc: string }) {
   )
 }
 
-/** Cuadro de llaves estático: imagen del producto (4 → 2 → campeón). */
-function BracketShowcase() {
-  return (
-    <div className="elevate-lg rounded-2xl border border-border bg-card p-5">
-      <p className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-        Llaves · Final
-      </p>
-      <div className="mt-4 grid grid-cols-[minmax(0,1fr)_18px_minmax(0,1fr)] items-center gap-0">
-        {/* Semis */}
-        <div className="flex min-w-0 flex-col gap-5">
-          <BracketPair top={['Pérez / Gómez', '6']} bottom={['Vega / Mai', '3']} />
-          <BracketPair top={['Ruiz / Sosa', '7']} bottom={['Díaz / Mol', '5']} />
-        </div>
-
-        <div className="flex justify-center text-muted-foreground/50" aria-hidden>
-          <ChevronRight />
-        </div>
-
-        {/* Final + campeón */}
-        <div className="flex min-w-0 flex-col gap-1.5">
-          <ScorePill name="Pérez / Gómez" score="6" winner />
-          <ScorePill name="Ruiz / Sosa" score="4" />
-          <div className="mt-1 rounded-xl bg-volt px-3 py-2.5 text-volt-foreground">
-            <span className="flex items-center gap-1.5 text-[0.6rem] font-semibold uppercase tracking-[0.14em] opacity-90">
-              <TrophyIcon className="h-3 w-3" /> Campeón
-            </span>
-            <span className="font-display mt-1 block text-sm leading-none">
-              Pérez / Gómez
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function BracketPair({
-  top,
-  bottom,
-}: {
-  top: [string, string]
-  bottom: [string, string]
-}) {
-  return (
-    <div className="flex min-w-0 flex-col gap-1.5">
-      <ScorePill name={top[0]} score={top[1]} winner />
-      <ScorePill name={bottom[0]} score={bottom[1]} />
-    </div>
-  )
-}
-
-function ScorePill({
-  name,
-  score,
-  winner,
-}: {
-  name: string
-  score: string
-  winner?: boolean
-}) {
-  return (
-    <div
-      className={`flex items-center justify-between rounded-md border px-2 py-1.5 text-xs ${
-        winner
-          ? 'border-volt bg-[color:var(--volt-surface)]'
-          : 'border-border bg-secondary'
-      }`}
-    >
-      <span
-        className={`min-w-0 flex-1 truncate ${
-          winner ? 'font-bold text-volt-deep' : 'text-muted-foreground'
-        }`}
-      >
-        {name}
-      </span>
-      <span
-        className={`ml-2 shrink-0 font-mono tnum font-bold ${
-          winner ? 'text-volt-deep' : 'text-muted-foreground'
-        }`}
-      >
-        {score}
-      </span>
-    </div>
-  )
-}
-
 /* ------------------------------- íconos ------------------------------- */
 
 function ClipboardIcon({ className = 'h-5 w-5' }: { className?: string }) {
@@ -382,19 +297,3 @@ function ShareIcon({ className = 'h-5 w-5' }: { className?: string }) {
   )
 }
 
-function ChevronRight({ className = 'h-4 w-4' }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="m9 18 6-6-6-6" />
-    </svg>
-  )
-}
