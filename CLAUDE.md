@@ -12,6 +12,9 @@ Las primeras versiones son organizer-first.
 - `spec.md` — especificación detallada de implementación de v1
 - `spec-v2.md` — especificación de implementación de v2 (en construcción)
 - `spec-v3.md` — especificación de implementación de v3 (comunicaciones: email + share)
+- `spec-v3-2.md` — especificación de v3 (parte 2): branding del organizador (logo/Storage,
+  dirección, paletas de marca) + refinamientos del index (promo + "próximamente" + carousel) +
+  transiciones de página. En desarrollo en `feature/organizer-branding` (spec para revisión).
 - `DESIGN.md` — **sistema visual "Court Side" (tema claro)**: tokens, tipografía y reglas. Fuente de
   verdad del diseño; consultarlo antes de tocar UI.
 - `PRODUCT.md` — documento de producto/estrategia (audiencia, personalidad de marca, principios de diseño).

@@ -141,12 +141,42 @@ build separado. Instalar es **opcional por usuario** y el acceso web queda intac
 
 ---
 
-## Versión 4 — Perfiles de jugador, stats y rankings
-Esta versión marca el punto donde el jugador se convierte en usuario pleno de la plataforma.
+## Versión 3 (parte 2) — Branding del organizador y presentación
+Refinamiento estético sobre v3, sin tocar la lógica de negocio. El organizador gana **identidad
+propia** y la plataforma mejora su **autopromoción**.
+
+### Identidad del organizador (post-registro)
+- **Logo / imagen** de la organización (se sube a la app).
+- **Dirección / ubicación** del establecimiento, visible en las páginas públicas de sus torneos y
+  en su calendario (ayuda al jugador a saber dónde se juega).
+- **Paleta de marca:** el organizador elige, de un set curado de estilos, los **colores** que tiñen
+  su dashboard, sus páginas públicas y sus imágenes de difusión (una sola elección de marca para
+  todo). Mantiene la coherencia del sistema visual: cambia el acento, no la estructura.
+
+### Presentación / landing
+- Más **contenido promocional** en el inicio: además de lo que la app ya hace, una sección
+  **"Próximamente"** que adelanta la visión a futuro (perfiles + rankings, reserva de turnos,
+  transmisión en vivo) de forma honesta, sin prometer fechas.
+- El ejemplo estático de "llaves" del hero pasa a ser un **carousel** que rota solo, mostrando
+  varias caras del producto (llaves, posiciones, calendario/QR, campeón).
+- **Transiciones** sutiles entre páginas para dar sensación de fluidez.
+
+> Detalle de implementación en `spec-v3-2.md`. Esta tanda **adelanta el uso de Supabase Storage**
+> (para los logos) respecto del plan original que lo difería a la última versión.
+
+---
+
+## Versión 4 — Perfiles de jugador, stats y **rankings**
+Esta versión marca el punto donde el jugador se convierte en usuario pleno de la plataforma, y su
+**objetivo central son los rankings**: el norte de largo plazo del producto (ver "Visión del
+producto") se materializa acá. El perfil y las stats son la base de datos sobre la que se calcula
+el ranking de la comunidad.
 - Login de jugadores: registro y autenticación propia
 - Perfil de jugador: historial de torneos jugados, resultados, compañeros frecuentes
 - Stats individuales: puntos acumulados, partidos ganados/perdidos, rendimiento por categoría
-- Rankings: manual hasta implementar sistema de puntos automático; el historial guardado desde v1 alimenta estas estadísticas sin necesidad de migración
+- **Rankings (foco de la versión):** ranking de jugadores de la comunidad. Arranca **manual** hasta
+  implementar un **sistema de puntos automático** que se nutre de los resultados de cada torneo.
+  El historial guardado desde v1 alimenta estas estadísticas **sin necesidad de migración**.
 - El DNI/identificador guardado desde v1 es el nexo que vincula la actividad previa al nuevo perfil
 
 ---
@@ -181,7 +211,7 @@ Esta versión marca el punto donde el jugador se convierte en usuario pleno de l
 | Supabase Realtime | v2 — brackets en vivo (postergado por decisión de producto) |
 | Resend (email transaccional) | v3 — notificaciones + auth por email |
 | Serwist (PWA: instalable + offline) | v3 — app instalable, service worker |
-| Supabase Storage | última versión — streaming / multimedia |
+| Supabase Storage | v3 (parte 2) — logos de organización · última versión — streaming / multimedia |
 | Cloudflare Pages | Primer deploy (v1) |
 | Stripe o similar | v5 — si se implementa seña |
 
