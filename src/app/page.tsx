@@ -53,24 +53,98 @@ export default function HomePage() {
         <BracketShowcase />
       </div>
 
-      {/* Tira de features */}
-      <div className="grid gap-4 pb-14 sm:grid-cols-3">
-        <FeatureCard
-          title="Inscripciones"
-          desc="Las parejas se anotan solas; vos aceptás."
-          icon={<ClipboardIcon />}
-        />
-        <FeatureCard
-          title="Zonas y partidos"
-          desc="Round-robin y posiciones en vivo."
-          icon={<GridIcon />}
-        />
-        <FeatureCard
-          title="Llaves y campeón"
-          desc="Cuadro de eliminación y final."
-          icon={<TrophyIcon />}
-        />
-      </div>
+      {/* Lo que hacés hoy */}
+      <section className="pb-4">
+        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-volt">
+          Lo que hacés hoy
+        </p>
+        <h2 className="font-display mt-3 text-[clamp(1.75rem,4vw,2.75rem)] text-foreground">
+          Un torneo, de principio a fin
+        </h2>
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <FeatureCard
+            title="Inscripciones"
+            desc="Las parejas se anotan solas; vos aceptás o rechazás."
+            icon={<ClipboardIcon />}
+          />
+          <FeatureCard
+            title="Zonas y partidos"
+            desc="Generás zonas al azar y armás el fixture round-robin."
+            icon={<GridIcon />}
+          />
+          <FeatureCard
+            title="Resultados y posiciones"
+            desc="Cargás los resultados y la tabla se ordena sola."
+            icon={<ChartIcon />}
+          />
+          <FeatureCard
+            title="Llaves y campeón"
+            desc="Cuadro de eliminación directa hasta la final."
+            icon={<TrophyIcon />}
+          />
+          <FeatureCard
+            title="Calendario público + QR"
+            desc="Un link y un QR para pegar en el club; se actualiza solo."
+            icon={<CalendarIcon />}
+          />
+          <FeatureCard
+            title="Compartir"
+            desc="Torneo, calendario y campeón a WhatsApp e Instagram."
+            icon={<ShareIcon />}
+          />
+        </div>
+      </section>
+
+      {/* Próximamente */}
+      <section className="mt-14 border-t border-border py-14">
+        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+          Próximamente
+        </p>
+        <h2 className="font-display mt-3 text-[clamp(1.75rem,4vw,2.75rem)] text-foreground">
+          Lo que se viene
+        </h2>
+        <p className="mt-3 max-w-xl text-sm text-muted-foreground">
+          Matchpoint arranca por los organizadores, pero el norte es la
+          comunidad. Esto es lo que estamos construyendo.
+        </p>
+        <div className="mt-8 grid gap-4 sm:grid-cols-3">
+          <ComingSoonCard
+            title="Perfiles y rankings"
+            desc="Cada jugador con su historial, sus números y su ranking. Lo que cargás hoy ya alimenta ese perfil."
+          />
+          <ComingSoonCard
+            title="Reserva de turnos"
+            desc="Tus canchas con disponibilidad y reservas, en el mismo lugar."
+          />
+          <ComingSoonCard
+            title="Transmisión en vivo"
+            desc="Transmití los partidos de tu club, directo desde la app."
+          />
+        </div>
+      </section>
+
+      {/* CTA de cierre */}
+      <section className="pb-20">
+        <div className="elevate-lg flex flex-col items-start gap-5 rounded-2xl border border-border bg-card px-6 py-10 sm:flex-row sm:items-center sm:justify-between sm:px-10">
+          <div>
+            <h2 className="font-display text-[clamp(1.75rem,4vw,2.5rem)] text-foreground">
+              Armá tu próximo torneo
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Gratis para empezar. Sin planillas ni grupos de WhatsApp.
+            </p>
+          </div>
+          <Link
+            href="/register"
+            className={cn(
+              buttonVariants({ size: 'lg' }),
+              'font-display h-12 shrink-0 px-6 text-base'
+            )}
+          >
+            Crear cuenta →
+          </Link>
+        </div>
+      </section>
     </main>
   )
 }
@@ -89,6 +163,19 @@ function FeatureCard({
   return (
     <div className="elevate rounded-2xl border border-border bg-card p-5">
       <span className="text-volt">{icon}</span>
+      <h3 className="mt-3 text-sm font-bold text-foreground">{title}</h3>
+      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{desc}</p>
+    </div>
+  )
+}
+
+/** Tarjeta de roadmap: feature futuro, marcado con chip neutro "Próximamente". */
+function ComingSoonCard({ title, desc }: { title: string; desc: string }) {
+  return (
+    <div className="rounded-2xl border border-dashed border-border bg-card/50 p-5">
+      <span className="inline-flex items-center rounded-full bg-secondary px-2.5 py-1 text-[0.6rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+        Próximamente
+      </span>
       <h3 className="mt-3 text-sm font-bold text-foreground">{title}</h3>
       <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{desc}</p>
     </div>
@@ -236,6 +323,61 @@ function TrophyIcon({ className = 'h-5 w-5' }: { className?: string }) {
     >
       <path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4Z" />
       <path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3" />
+    </svg>
+  )
+}
+
+function ChartIcon({ className = 'h-5 w-5' }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M4 20h16M7 20v-6M12 20V8M17 20v-9" />
+    </svg>
+  )
+}
+
+function CalendarIcon({ className = 'h-5 w-5' }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="3" y="4" width="18" height="18" rx="2" />
+      <path d="M16 2v4M8 2v4M3 10h18" />
+    </svg>
+  )
+}
+
+function ShareIcon({ className = 'h-5 w-5' }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="18" cy="5" r="3" />
+      <circle cx="6" cy="12" r="3" />
+      <circle cx="18" cy="19" r="3" />
+      <path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4" />
     </svg>
   )
 }
