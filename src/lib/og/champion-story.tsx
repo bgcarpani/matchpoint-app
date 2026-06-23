@@ -14,7 +14,7 @@
  * emojis. Satori: estilos inline + flexbox; corre en Cloudflare Workers.
  */
 import { ImageResponse } from 'next/og'
-import { loadFonts } from './story'
+import { loadFonts, BrandLockup } from './story'
 import type { OgAccent } from '@/lib/branding/themes'
 
 export type ChampionStyle = 'a' | 'b' | 'c'
@@ -27,6 +27,8 @@ export interface ChampionStoryInput {
   name2: string
   /** Nombre del torneo. */
   tournamentName: string
+  /** Nombre del club/organización (lockup de marca). */
+  establishmentName: string
   /** "6ta · Caballeros" — categoría + género, ya combinados. */
   category: string
   /** CTA bajo el bloque principal, ej. "Mirá las llaves". */
@@ -125,51 +127,6 @@ function Names({
   )
 }
 
-function Wordmark({ ink, accent, size = 52 }: { ink: string; accent: string; size?: number }) {
-  return (
-    <div
-      style={{
-        display: 'flex',
-        fontSize: size,
-        fontWeight: 800,
-        textTransform: 'uppercase',
-        letterSpacing: -1,
-        color: ink,
-      }}
-    >
-      <span>Match</span>
-      <span style={{ color: accent }}>point</span>
-    </div>
-  )
-}
-
-/** Logo del club si lo subió (raster), si no el wordmark Matchpoint. */
-function Brand({
-  logoDataUrl,
-  ink,
-  accent,
-  size = 52,
-}: {
-  logoDataUrl: string | null | undefined
-  ink: string
-  accent: string
-  size?: number
-}) {
-  if (logoDataUrl) {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element -- Satori (OG image)
-      <img
-        src={logoDataUrl}
-        alt=""
-        width={96}
-        height={96}
-        style={{ objectFit: 'contain', borderRadius: 18 }}
-      />
-    )
-  }
-  return <Wordmark ink={ink} accent={accent} size={size} />
-}
-
 const EYEBROW = 'Pareja campeona'
 
 export async function buildChampionStory({
@@ -177,6 +134,7 @@ export async function buildChampionStory({
   name1,
   name2,
   tournamentName,
+  establishmentName,
   category,
   caption,
   accent,
@@ -206,7 +164,12 @@ export async function buildChampionStory({
           fontFamily: 'Archivo',
         }}
       >
-        <Brand logoDataUrl={logoDataUrl} ink="#ffffff" accent={accent.tint} />
+        <BrandLockup
+          logoDataUrl={logoDataUrl}
+          name={establishmentName}
+          ink="#ffffff"
+          center
+        />
         <div
           style={{
             display: 'flex',
@@ -296,7 +259,11 @@ export async function buildChampionStory({
           fontFamily: 'Archivo',
         }}
       >
-        <Brand logoDataUrl={logoDataUrl} ink="#0D1020" accent={accent.base} />
+        <BrandLockup
+          logoDataUrl={logoDataUrl}
+          name={establishmentName}
+          ink="#0D1020"
+        />
         <div
           style={{
             display: 'flex',
@@ -395,7 +362,13 @@ export async function buildChampionStory({
             justifyContent: 'space-between',
           }}
         >
-          <Brand logoDataUrl={logoDataUrl} ink="#ffffff" accent={accent.base} />
+          <BrandLockup
+            logoDataUrl={logoDataUrl}
+            name={establishmentName}
+            ink="#ffffff"
+            logoSize={120}
+            nameSize={34}
+          />
           <TrophyBadge size={84} glow="rgba(255,215,94,0.5)" />
         </div>
         <div

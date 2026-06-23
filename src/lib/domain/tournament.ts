@@ -89,6 +89,12 @@ export const GENDER_LABELS: Record<Gender, string> = {
   mixed: 'Mixto',
 }
 
+/**
+ * Formato de juego de la plataforma (constante: Americano + Llaves, parejas
+ * fijas). No es un campo del torneo; se imprime en los afiches de difusión.
+ */
+export const FORMAT_LABEL = 'Americano'
+
 export const CATEGORY_TYPE_LABELS: Record<CategoryType, string> = {
   individual: 'Individual',
   suma: 'Suma',

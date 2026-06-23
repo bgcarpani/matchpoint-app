@@ -51,6 +51,7 @@ export async function GET(
     name1,
     name2,
     tournamentName: tournament?.name ?? '',
+    establishmentName: tournament?.establishment_name ?? '',
     category,
     caption: 'Mirá las llaves',
     accent: themeAccent(tournament?.theme_key),

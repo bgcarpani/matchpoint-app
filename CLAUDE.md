@@ -115,6 +115,35 @@ zona `winner_vs_loser` → label "Ganador vs Ganador". ⚠️ **Pendiente de ver
 (no hecha por el asistente, sin credenciales): subir logo + elegir paleta en `/settings`, ver una
 pública con tema/logo, y una imagen OG real con logo + paleta no-default.
 
+**Post-v3.2 — afiche de difusión del torneo con selector de estilo (2026-06-23, en `master` local, NO
+deployado aún).** Espejo del flujo del campeón: al compartir el torneo, el organizer elige entre **3
+estilos** (`?style=a|b|c`) con preview en vivo del PNG. Builder nuevo `src/lib/og/tournament-story.tsx`
+(`buildTournamentStory`): `a` Afiche (noche plano sin glow, categoría como héroe apilada — inspirado en los
+flyers que la comunidad ya comparte), `b` Marcador (tablero, categoría como número/sigla gigante mono),
+`c` Ficha (claro/editorial, datos en lista). Lidera con la **categoría**, no con el nombre del torneo;
+suma día de semana a la fecha (`formatStoryDate`), cupos (`accepted/max`) y formato (`FORMAT_LABEL`
+constante = "Americano"). Teñido por la **paleta del organizador** (`themeAccent`) + logo, igual que el
+campeón. UI: `tournament-story-share.tsx` (clon de `champion-story-share`) en
+`share-registration-link.tsx`; el `ShareButtons` de ese panel quedó **solo-WhatsApp** (se le sacó
+`storyUrl`). El genérico `buildStory` sigue sirviendo SOLO al calendario (`/o/[slug]`).
+
+**Refinamientos sobre las piezas de difusión (mismo día, sobre lo anterior):**
+- **Paleta "noche" neutralizada.** Los neutros OG eran azul marino (`#0b1220`/`#0d1020`) — herencia del
+  acento azul original; chocaban con paletas no-azules (clay/verde/rojo). Ahora son **carbón sin tinte**
+  centralizados como exports en `story.tsx`: `BG #141416`, `INK #f0f1f2`, `MUTED #9a9ba1`, `LINE #26272c`
+  (Satori no puede usar CSS vars; por eso son literales). El único color de marca es el `accent` del
+  organizador.
+- **Sin halo/glow** en Afiche, Ficha **y calendario** (se quitó el `radial-gradient` del `accent`: sobre
+  el carbón quedaba marrón turbio). El Marcador nunca tuvo glow.
+- **Lockup de marca en TODAS las piezas:** logo **más grande** (150px; 120 en filas compactas) + **nombre
+  del club** al lado, vía `BrandLockup` exportado de `story.tsx` (sin logo, el nombre actúa de wordmark).
+  Aplica a torneo (a/b/c), **campeón** (a/b/c, ahora recibe `establishmentName`) y calendario (logo
+  agrandado; el nombre ya era el título héroe).
+
+**Verificado e2e con `tsc`/`eslint` + render real** (torneo a/b/c suma e individual, campeón, calendario;
+org "Padel God" tema clay con logo) vía dev server — carbón neutro sin halo, logo grande + nombre OK, sin
+overflow.
+
 ## Estado de master y deploy (2026-06-22) — leer al abrir sesión nueva
 **El código en `master` está deployado en producción** (`https://app.match-point.workers.dev`).
 `master` == `origin/master` == lo deployado (merge `e595e7c`, Version ID `413331bd`; smoke test OK:

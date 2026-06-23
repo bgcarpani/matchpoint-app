@@ -29,9 +29,15 @@ import { ImageResponse } from 'next/og'
 import { ARCHIVO_FONTS } from './fonts.generated'
 import type { OgAccent } from '@/lib/branding/themes'
 
-const BG = '#0b1220'
-const INK = '#ecf0f7'
-const MUTED = '#9aa6bd'
+/**
+ * Paleta "noche" fija de las imágenes OG (Satori no puede usar CSS vars del tema).
+ * Neutros **sin tinte** (canales RGB parejos) para que convivan con cualquier
+ * acento de marca del organizador: un fondo azulado chocaba con paletas no-azules.
+ */
+export const BG = '#141416'
+export const INK = '#f0f1f2'
+export const MUTED = '#9a9ba1'
+export const LINE = '#26272c'
 
 type FontWeight = 400 | 700 | 800
 
@@ -110,9 +116,9 @@ function Brand({
       <img
         src={logoDataUrl}
         alt=""
-        width={104}
-        height={104}
-        style={{ objectFit: 'contain', borderRadius: 20 }}
+        width={150}
+        height={150}
+        style={{ objectFit: 'contain', borderRadius: 28 }}
       />
     )
   }
@@ -128,6 +134,77 @@ function Brand({
     >
       <span>Match</span>
       <span style={{ color: accent }}>point</span>
+    </div>
+  )
+}
+
+/**
+ * Lockup de marca del organizador para las piezas de difusión: logo (raster) +
+ * nombre del club al lado. Si no hay logo, el nombre solo actúa de wordmark.
+ * Compartido por torneo y campeón (el calendario muestra el nombre como título).
+ */
+export function BrandLockup({
+  logoDataUrl,
+  name,
+  ink,
+  center = false,
+  logoSize = 150,
+  nameSize = 42,
+}: {
+  logoDataUrl: string | null | undefined
+  name: string
+  ink: string
+  center?: boolean
+  logoSize?: number
+  nameSize?: number
+}) {
+  const nameNode = (
+    <span
+      style={{
+        display: 'flex',
+        fontSize: logoDataUrl ? nameSize : nameSize + 14,
+        fontWeight: 800,
+        textTransform: 'uppercase',
+        letterSpacing: -1,
+        lineHeight: 1.05,
+        color: ink,
+        maxWidth: logoDataUrl ? 600 : 880,
+      }}
+    >
+      {name}
+    </span>
+  )
+
+  if (!logoDataUrl) {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: center ? 'center' : 'flex-start',
+        }}
+      >
+        {nameNode}
+      </div>
+    )
+  }
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: center ? 'center' : 'flex-start',
+      }}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element -- Satori (OG image) */}
+      <img
+        src={logoDataUrl}
+        alt=""
+        width={logoSize}
+        height={logoSize}
+        style={{ objectFit: 'contain', borderRadius: 28, marginRight: 28 }}
+      />
+      {nameNode}
     </div>
   )
 }
@@ -171,7 +248,6 @@ export async function buildStory({
           width: '1080px',
           height: '1920px',
           backgroundColor: BG,
-          backgroundImage: `radial-gradient(circle at 50% 18%, rgba(${accent.rgb},0.26), rgba(${accent.rgb},0) 55%)`,
           color: INK,
           // Safe zones: 280 arriba (UI de IG), 0 abajo (tercio libre para sticker).
           padding: '280px 96px 0',
