@@ -4,6 +4,7 @@ import { ShowcaseCarousel } from '@/components/landing/showcase-carousel'
 import { cn } from '@/lib/utils'
 
 export default function HomePage() {
+  const year = new Date().getFullYear()
   return (
     <main className="relative z-[2] mx-auto flex min-h-dvh w-full max-w-6xl flex-col px-5 sm:px-8">
       {/* Solo el logo: los CTAs (Ingresar / Crear cuenta) viven en el hero para no duplicarlos. */}
@@ -84,7 +85,7 @@ export default function HomePage() {
             icon={<TrophyIcon />}
           />
           <FeatureCard
-            title="Calendario público + QR"
+            title="Calendario de torneos + QR"
             desc="Un link y un QR para pegar en el club; se actualiza solo."
             icon={<CalendarIcon />}
           />
@@ -93,6 +94,38 @@ export default function HomePage() {
             desc="Torneo, calendario y campeón a WhatsApp e Instagram."
             icon={<ShareIcon />}
           />
+        </div>
+      </section>
+
+      {/* Tu marca (personalización de /settings) */}
+      <section className="pb-4">
+        <div className="elevate-lg overflow-hidden rounded-2xl border border-border bg-card sm:flex sm:items-center sm:justify-between">
+          <div className="px-6 py-8 sm:px-10 sm:py-10">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-volt">
+              Tu marca
+            </p>
+            <h2 className="font-display mt-3 text-[clamp(1.5rem,3.5vw,2.25rem)] text-foreground">
+              Tu identidad en cada torneo
+            </h2>
+            <p className="mt-3 max-w-xl text-sm text-muted-foreground">
+              Subí tu logo, elegí los colores de tu club y sumá tu dirección. La
+              app y las imágenes que compartís —torneo, calendario y campeón—
+              quedan con tu sello.
+            </p>
+          </div>
+          {/* Muestra de paletas de marca disponibles */}
+          <div className="flex gap-2 px-6 pb-8 sm:px-10 sm:py-10">
+            {['#2d52e8', '#0e9c77', '#e2620e', '#dc2e3e', '#0e8fa8', '#646e80'].map(
+              (c) => (
+                <span
+                  key={c}
+                  className="size-9 rounded-full border border-border"
+                  style={{ backgroundColor: c }}
+                  aria-hidden
+                />
+              )
+            )}
+          </div>
         </div>
       </section>
 
@@ -125,7 +158,7 @@ export default function HomePage() {
       </section>
 
       {/* CTA de cierre */}
-      <section className="pb-20">
+      <section className="pb-12">
         <div className="elevate-lg flex flex-col items-start gap-5 rounded-2xl border border-border bg-card px-6 py-10 sm:flex-row sm:items-center sm:justify-between sm:px-10">
           <div>
             <h2 className="font-display text-[clamp(1.75rem,4vw,2.5rem)] text-foreground">
@@ -142,10 +175,22 @@ export default function HomePage() {
               'font-display h-12 shrink-0 px-6 text-base'
             )}
           >
-            Crear cuenta →
+            Empezar gratis →
           </Link>
         </div>
       </section>
+
+      {/* Footer */}
+      <footer className="mt-auto border-t border-border py-8">
+        <div className="flex flex-col items-start justify-between gap-2 text-xs text-muted-foreground sm:flex-row sm:items-center">
+          <span className="font-display text-sm text-foreground">
+            Match<span className="text-volt">point</span>
+          </span>
+          <span>
+            © {year} Matchpoint · Hecho para la comunidad de pádel.
+          </span>
+        </div>
+      </footer>
     </main>
   )
 }

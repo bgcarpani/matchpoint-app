@@ -52,7 +52,7 @@ export function TournamentTable({ tournaments }: { tournaments: TournamentRow[] 
 
               {/* Estado */}
               <div className="justify-self-end sm:justify-self-start">
-                <TournamentStatusBadge status={t.status} />
+                <TournamentStatusBadge status={t.status} compact />
               </div>
 
               {/* Parejas (desktop) */}

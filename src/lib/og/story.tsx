@@ -27,11 +27,16 @@
  */
 import { ImageResponse } from 'next/og'
 import { ARCHIVO_FONTS } from './fonts.generated'
-import type { OgAccent } from '@/lib/branding/themes'
 
-const BG = '#0b1220'
-const INK = '#ecf0f7'
-const MUTED = '#9aa6bd'
+/**
+ * Paleta "noche" fija de las imágenes OG (Satori no puede usar CSS vars del tema).
+ * Neutros **sin tinte** (canales RGB parejos) para que convivan con cualquier
+ * acento de marca del organizador: un fondo azulado chocaba con paletas no-azules.
+ */
+export const BG = '#141416'
+export const INK = '#f0f1f2'
+export const MUTED = '#9a9ba1'
+export const LINE = '#26272c'
 
 type FontWeight = 400 | 700 | 800
 
@@ -96,27 +101,32 @@ export function loadFonts(): LoadedFont[] {
   return fontsCache
 }
 
-/** Wordmark "Matchpoint" o, si hay logo, el logo del club. */
-function Brand({
+/**
+ * Wordmark "Matchpoint" o, si hay logo, el logo del club. Lo usan las piezas en
+ * las que el nombre del club es el TÍTULO héroe (calendario): el logo identifica
+ * arriba y el nombre no se duplica (a diferencia de `BrandLockup`, que imprime
+ * logo + nombre juntos para torneo/campeón, donde el héroe es otro dato).
+ */
+export function Brand({
   logoDataUrl,
   accent,
+  center = false,
 }: {
   logoDataUrl: string | null | undefined
   accent: string
+  /** Centra el logo/wordmark horizontalmente (masthead de las piezas de difusión). */
+  center?: boolean
 }) {
-  if (logoDataUrl) {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element -- Satori (OG image)
-      <img
-        src={logoDataUrl}
-        alt=""
-        width={104}
-        height={104}
-        style={{ objectFit: 'contain', borderRadius: 20 }}
-      />
-    )
-  }
-  return (
+  const mark = logoDataUrl ? (
+    // eslint-disable-next-line @next/next/no-img-element -- Satori (OG image)
+    <img
+      src={logoDataUrl}
+      alt=""
+      width={150}
+      height={150}
+      style={{ objectFit: 'contain', borderRadius: 28 }}
+    />
+  ) : (
     <div
       style={{
         display: 'flex',
@@ -130,143 +140,86 @@ function Brand({
       <span style={{ color: accent }}>point</span>
     </div>
   )
+  return (
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: center ? 'center' : 'flex-start',
+      }}
+    >
+      {mark}
+    </div>
+  )
 }
 
-export interface StoryInput {
-  /** Etiqueta superior, ej. "Torneo" / "Calendario". */
-  eyebrow: string
-  /** Título principal grande. */
-  title: string
-  /** Línea(s) de apoyo bajo el título. */
-  subtitle?: string
-  /** URL pública de destino; se muestra como CTA legible (sin protocolo). */
-  url: string
-  /** Llamado a la acción bajo la URL, ej. "Inscribite online". */
-  caption: string
-  /** Acento de marca del organizador. */
-  accent: OgAccent
-  /** Logo del club (data URL) o null → wordmark. */
-  logoDataUrl?: string | null
-}
-
-export async function buildStory({
-  eyebrow,
-  title,
-  subtitle,
-  url,
-  caption,
-  accent,
+/**
+ * Lockup de marca del organizador para las piezas de difusión: logo (raster) +
+ * nombre del club al lado. Si no hay logo, el nombre solo actúa de wordmark.
+ * Compartido por torneo y campeón (el calendario muestra el nombre como título).
+ */
+export function BrandLockup({
   logoDataUrl,
-}: StoryInput): Promise<ImageResponse> {
-  const displayUrl = url.replace(/^https?:\/\//, '').replace(/\/$/, '')
-  const fonts = loadFonts()
+  name,
+  ink,
+  center = false,
+  logoSize = 150,
+  nameSize = 42,
+}: {
+  logoDataUrl: string | null | undefined
+  name: string
+  ink: string
+  center?: boolean
+  logoSize?: number
+  nameSize?: number
+}) {
+  const nameNode = (
+    <span
+      style={{
+        display: 'flex',
+        fontSize: logoDataUrl ? nameSize : nameSize + 14,
+        fontWeight: 800,
+        textTransform: 'uppercase',
+        letterSpacing: -1,
+        lineHeight: 1.05,
+        color: ink,
+        maxWidth: logoDataUrl ? 600 : 880,
+      }}
+    >
+      {name}
+    </span>
+  )
 
-  return new ImageResponse(
-    (
+  if (!logoDataUrl) {
+    return (
       <div
         style={{
           display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'flex-start',
-          width: '1080px',
-          height: '1920px',
-          backgroundColor: BG,
-          backgroundImage: `radial-gradient(circle at 50% 18%, rgba(${accent.rgb},0.26), rgba(${accent.rgb},0) 55%)`,
-          color: INK,
-          // Safe zones: 280 arriba (UI de IG), 0 abajo (tercio libre para sticker).
-          padding: '280px 96px 0',
-          fontFamily: 'Archivo',
+          justifyContent: center ? 'center' : 'flex-start',
         }}
       >
-        <Brand logoDataUrl={logoDataUrl} accent={accent.base} />
-
-        {/* Bloque central */}
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'flex-start',
-            marginTop: 116,
-          }}
-        >
-          <span
-            style={{
-              fontSize: 34,
-              letterSpacing: 8,
-              textTransform: 'uppercase',
-              color: accent.base,
-              fontWeight: 700,
-            }}
-          >
-            {eyebrow}
-          </span>
-          <span
-            style={{
-              fontSize: 100,
-              fontWeight: 800,
-              textTransform: 'uppercase',
-              letterSpacing: -2,
-              lineHeight: 1,
-              marginTop: 26,
-            }}
-          >
-            {title}
-          </span>
-          {subtitle ? (
-            <span
-              style={{
-                fontSize: 42,
-                fontWeight: 400,
-                color: MUTED,
-                marginTop: 34,
-                lineHeight: 1.4,
-                whiteSpace: 'pre-line',
-              }}
-            >
-              {subtitle}
-            </span>
-          ) : null}
-        </div>
-
-        {/* CTA + URL legible (reemplaza al QR) */}
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'flex-start',
-            width: '100%',
-            marginTop: 80,
-          }}
-        >
-          <span style={{ fontSize: 40, fontWeight: 700, color: INK }}>
-            {caption}
-          </span>
-          <div
-            style={{
-              display: 'flex',
-              width: '100%',
-              marginTop: 26,
-              borderRadius: 24,
-              border: `3px solid ${accent.base}`,
-              backgroundColor: `rgba(${accent.rgb},0.12)`,
-              padding: '24px 36px',
-            }}
-          >
-            <span
-              style={{
-                fontSize: 38,
-                fontWeight: 700,
-                color: accent.base,
-                lineHeight: 1.3,
-                wordBreak: 'break-all',
-              }}
-            >
-              {displayUrl}
-            </span>
-          </div>
-        </div>
+        {nameNode}
       </div>
-    ),
-    { width: 1080, height: 1920, fonts }
+    )
+  }
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: center ? 'center' : 'flex-start',
+      }}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element -- Satori (OG image) */}
+      <img
+        src={logoDataUrl}
+        alt=""
+        width={logoSize}
+        height={logoSize}
+        style={{ objectFit: 'contain', borderRadius: 28, marginRight: 28 }}
+      />
+      {nameNode}
+    </div>
   )
 }
+

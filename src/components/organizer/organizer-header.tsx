@@ -80,16 +80,23 @@ export function OrganizerHeader({
   return (
     <>
       <ThemeStyle themeKey={themeKey} />
-      <header className="relative flex items-center justify-between gap-3 border-b border-border">
-        {/* Izquierda: logo + nav (la nav inline sólo desde sm). */}
-        <div className="flex min-w-0 items-center gap-4 sm:gap-8">
+      {/*
+        `@container`: el header se adapta a SU PROPIO ancho, no al viewport. Varias
+        páginas lo montan dentro de columnas angostas (`max-w-2xl`), donde los
+        breakpoints de viewport (`sm:`) mostraban el header desktop completo y la nav
+        se solapaba con el grupo derecho. Con container queries la nav aparece a
+        partir de `@xl` (≈576px de columna) y el nombre del club recién a `@3xl`.
+      */}
+      <header className="@container relative flex items-center justify-between gap-3 border-b border-border">
+        {/* Izquierda: logo + nav (la nav inline sólo cuando entra la columna). */}
+        <div className="flex shrink-0 items-center gap-4 @xl:gap-8">
           <Link
             href="/dashboard"
             className="font-display shrink-0 text-lg tracking-tight text-foreground"
           >
             Match<span className="text-volt">point</span>
           </Link>
-          <nav className="hidden items-center gap-1 sm:flex">
+          <nav className="hidden items-center gap-1 @xl:flex">
             {NAV.map((item) => {
               const active = isActive(item.href)
               return (
@@ -116,10 +123,10 @@ export function OrganizerHeader({
           </nav>
         </div>
 
-        {/* Derecha (desktop): logo + nombre + configuración + cerrar sesión. */}
-        <div className="hidden shrink-0 items-center gap-2 sm:flex sm:gap-3">
+        {/* Derecha (desktop): nombre + logo + configuración + cerrar sesión. */}
+        <div className="hidden min-w-0 items-center gap-2 @xl:flex @xl:gap-3">
           {establishmentName && (
-            <span className="hidden text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground sm:inline">
+            <span className="hidden min-w-0 truncate text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground @3xl:block">
               {establishmentName}
             </span>
           )}
@@ -145,7 +152,7 @@ export function OrganizerHeader({
           onClick={() => setOpen((o) => !o)}
           aria-label={open ? 'Cerrar menú' : 'Abrir menú'}
           aria-expanded={open}
-          className="grid size-9 shrink-0 place-items-center rounded-lg border border-border text-foreground sm:hidden"
+          className="grid size-9 shrink-0 place-items-center rounded-lg border border-border text-foreground @xl:hidden"
         >
           {open ? (
             <X className="size-5" aria-hidden />
@@ -163,9 +170,9 @@ export function OrganizerHeader({
               aria-hidden
               tabIndex={-1}
               onClick={() => setOpen(false)}
-              className="fixed inset-0 z-40 cursor-default sm:hidden"
+              className="fixed inset-0 z-40 cursor-default @xl:hidden"
             />
-            <div className="elevate-lg absolute right-0 top-full z-50 mt-2 w-60 overflow-hidden rounded-xl border border-border bg-card sm:hidden">
+            <div className="elevate-lg absolute right-0 top-full z-50 mt-2 w-60 overflow-hidden rounded-xl border border-border bg-card @xl:hidden">
               {establishmentName && (
                 <div className="flex items-center gap-3 border-b border-border px-4 py-3">
                   <OrgAvatar

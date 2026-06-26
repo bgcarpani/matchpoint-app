@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { formatDateTime } from '@/lib/format'
 import { ShareButtons } from '@/components/share/share-buttons'
+import { TournamentStoryShare } from '@/components/share/tournament-story-share'
 
 /**
  * Panel "Link de inscripción" del detalle del torneo: muestra la URL pública
@@ -68,7 +69,11 @@ export function ShareRegistrationLink({
         <ShareButtons
           url={url}
           text={`🎾 Torneo ${categoryGender} — ${tournamentName}. ¡Inscribite en Matchpoint!`}
+        />
+        <TournamentStoryShare
           storyUrl={`${url}/og/story`}
+          url={url}
+          text={`🎾 Torneo ${categoryGender} — ${tournamentName}. ¡Inscribite en Matchpoint!`}
         />
       </div>
 

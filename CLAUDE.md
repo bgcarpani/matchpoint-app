@@ -115,6 +115,66 @@ zona `winner_vs_loser` → label "Ganador vs Ganador". ⚠️ **Pendiente de ver
 (no hecha por el asistente, sin credenciales): subir logo + elegir paleta en `/settings`, ver una
 pública con tema/logo, y una imagen OG real con logo + paleta no-default.
 
+**Post-v3.2 — afiche de difusión del torneo con selector de estilo (2026-06-23, en `master` local, NO
+deployado aún).** Espejo del flujo del campeón: al compartir el torneo, el organizer elige entre **3
+estilos** (`?style=a|b|c`) con preview en vivo del PNG. Builder nuevo `src/lib/og/tournament-story.tsx`
+(`buildTournamentStory`): `a` Afiche (noche plano sin glow, categoría como héroe apilada — inspirado en los
+flyers que la comunidad ya comparte), `b` Marcador (tablero, categoría como número/sigla gigante mono),
+`c` Ficha (claro/editorial, datos en lista). Lidera con la **categoría**, no con el nombre del torneo;
+suma día de semana a la fecha (`formatStoryDate`), cupos (`accepted/max`) y formato (`FORMAT_LABEL`
+constante = "Americano"). Teñido por la **paleta del organizador** (`themeAccent`) + logo, igual que el
+campeón. UI: `tournament-story-share.tsx` (clon de `champion-story-share`) en
+`share-registration-link.tsx`; el `ShareButtons` de ese panel quedó **solo-WhatsApp** (se le sacó
+`storyUrl`).
+
+**Selector de estilo en el afiche del CALENDARIO (2026-06-23, sobre lo anterior).** Se llevó el mismo
+flujo de 3 estilos al calendario: builder nuevo `src/lib/og/calendar-story.tsx` (`buildCalendarStory`,
+`?style=a|b|c`) — `a` Afiche (nombre del club como héroe + pill "N torneos vigentes"), `b` Marcador
+(cantidad de torneos vigentes como número mono gigante; con 0 muestra "PRONTO/NUEVOS TORNEOS"), `c` Ficha
+(club como titular en acento + lista). Como el calendario no tiene categoría, el dato héroe es el club /
+la cantidad; en `a`/`c` el nombre es el título y arriba va sólo el logo/wordmark (`Brand`, ahora exportado
+de `story.tsx`) para no duplicar; en `b` el club va en el `BrandLockup`. UI: `calendar-story-share.tsx`
+(clon de `tournament-story-share`) en `calendar-share-panel.tsx`; el `ShareButtons` de ese panel quedó
+**solo-WhatsApp**. **Se eliminó el genérico `buildStory`/`StoryInput`** de `story.tsx` (ya no lo usa
+nadie; el calendario tiene su propio builder). Render real verificado vía dev server (Padel God tema
+match con logo: a/b/c; Acacias sin logo y 0 torneos: wordmark + "PRÓXIMAMENTE"/"PRONTO" sin overflow).
+
+**Afiche mensual del calendario + marca centrada (2026-06-26, sobre lo anterior).** (1) **Estilo `d`
+"Mes"** en `buildCalendarStory`: mini calendario (grilla Lu–Do, X=miércoles, lunes primero, vía
+`monthGrid()` en UTC) con los días que tienen torneo resaltados en acento + "N TORNEOS ESTE MES". Lee
+`?style=d&month=YYYY-MM`; la route filtra `getActiveTournaments` por mes (default: mes actual). El
+selector de mes vive en `calendar-story-share.tsx` (sólo visible con estilo 'd'); los meses con torneos
+los calcula el **dashboard** (`ACTIVE_CALENDAR_STATUSES`, mismos estados que la vista pública) y bajan por
+`CalendarSharePanel → CalendarStoryShare` (`months: 'YYYY-MM'[]`). (2) **Marca centrada en TODAS las
+piezas** (torneo, campeón, calendario): `Brand` (story.tsx) ahora acepta `center`; se pasó `center` a
+todos los `BrandLockup`/`Brand`. En `torneo b` la marca+fecha quedan en columna centrada; en `campeón a`
+la marca+copa centradas como grupo. El resto del cuerpo sigue alineado a la izquierda (masthead centrado).
+Verificado por render real (calendario a/b/c/d Padel God junio=3 días / julio=1; torneo b; campeón a).
+
+**Landing (`src/app/page.tsx`) — ajustes (2026-06-26).** Se quitó el "Crear cuenta" duplicado: el CTA de
+cierre dice **"Empezar gratis"** (el hero sigue "Crear cuenta"). Se sumó una **promo de marca** ("Tu
+identidad en cada torneo": logo + colores + dirección de `/settings`, con muestra de las 6 paletas) entre
+las features y "Próximamente", y un **footer** con `© <año> Matchpoint`. Copyright: en AR/Berna el derecho
+es automático al crear la obra; el aviso © es buena práctica (no obligatorio) y registrar en DNDA es
+opcional.
+
+**Refinamientos sobre las piezas de difusión (mismo día, sobre lo anterior):**
+- **Paleta "noche" neutralizada.** Los neutros OG eran azul marino (`#0b1220`/`#0d1020`) — herencia del
+  acento azul original; chocaban con paletas no-azules (clay/verde/rojo). Ahora son **carbón sin tinte**
+  centralizados como exports en `story.tsx`: `BG #141416`, `INK #f0f1f2`, `MUTED #9a9ba1`, `LINE #26272c`
+  (Satori no puede usar CSS vars; por eso son literales). El único color de marca es el `accent` del
+  organizador.
+- **Sin halo/glow** en Afiche, Ficha **y calendario** (se quitó el `radial-gradient` del `accent`: sobre
+  el carbón quedaba marrón turbio). El Marcador nunca tuvo glow.
+- **Lockup de marca en TODAS las piezas:** logo **más grande** (150px; 120 en filas compactas) + **nombre
+  del club** al lado, vía `BrandLockup` exportado de `story.tsx` (sin logo, el nombre actúa de wordmark).
+  Aplica a torneo (a/b/c), **campeón** (a/b/c, ahora recibe `establishmentName`) y calendario (logo
+  agrandado; el nombre ya era el título héroe).
+
+**Verificado e2e con `tsc`/`eslint` + render real** (torneo a/b/c suma e individual, campeón, calendario;
+org "Padel God" tema clay con logo) vía dev server — carbón neutro sin halo, logo grande + nombre OK, sin
+overflow.
+
 ## Estado de master y deploy (2026-06-22) — leer al abrir sesión nueva
 **El código en `master` está deployado en producción** (`https://app.match-point.workers.dev`).
 `master` == `origin/master` == lo deployado (merge `e595e7c`, Version ID `413331bd`; smoke test OK:
@@ -258,6 +318,12 @@ viejo no soporta Next 16). Corre en el runtime de Workers (`nodejs_compat`), **n
   `src/components/ui/calendar.tsx` y `src/components/form/date-field.tsx`.
 - **Loading states**: `loading.tsx` en rutas pesadas (dashboard, `/t/[id]`, `/tournaments/[id]`) con
   spinner desde `src/components/ui/spinner.tsx`. Feedback inmediato en navegación.
+- **`OrganizerHeader` usa CONTAINER QUERIES (`@container` + `@xl:`/`@3xl:`), no `sm:`** (2026-06-23). El
+  header se monta dentro de la columna de cada página, cuyo ancho varía (`max-w-2xl` … `max-w-6xl`). Con
+  breakpoints de viewport (`sm:`) el header desktop completo se renderizaba aunque la columna fuera
+  angosta (ej. `tournaments/new`/`edit` = `max-w-2xl` ≈ 672px) y la nav se **solapaba** con el grupo
+  derecho. Ahora la nav inline aparece desde `@xl` (≈576px de columna) y el nombre del club desde `@3xl`
+  (≈768px); abajo de `@xl` cae al menú hamburguesa. No volver a `sm:` sin resolver esto.
 - **Tema (branding) — "Court Side", CLARO por default** (rediseño 2026-06-20; antes era oscuro):
   acento azul real (`--volt: #2d52e8`) sobre off-white frío (`--background: #e7ebf2`, tarjetas blancas
   `--card: #ffffff`). Tipografía: **Archivo** (display expandido en mayúsculas, clase `font-display`) +

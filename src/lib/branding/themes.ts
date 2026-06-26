@@ -88,13 +88,18 @@ export const THEMES: Record<ThemeKey, ThemePalette> = {
   },
   grafito: {
     key: 'grafito',
+    // Acento gris medio (no negro): el grafito casi-negro original (#2b3242 /
+    // #0d1020) se dibuja como TEXTO sobre el carbón #141416 de las imágenes de
+    // difusión y sobre estados seleccionados oscuros → negro-sobre-negro. Este
+    // acero medio mantiene contraste de texto blanco en botones (~5:1) y a la
+    // vez se lee sobre el carbón oscuro (~3.6:1 en el tipo grande del afiche).
     label: 'Grafito',
-    volt: '#2b3242',
+    volt: '#646e80',
     voltForeground: '#ffffff',
-    voltDeep: '#0d1020',
+    voltDeep: '#3a4252',
     voltTint: '#dde1ea',
     voltSurface: '#f4f5f8',
-    glowRgb: '43, 50, 66',
+    glowRgb: '100, 110, 128',
   },
 }
 
