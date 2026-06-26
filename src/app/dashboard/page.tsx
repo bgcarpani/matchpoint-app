@@ -9,16 +9,22 @@ import {
   DashboardStats,
   type DashboardStat,
 } from '@/components/organizer/dashboard-stats'
-import {
-  TournamentTable,
-  type TournamentRow,
-} from '@/components/tournaments/tournament-table'
+import { TournamentBrowser } from '@/components/tournaments/tournament-browser'
+import type { TournamentRow } from '@/components/tournaments/tournament-table'
 import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
 export const metadata: Metadata = { title: 'Panel — Matchpoint' }
 
 const ACTIVE_STATUSES = new Set(['registration_open', 'in_progress'])
+
+// Estados "vigentes" del calendario público (espejo de public_calendar_tournament_view).
+const ACTIVE_CALENDAR_STATUSES = new Set([
+  'published',
+  'registration_open',
+  'registration_closed',
+  'in_progress',
+])
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -41,11 +47,13 @@ export default async function DashboardPage() {
       // Filtrar por dueño explícitamente: la policy tournaments_public_read deja
       // leer a cualquier `authenticated` los torneos no-draft, así que NO alcanza
       // con confiar en RLS para acotar la lista a los del organizador logueado.
+      // Orden por fecha de torneo (la fecha en que se juega), del más próximo
+      // (antiguo) al más lejano; el listado permite reordenar/filtrar en el cliente.
       supabase
         .from('tournaments')
         .select('*')
         .eq('organizer_id', user.id)
-        .order('created_at', { ascending: false }),
+        .order('tournament_date', { ascending: true }),
       supabase.from('pairs').select('tournament_id, status'),
       supabase.from('courts').select('id', { count: 'exact', head: true }),
     ])
@@ -73,6 +81,16 @@ export default async function DashboardPage() {
     ...t,
     acceptedCount: acceptedByTournament.get(t.id) ?? 0,
   }))
+
+  // Meses ('YYYY-MM') con torneos vigentes, para el afiche mensual del calendario.
+  // Mismos estados que `public_calendar_tournament_view` (sin draft/finished).
+  const calendarMonthSet = new Set<string>()
+  for (const t of list) {
+    if (ACTIVE_CALENDAR_STATUSES.has(t.status)) {
+      calendarMonthSet.add(t.tournament_date.slice(0, 7))
+    }
+  }
+  const calendarMonths = [...calendarMonthSet].sort()
 
   const stats: DashboardStat[] = [
     { label: 'Activos', value: list.filter((t) => ACTIVE_STATUSES.has(t.status)).length },
@@ -125,6 +143,7 @@ export default async function DashboardPage() {
             <CalendarSharePanel
               url={calendarUrl}
               establishmentName={organizer?.establishment_name}
+              months={calendarMonths}
             />
           </section>
         )}
@@ -139,7 +158,7 @@ export default async function DashboardPage() {
               </p>
             </div>
           ) : (
-            <TournamentTable tournaments={rows} />
+            <TournamentBrowser tournaments={rows} />
           )}
         </section>
       </div>

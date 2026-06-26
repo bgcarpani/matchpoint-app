@@ -121,8 +121,8 @@ export async function buildTournamentStory({
           <div
             style={{
               display: 'flex',
+              flexDirection: 'column',
               alignItems: 'center',
-              justifyContent: 'space-between',
             }}
           >
             <BrandLockup
@@ -131,8 +131,16 @@ export async function buildTournamentStory({
               ink="#ffffff"
               logoSize={120}
               nameSize={34}
+              center
             />
-            <span style={{ fontSize: 30, fontWeight: 700, color: MUTED }}>
+            <span
+              style={{
+                fontSize: 30,
+                fontWeight: 700,
+                color: MUTED,
+                marginTop: 14,
+              }}
+            >
               {dateLabel}
             </span>
           </div>
@@ -257,6 +265,7 @@ export async function buildTournamentStory({
           logoDataUrl={logoDataUrl}
           name={establishmentName}
           ink="#0d1020"
+          center
         />
 
         <div style={{ display: 'flex', flexDirection: 'column', marginTop: 120 }}>
@@ -366,6 +375,7 @@ export async function buildTournamentStory({
           logoDataUrl={logoDataUrl}
           name={establishmentName}
           ink={INK}
+          center
         />
 
         <span

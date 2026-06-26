@@ -263,6 +263,7 @@ export async function buildChampionStory({
           logoDataUrl={logoDataUrl}
           name={establishmentName}
           ink="#0D1020"
+          center
         />
         <div
           style={{
@@ -359,7 +360,8 @@ export async function buildChampionStory({
           style={{
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between',
+            justifyContent: 'center',
+            gap: 28,
           }}
         >
           <BrandLockup

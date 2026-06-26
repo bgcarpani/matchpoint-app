@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
 import { ShareButtons } from '@/components/share/share-buttons'
+import { CalendarStoryShare } from '@/components/share/calendar-story-share'
 
 /**
  * Panel "Calendario público" del dashboard: muestra la URL estática del
@@ -17,9 +18,12 @@ import { ShareButtons } from '@/components/share/share-buttons'
 export function CalendarSharePanel({
   url,
   establishmentName,
+  months,
 }: {
   url: string
   establishmentName?: string
+  /** Meses con torneos ('YYYY-MM' asc) para el afiche mensual ('Mes'). */
+  months?: string[]
 }) {
   const [copied, setCopied] = useState(false)
   const qrRef = useRef<HTMLDivElement>(null)
@@ -50,7 +54,7 @@ export function CalendarSharePanel({
   return (
     <div className="elevate rounded-2xl border border-border bg-card p-6 sm:p-8">
       <h2 className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-        Calendario público
+        Calendario de torneos
       </h2>
       <p className="mt-2 text-sm text-muted-foreground">
         Un link fijo que siempre muestra tus torneos vigentes. Compartilo o
@@ -95,7 +99,16 @@ export function CalendarSharePanel({
                   ? `Mirá los torneos de ${establishmentName} en Matchpoint:`
                   : 'Mirá los torneos en Matchpoint:'
               }
+            />
+            <CalendarStoryShare
               storyUrl={`${url}/og/story`}
+              url={url}
+              months={months}
+              text={
+                establishmentName
+                  ? `Mirá los torneos de ${establishmentName} en Matchpoint:`
+                  : 'Mirá los torneos en Matchpoint:'
+              }
             />
           </div>
         </div>
