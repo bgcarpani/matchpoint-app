@@ -32,8 +32,9 @@
 
 ## Implementación — Fase 1 (lo mínimo que da control real)
 
-### 1. Migración `supabase/migrations/0022_organizer_approval.sql`
-> `db:apply` NO es idempotente. Correr con `npm run db:apply -- 0022`.
+### 1. Migración `supabase/migrations/0023_organizer_approval.sql`
+> `db:apply` NO es idempotente. Correr con `npm run db:apply -- 0023`.
+> (`0022_shifts_cleanup.sql` ya está tomado por la limpieza de turnos.)
 - `alter table organizers add column status text not null default 'pending'
   check (status in ('pending','approved','rejected'));`
   (opcional: `reviewed_at timestamptz`, `reviewed_by uuid`).

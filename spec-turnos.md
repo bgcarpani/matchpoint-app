@@ -292,7 +292,7 @@ cleanup on-read). Por qué:
 - Nativo de Supabase (extensión `pg_cron`), sin infra extra.
 
 **Implementación:**
-- Migración `00NN_shifts_cleanup.sql`: `create extension if not exists pg_cron;` +
+- Migración `0022_shifts_cleanup.sql`: `create extension if not exists pg_cron;` +
   `select cron.schedule('shifts_cleanup', '0 * * * *', $$ ... $$);` (cada hora; el timing exacto
   no es visible al usuario porque la lista ya oculta expirados por read-filter).
 - El job borra en **una sola sentencia** todo lo que ya no sirve — expirados **y** cerrados:
