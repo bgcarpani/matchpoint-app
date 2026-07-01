@@ -19,6 +19,10 @@ Las primeras versiones son organizer-first.
 - `spec-turnos.md` — especificación del **Tablero de turnos** (`/turnos`): sección pública para
   jugadores (sin login) donde publicar turnos con lugares vacíos y encontrar compañeros.
   **Implementada y verificada e2e (2026-07-01)**; pendiente de commit/deploy — ver estado abajo.
+- `spec-account-approval.md` — especificación del **gate de aprobación de cuentas de organizador**:
+  el registro pasa a requerir aprobación manual del dueño (solicitud → `pending` → aprobar). Alcance:
+  solo el registro de organizador (turnos y páginas públicas quedan igual). **Planificado 2026-07-01,
+  sin implementar todavía** — handoff listo para arrancar.
 - `DESIGN.md` — **sistema visual "Court Side" (tema claro)**: tokens, tipografía y reglas. Fuente de
   verdad del diseño; consultarlo antes de tocar UI.
 - `PRODUCT.md` — documento de producto/estrategia (audiencia, personalidad de marca, principios de diseño).
