@@ -31,9 +31,10 @@ export async function GET(
   if (!bracket?.champion) return new Response('Not found', { status: 404 })
 
   const styleParam = new URL(req.url).searchParams.get('style')
-  const style: ChampionStyle = STYLES.includes(styleParam as ChampionStyle)
-    ? (styleParam as ChampionStyle)
-    : 'a'
+  const style: ChampionStyle =
+    styleParam !== null && STYLES.includes(styleParam as ChampionStyle)
+      ? (styleParam as ChampionStyle)
+      : 'a'
 
   // El campeón viene como "Jugador 1 / Jugador 2" (nombres completos).
   const [name1, name2 = ''] = bracket.champion.split(' / ')
@@ -46,7 +47,7 @@ export async function GET(
     logoPublicUrl(tournament?.logo_path ?? null)
   )
 
-  return buildChampionStory({
+  const image = await buildChampionStory({
     style,
     name1,
     name2,
@@ -57,4 +58,7 @@ export async function GET(
     accent: themeAccent(tournament?.theme_key),
     logoDataUrl,
   })
+  const headers = new Headers(image.headers)
+  headers.set('Cache-Control', 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800')
+  return new Response(image.body, { headers, status: image.status })
 }

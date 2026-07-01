@@ -13,18 +13,11 @@ import { TournamentBrowser } from '@/components/tournaments/tournament-browser'
 import type { TournamentRow } from '@/components/tournaments/tournament-table'
 import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { ACTIVE_CALENDAR_STATUSES } from '@/lib/domain/tournament'
 
 export const metadata: Metadata = { title: 'Panel — Matchpoint' }
 
 const ACTIVE_STATUSES = new Set(['registration_open', 'in_progress'])
-
-// Estados "vigentes" del calendario público (espejo de public_calendar_tournament_view).
-const ACTIVE_CALENDAR_STATUSES = new Set([
-  'published',
-  'registration_open',
-  'registration_closed',
-  'in_progress',
-])
 
 export default async function DashboardPage() {
   const supabase = await createClient()

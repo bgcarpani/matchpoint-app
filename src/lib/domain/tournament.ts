@@ -8,6 +8,18 @@ import type {
   TournamentStatus,
 } from '@/lib/types/database'
 
+/**
+ * Estados que cuentan como "vigentes" en el calendario público.
+ * Espejo de la cláusula WHERE de `public_calendar_tournament_view`
+ * (supabase/migrations/0009_calendar_slug.sql). Actualizar ambos a la vez.
+ */
+export const ACTIVE_CALENDAR_STATUSES = new Set<TournamentStatus>([
+  'published',
+  'registration_open',
+  'registration_closed',
+  'in_progress',
+])
+
 // --- Ciclo de vida (transiciones unidireccionales, no se retrocede) ---
 export const TOURNAMENT_LIFECYCLE: readonly TournamentStatus[] = [
   'draft',

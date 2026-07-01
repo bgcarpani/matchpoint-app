@@ -38,6 +38,11 @@ export const INK = '#f0f1f2'
 export const MUTED = '#9a9ba1'
 export const LINE = '#26272c'
 
+/** Trunca un nombre a `max` caracteres añadiendo '…'. Evita desborde del canvas en Satori. */
+export function truncateName(name: string, max = 28): string {
+  return name.length > max ? name.slice(0, max - 1) + '…' : name
+}
+
 type FontWeight = 400 | 700 | 800
 
 export type LoadedFont = {
@@ -185,7 +190,7 @@ export function BrandLockup({
         maxWidth: logoDataUrl ? 600 : 880,
       }}
     >
-      {name}
+      {truncateName(name)}
     </span>
   )
 

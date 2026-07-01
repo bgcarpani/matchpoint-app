@@ -17,15 +17,20 @@ import {
 } from '@/lib/og/calendar-story'
 import { themeAccent } from '@/lib/branding/themes'
 import { logoPublicUrl } from '@/lib/branding/logo'
+import { categoryLabel, GENDER_LABELS } from '@/lib/domain/tournament'
 
 const STYLES: ReadonlySet<CalendarStyle> = new Set(['a', 'b', 'c', 'd'])
 
 /** '2026-07' → { year: 2026, month: 7 } válido, o el mes actual si no parsea. */
 function parseMonth(raw: string | null): { year: number; month: number } {
-  const m = raw?.match(/^(\d{4})-(0[1-9]|1[0-2])$/)
-  if (m) return { year: Number(m[1]), month: Number(m[2]) }
   const now = new Date()
-  return { year: now.getUTCFullYear(), month: now.getUTCMonth() + 1 }
+  const defaultMonth = { year: now.getUTCFullYear(), month: now.getUTCMonth() + 1 }
+  const m = raw?.match(/^(\d{4})-(0[1-9]|1[0-2])$/)
+  if (!m) return defaultMonth
+  const year = Number(m[1])
+  // Rechazar años fuera de rango para evitar queries sin sentido.
+  if (year < defaultMonth.year - 1 || year > defaultMonth.year + 2) return defaultMonth
+  return { year, month: Number(m[2]) }
 }
 
 /** Etiqueta "Julio 2026" (es-AR, inicial mayúscula). */
@@ -47,7 +52,7 @@ export async function GET(
 
   const search = new URL(req.url).searchParams
   const raw = search.get('style')
-  const style: CalendarStyle = STYLES.has(raw as CalendarStyle)
+  const style: CalendarStyle = raw !== null && STYLES.has(raw as CalendarStyle)
     ? (raw as CalendarStyle)
     : 'a'
 
@@ -68,10 +73,24 @@ export async function GET(
     const days = [
       ...new Set(inMonth.map((t) => Number(t.tournament_date.slice(8, 10)))),
     ]
-    month = { year, month: m, label: monthLabel(year, m), days, count: inMonth.length }
+    const monthTournaments = inMonth
+      .map((t) => ({
+        day: Number(t.tournament_date.slice(8, 10)),
+        categoryLabel: categoryLabel(t.category_type, t.category_value),
+        genderLabel: GENDER_LABELS[t.gender],
+      }))
+      .sort((a, b) => a.day - b.day)
+    month = {
+      year,
+      month: m,
+      label: monthLabel(year, m),
+      days,
+      count: inMonth.length,
+      tournaments: monthTournaments,
+    }
   }
 
-  return buildCalendarStory({
+  const image = await buildCalendarStory({
     style,
     establishmentName: organizer.establishment_name,
     tournamentCount: tournaments.length,
@@ -80,4 +99,7 @@ export async function GET(
     logoDataUrl,
     month,
   })
+  const headers = new Headers(image.headers)
+  headers.set('Cache-Control', 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800')
+  return new Response(image.body, { headers, status: image.status })
 }

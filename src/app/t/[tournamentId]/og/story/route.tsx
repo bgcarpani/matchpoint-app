@@ -29,16 +29,17 @@ export async function GET(
   if (!tournament) return new Response('Not found', { status: 404 })
 
   const styleParam = new URL(req.url).searchParams.get('style')
-  const style: TournamentStyle = STYLES.includes(styleParam as TournamentStyle)
-    ? (styleParam as TournamentStyle)
-    : 'a'
+  const style: TournamentStyle =
+    styleParam !== null && STYLES.includes(styleParam as TournamentStyle)
+      ? (styleParam as TournamentStyle)
+      : 'a'
 
   const [baseUrl, logoDataUrl] = await Promise.all([
     getBaseUrl(),
     loadLogoDataUrl(logoPublicUrl(tournament.logo_path)),
   ])
 
-  return buildTournamentStory({
+  const image = await buildTournamentStory({
     style,
     establishmentName: tournament.establishment_name,
     categoryType: tournament.category_type,
@@ -52,4 +53,7 @@ export async function GET(
     accent: themeAccent(tournament.theme_key),
     logoDataUrl,
   })
+  const headers = new Headers(image.headers)
+  headers.set('Cache-Control', 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800')
+  return new Response(image.body, { headers, status: image.status })
 }

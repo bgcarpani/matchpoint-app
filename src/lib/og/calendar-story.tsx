@@ -20,10 +20,20 @@
  * como CTA legible (sin QR).
  */
 import { ImageResponse } from 'next/og'
-import { loadFonts, Brand, BrandLockup, BG, INK, MUTED } from './story'
+import { loadFonts, Brand, BrandLockup, BG, INK, MUTED, LINE, truncateName } from './story'
 import type { OgAccent } from '@/lib/branding/themes'
 
 export type CalendarStyle = 'a' | 'b' | 'c' | 'd'
+
+/** Torneo del mes para la lista resumida del estilo 'd' (día + categoría + género). */
+export interface CalendarMonthTournament {
+  /** Día del mes (1-31). */
+  day: number
+  /** Etiqueta de categoría, ej. "6ta" / "Suma 14" (ver `categoryLabel` en domain/tournament). */
+  categoryLabel: string
+  /** Etiqueta de género, ej. "Masculino" (ver `GENDER_LABELS`). */
+  genderLabel: string
+}
 
 /** Datos del mes para el estilo 'd' (mini calendario). */
 export interface CalendarMonth {
@@ -37,6 +47,8 @@ export interface CalendarMonth {
   days: number[]
   /** Cantidad de torneos del mes (puede haber varios en un día). */
   count: number
+  /** Torneos del mes ordenados por día, para la lista resumida (categoría + género). */
+  tournaments: CalendarMonthTournament[]
 }
 
 export interface CalendarStoryInput {
@@ -108,17 +120,29 @@ export async function buildCalendarStory({
     ? `${tournamentCount} ${tournamentCount === 1 ? 'TORNEO VIGENTE' : 'TORNEOS VIGENTES'}`
     : 'PRÓXIMAMENTE'
 
+  // Guarda explícita: style 'd' requiere month. Si falta (error de caller), cae a 'a'.
+  if (style === 'd' && !month) {
+    return buildCalendarStory({ style: 'a', establishmentName, tournamentCount, url, accent, logoDataUrl })
+  }
+
   let content: React.ReactNode
 
   if (style === 'd' && month) {
     // Mes: mini calendario con los días que tienen torneo resaltados.
     const weeks = monthGrid(month.year, month.month)
     const dayset = new Set(month.days)
-    const CELL = 118
+    const CELL = 100
     const summary =
       month.count > 0
         ? `${month.count} ${month.count === 1 ? 'TORNEO' : 'TORNEOS'} ESTE MES`
         : 'SIN TORNEOS ESTE MES'
+    // Lista resumida (día + categoría + género). Se cappea para no desbordar el
+    // canvas fijo de 1920px cuando el mes tiene muchos torneos o el grid ocupa 6 filas.
+    const MAX_LIST_ROWS = 6
+    const visibleTournaments = month.tournaments.slice(0, MAX_LIST_ROWS)
+    const hiddenCount = month.tournaments.length - visibleTournaments.length
+    // "Julio 2026" -> "JUL", para la fecha corta de cada fila de la lista.
+    const monthAbbrev = month.label.slice(0, 3).toUpperCase()
     content = (
       <div
         style={{
@@ -129,7 +153,7 @@ export async function buildCalendarStory({
           height: '1920px',
           backgroundColor: BG,
           color: INK,
-          padding: '230px 72px 200px',
+          padding: '200px 72px 170px',
           fontFamily: 'Archivo',
         }}
       >
@@ -137,31 +161,31 @@ export async function buildCalendarStory({
 
         <span
           style={{
-            fontSize: 32,
+            fontSize: 30,
             letterSpacing: 8,
             textTransform: 'uppercase',
             color: accent.base,
             fontWeight: 700,
-            marginTop: 48,
+            marginTop: 40,
           }}
         >
           {EYEBROW}
         </span>
         <span
           style={{
-            fontSize: 92,
+            fontSize: 88,
             fontWeight: 800,
             letterSpacing: -2,
             textTransform: 'uppercase',
             lineHeight: 1,
-            marginTop: 14,
+            marginTop: 12,
           }}
         >
           {month.label}
         </span>
 
         {/* Encabezado de días */}
-        <div style={{ display: 'flex', marginTop: 56 }}>
+        <div style={{ display: 'flex', marginTop: 44 }}>
           {WEEKDAYS.map((w, i) => (
             <div
               key={i}
@@ -169,7 +193,7 @@ export async function buildCalendarStory({
                 display: 'flex',
                 width: CELL,
                 justifyContent: 'center',
-                fontSize: 32,
+                fontSize: 28,
                 fontWeight: 700,
                 color: MUTED,
               }}
@@ -180,7 +204,7 @@ export async function buildCalendarStory({
         </div>
 
         {/* Semanas */}
-        <div style={{ display: 'flex', flexDirection: 'column', marginTop: 12 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', marginTop: 10 }}>
           {weeks.map((week, wi) => (
             <div key={wi} style={{ display: 'flex' }}>
               {week.map((day, di) => {
@@ -194,7 +218,7 @@ export async function buildCalendarStory({
                       height: CELL,
                       alignItems: 'center',
                       justifyContent: 'center',
-                      padding: 8,
+                      padding: 6,
                     }}
                   >
                     {day != null ? (
@@ -205,8 +229,8 @@ export async function buildCalendarStory({
                           height: '100%',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          borderRadius: 20,
-                          fontSize: 40,
+                          borderRadius: 18,
+                          fontSize: 36,
                           fontWeight: on ? 800 : 500,
                           backgroundColor: on ? accent.base : 'transparent',
                           color: on ? '#ffffff' : MUTED,
@@ -224,16 +248,55 @@ export async function buildCalendarStory({
 
         <span
           style={{
-            fontSize: 36,
+            fontSize: 32,
             fontWeight: 800,
-            letterSpacing: 4,
+            letterSpacing: 3,
             textTransform: 'uppercase',
             color: accent.base,
-            marginTop: 48,
+            marginTop: 40,
           }}
         >
           {summary}
         </span>
+
+        {/* Lista resumida: día + categoría + género de cada torneo del mes. */}
+        {visibleTournaments.length > 0 ? (
+          <div style={{ display: 'flex', flexDirection: 'column', width: '100%', marginTop: 8 }}>
+            {visibleTournaments.map((t, i) => (
+              <div
+                key={i}
+                style={{
+                  display: 'flex',
+                  width: '100%',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  borderBottom: `2px solid ${LINE}`,
+                  padding: '12px 0',
+                }}
+              >
+                <span style={{ fontSize: 30, fontWeight: 800, color: accent.tint }}>
+                  {String(t.day).padStart(2, '0')} {monthAbbrev}
+                </span>
+                <span style={{ fontSize: 28, fontWeight: 600, color: MUTED, textTransform: 'uppercase' }}>
+                  {t.categoryLabel} · {t.genderLabel}
+                </span>
+              </div>
+            ))}
+            {hiddenCount > 0 ? (
+              <span
+                style={{
+                  fontSize: 26,
+                  fontWeight: 700,
+                  color: MUTED,
+                  marginTop: 12,
+                  alignSelf: 'flex-end',
+                }}
+              >
+                +{hiddenCount} {hiddenCount === 1 ? 'torneo más' : 'torneos más'}
+              </span>
+            ) : null}
+          </div>
+        ) : null}
 
         <div style={{ display: 'flex', flexGrow: 1 }} />
         <div
@@ -425,7 +488,7 @@ export async function buildCalendarStory({
               marginTop: 18,
             }}
           >
-            {establishmentName}
+            {truncateName(establishmentName)}
           </span>
         </div>
 
@@ -528,7 +591,7 @@ export async function buildCalendarStory({
             marginTop: 18,
           }}
         >
-          {establishmentName}
+          {truncateName(establishmentName)}
         </span>
 
         <div

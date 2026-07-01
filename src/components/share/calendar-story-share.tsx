@@ -52,7 +52,7 @@ export function CalendarStoryShare({
 
   // Opciones de mes: los meses con torneos, o el mes actual como fallback.
   const now = new Date()
-  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+  const currentMonth = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`
   const monthOptions = months.length > 0 ? months : [currentMonth]
   const [month, setMonth] = useState(monthOptions[0])
 
