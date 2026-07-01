@@ -197,12 +197,14 @@ overflow.
 Feature transversal para jugadores (sin login): publicar un turno con lugar vacío y encontrar
 compañeros. Spec completa en `spec-turnos.md` (deltas de implementación) — todos los puntos ya
 están hechos, sólo quedan como "pendientes futuros" explícitos de la spec (contador automático de
-cupos, cleanup batch de expirados, push notifications, filtro por zona, login de jugador v4).
+cupos, push notifications, filtro por zona, login de jugador v4).
 Decisiones: (a) sin login — control por **token de gestión** generado al crear (link único
 `/turnos/[id]/editar?token=xxx`, guardado en `localStorage['myShiftTokens']`); (b) **sección
 separada** `/turnos` (layout propio, sin `OrganizerHeader`), desacoplada del área de organizadores;
 (c) canchas como **texto libre**, sin integración con las canchas de la plataforma; (d) **expiración
-lazy** — la query de `/turnos` filtra `start_time < NOW() - INTERVAL '30 minutes'`, sin cron; (e)
+lazy** en la lectura — la query de `/turnos` filtra `start_time < NOW() - INTERVAL '30 minutes'`, y
+además un job `pg_cron` horario (`shifts_cleanup`, migración `0022`) borra físicamente los expirados
++ cerrados; (e)
 deep links a WhatsApp (`wa.me`, mensaje pre-llenado) e Instagram (perfil); (f) defaults inteligentes
 en el form (fecha=hoy, hora=próxima hora redonda, slots=2, WhatsApp pre-llenado desde
 `localStorage['lastWhatsapp']`). Migración `0021_shifts.sql` (tabla `shifts` + RLS de sólo-lectura
@@ -239,6 +241,11 @@ home/login/register 200, `/settings` 307→login). **Último deploy: v3.2 (brand
   2. **Dominio propio pendiente** — cierra de un saque: emails a cualquiera (Resend verificado), reset de
      contraseña real, registro seguro, y URL linda (Custom Domain en Cloudflare). Es el último tramo de v3.
   3. Worker huérfano `matchpoint-app` (de un deploy fallido) — borrar del dashboard cuando quieras.
+  4. **Job `pg_cron` `shifts_cleanup` activo en Supabase** (migración `0022_shifts_cleanup.sql`,
+     aplicada 2026-07-01). Corre cada hora (`0 * * * *`) y borra los turnos cerrados + expirados
+     (`start_time < now() - interval '30 min'`). Vive en la base, no depende del deploy de Cloudflare.
+     Reversible con `select cron.unschedule('shifts_cleanup');`. Ver `spec-turnos.md` → "Auto-cierre y
+     limpieza automática".
 
 ## Convenciones de implementación (v1)
 > No revertir sin discusión; reflejan decisiones ya validadas en código y verificadas e2e.
