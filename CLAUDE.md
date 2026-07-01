@@ -16,6 +16,9 @@ Las primeras versiones son organizer-first.
   dirección, paletas de marca) + refinamientos del index (promo + "próximamente" + carousel) +
   transiciones de página. **Implementado y deployado a producción (2026-06-22)**; la branch
   `feature/organizer-branding` quedó mergeada a `master` (no borrada).
+- `spec-turnos.md` — especificación del **Tablero de turnos** (`/turnos`): sección pública para
+  jugadores (sin login) donde publicar turnos con lugares vacíos y encontrar compañeros.
+  **Implementada y verificada e2e (2026-07-01)**; pendiente de commit/deploy — ver estado abajo.
 - `DESIGN.md` — **sistema visual "Court Side" (tema claro)**: tokens, tipografía y reglas. Fuente de
   verdad del diseño; consultarlo antes de tocar UI.
 - `PRODUCT.md` — documento de producto/estrategia (audiencia, personalidad de marca, principios de diseño).
@@ -151,6 +154,17 @@ todos los `BrandLockup`/`Brand`. En `torneo b` la marca+fecha quedan en columna 
 la marca+copa centradas como grupo. El resto del cuerpo sigue alineado a la izquierda (masthead centrado).
 Verificado por render real (calendario a/b/c/d Padel God junio=3 días / julio=1; torneo b; campeón a).
 
+**Estilo `d` "Mes" — lista de categorías/género por torneo (2026-07-01).** Debajo de la grilla se agregó
+una lista resumida (día + categoría + género, ej. "09 AGO — SUMA 14 · MIXTO") de cada torneo del mes,
+ordenada por fecha. `CalendarMonth` ahora lleva `tournaments: CalendarMonthTournament[]` (día +
+`categoryLabel`/`genderLabel`, armados en la route con los helpers de `domain/tournament.ts`). Se
+descartó pintar la categoría dentro de la celda del día (118px es muy chico para texto legible, y un día
+puede tener más de un torneo); en su lugar se listan debajo. La lista se **cappea a 6 filas** (`+N
+torneos más` si sobra) y se achicó un poco la grilla (`CELL` 118→100) y los márgenes para que el peor
+caso (grilla de 6 semanas + 6+ torneos) siga entrando en el canvas fijo de 1920px sin desbordar.
+Verificado con render real: mes de 6 filas + 8 torneos de prueba (categorías/géneros variados,
+insertados y borrados en la DB sólo para el test) y mes real de 1 torneo — ambos casos entran bien.
+
 **Landing (`src/app/page.tsx`) — ajustes (2026-06-26).** Se quitó el "Crear cuenta" duplicado: el CTA de
 cierre dice **"Empezar gratis"** (el hero sigue "Crear cuenta"). Se sumó una **promo de marca** ("Tu
 identidad en cada torneo": logo + colores + dirección de `/settings`, con muestra de las 6 paletas) entre
@@ -174,6 +188,25 @@ opcional.
 **Verificado e2e con `tsc`/`eslint` + render real** (torneo a/b/c suma e individual, campeón, calendario;
 org "Padel God" tema clay con logo) vía dev server — carbón neutro sin halo, logo grande + nombre OK, sin
 overflow.
+
+**Tablero de turnos (`/turnos`) — IMPLEMENTADO y verificado e2e (2026-07-01).**
+Feature transversal para jugadores (sin login): publicar un turno con lugar vacío y encontrar
+compañeros. Spec completa en `spec-turnos.md` (deltas de implementación) — todos los puntos ya
+están hechos, sólo quedan como "pendientes futuros" explícitos de la spec (contador automático de
+cupos, cleanup batch de expirados, push notifications, filtro por zona, login de jugador v4).
+Decisiones: (a) sin login — control por **token de gestión** generado al crear (link único
+`/turnos/[id]/editar?token=xxx`, guardado en `localStorage['myShiftTokens']`); (b) **sección
+separada** `/turnos` (layout propio, sin `OrganizerHeader`), desacoplada del área de organizadores;
+(c) canchas como **texto libre**, sin integración con las canchas de la plataforma; (d) **expiración
+lazy** — la query de `/turnos` filtra `start_time < NOW() - INTERVAL '30 minutes'`, sin cron; (e)
+deep links a WhatsApp (`wa.me`, mensaje pre-llenado) e Instagram (perfil); (f) defaults inteligentes
+en el form (fecha=hoy, hora=próxima hora redonda, slots=2, WhatsApp pre-llenado desde
+`localStorage['lastWhatsapp']`). Migración `0021_shifts.sql` (tabla `shifts` + RLS de sólo-lectura
+pública) **aplicada** a la base real. Link "Turnos" agregado al header público (`/t/[id]`) y a la
+landing. Verificado con `tsc`/`eslint` limpios y flujo real vía dev server: alta → redirect a
+`/turnos/[id]/editar?token=...` → aparece en el listado → edición funciona con el token real. Queda
+un turno de prueba a propósito en la tabla `shifts` de la base real (creador "Bruno", Padel God) para
+seguir probando manualmente. **Pendiente: deploy** (no está en `master`/producción todavía).
 
 ## Estado de master y deploy (2026-06-22) — leer al abrir sesión nueva
 **El código en `master` está deployado en producción** (`https://app.match-point.workers.dev`).
