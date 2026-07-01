@@ -34,6 +34,8 @@ export type MatchPhase = 'zone' | 'bracket'
 
 export type TeamSlot = 'team1' | 'team2'
 
+export type ShiftStatus = 'open' | 'full' | 'closed'
+
 // Helper: una columna con default puede omitirse en Insert.
 type WithDefaults<Row, OptionalKeys extends keyof Row> = Omit<Row, OptionalKeys> &
   Partial<Pick<Row, OptionalKeys>>
@@ -223,6 +225,34 @@ export interface Database {
           | 'created_at'
         >
         Update: Partial<Database['public']['Tables']['matches']['Row']>
+        Relationships: []
+      }
+      shifts: {
+        Row: {
+          id: string
+          manage_token: string
+          court_name: string
+          start_time: string
+          slots_needed: number
+          category: string | null
+          notes: string | null
+          creator_name: string
+          whatsapp: string
+          instagram: string | null
+          status: ShiftStatus
+          created_at: string
+        }
+        Insert: WithDefaults<
+          Database['public']['Tables']['shifts']['Row'],
+          | 'id'
+          | 'manage_token'
+          | 'category'
+          | 'notes'
+          | 'instagram'
+          | 'status'
+          | 'created_at'
+        >
+        Update: Partial<Database['public']['Tables']['shifts']['Row']>
         Relationships: []
       }
     }

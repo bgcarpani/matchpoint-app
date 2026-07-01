@@ -70,9 +70,17 @@ export default async function PublicTournamentPage({
       <ThemeStyle themeKey={t.theme_key} />
       {/* Top bar */}
       <header className="flex items-center justify-between py-6">
-        <span className="font-display text-lg text-foreground">
-          Match<span className="text-volt">point</span>
-        </span>
+        <div className="flex items-center gap-5">
+          <span className="font-display text-lg text-foreground">
+            Match<span className="text-volt">point</span>
+          </span>
+          <a
+            href="/turnos"
+            className="text-xs uppercase tracking-[0.2em] text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Turnos
+          </a>
+        </div>
         <span className="flex items-center gap-2.5 text-xs uppercase tracking-[0.2em] text-muted-foreground">
           {logoUrl && (
             // eslint-disable-next-line @next/next/no-img-element -- logo del CDN de Storage

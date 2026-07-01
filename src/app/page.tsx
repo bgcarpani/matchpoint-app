@@ -157,6 +157,34 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Tablero de turnos — sección viva para jugadores (sin login) */}
+      <section className="mt-4 pb-2">
+        <div className="elevate flex flex-col items-start gap-4 rounded-2xl border border-volt/30 bg-volt/5 px-6 py-7 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+          <div>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-volt px-2.5 py-1 text-[0.6rem] font-semibold uppercase tracking-[0.14em] text-volt-foreground">
+              <span className="size-1.5 animate-pulse rounded-full bg-volt-foreground" aria-hidden />
+              Ya disponible
+            </span>
+            <h2 className="font-display mt-3 text-[clamp(1.4rem,3vw,2rem)] text-foreground">
+              Tablero de turnos
+            </h2>
+            <p className="mt-2 max-w-lg text-sm text-muted-foreground">
+              ¿Tenés una cancha reservada y te faltan jugadores? Publicalo sin
+              cuenta y que te encuentren. Para jugadores, gratis.
+            </p>
+          </div>
+          <Link
+            href="/turnos"
+            className={cn(
+              buttonVariants({ variant: 'outline', size: 'lg' }),
+              'font-display h-12 shrink-0 px-6 text-base'
+            )}
+          >
+            Ver el tablero →
+          </Link>
+        </div>
+      </section>
+
       {/* CTA de cierre */}
       <section className="pb-12">
         <div className="elevate-lg flex flex-col items-start gap-5 rounded-2xl border border-border bg-card px-6 py-10 sm:flex-row sm:items-center sm:justify-between sm:px-10">

@@ -166,6 +166,41 @@ propia** y la plataforma mejora su **autopromoción**.
 
 ---
 
+## Tablero de turnos — Feature transversal (jugadores, sin login)
+
+Sección pública independiente del área de organizadores, pensada para que **jugadores con turno
+reservado** puedan encontrar compañeros. No requiere login ni registro.
+
+### Qué hace
+- Un jugador publica que tiene una cancha reservada (fecha, hora, cancha, categoría) y le
+  faltan entre 1 y 4 compañeros, con su WhatsApp e Instagram opcionales.
+- Cualquier otro jugador ve el listado, filtra por fecha o slots disponibles, y contacta al
+  creador directamente por WhatsApp (deep link con mensaje pre-llenado) o Instagram.
+- La comunicación ocurre fuera de la app; la plataforma no intermedia.
+
+### Control del turno (sin login)
+- Al crear, el sistema genera un **token de gestión** (link único `/turnos/[id]/editar?token=xxx`)
+  que le permite al creador editar, marcar como completo / reabrir, cerrar o eliminar el turno.
+- El token se guarda en `localStorage` del mismo dispositivo para acceso directo sin el link.
+
+### Ciclo de vida
+```
+open ──→ full     (manual por creador)
+  │        │
+  └────────┴──→ closed    (manual por creador)
+
+[expirado]  = start_time < NOW() - 30min  → filtrado en query, no es un estado en DB
+```
+
+### Integración en la app
+- Vive en `/turnos`, accesible desde el header público.
+- Completamente desacoplado del área de organizadores y de la lógica de torneos.
+- Las canchas son texto libre; no requiere que el organizador esté en la plataforma.
+
+> Detalle de implementación en `spec-turnos.md`.
+
+---
+
 ## Versión 4 — Perfiles de jugador, stats y **rankings**
 Esta versión marca el punto donde el jugador se convierte en usuario pleno de la plataforma, y su
 **objetivo central son los rankings**: el norte de largo plazo del producto (ver "Visión del
