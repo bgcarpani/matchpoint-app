@@ -7,63 +7,144 @@ export default function HomePage() {
   const year = new Date().getFullYear()
   return (
     <main className="relative z-[2] mx-auto flex min-h-dvh w-full max-w-6xl flex-col px-5 sm:px-8">
-      {/* Solo el logo: los CTAs (Ingresar / Crear cuenta) viven en el hero para no duplicarlos. */}
-      <header className="flex items-center py-6">
+      <header className="flex items-center justify-between py-6">
         <span className="font-display text-lg text-foreground">
           Match<span className="text-volt">point</span>
         </span>
+        <nav className="flex items-center gap-5 text-sm">
+          <Link
+            href="/turnos"
+            className="font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Turnos
+          </Link>
+          <Link
+            href="/login"
+            className="font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Ingresar
+          </Link>
+        </nav>
       </header>
 
-      <div className="grid flex-1 items-center gap-10 py-12 xl:grid-cols-[1fr_minmax(320px,400px)] xl:py-16">
-        {/* Texto */}
-        <div className="min-w-0">
+      {/* Hero: entrada de dos puertas — Torneos (organizadores) y Turnos (jugadores) con el mismo peso. */}
+      <section className="py-10 sm:py-14">
+        <div className="text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-volt">
             Comunidad de pádel
           </p>
-          <h1 className="font-display mt-5 text-[clamp(2rem,6vw,3.75rem)] leading-[0.92] text-foreground">
-            Gestioná tu
-            <br />
-            organización
+          <h1 className="font-display mx-auto mt-5 max-w-3xl text-[clamp(2rem,6vw,3.75rem)] leading-[0.95] text-foreground">
+            Todo tu pádel, en un solo lugar
           </h1>
-          <p className="mt-6 max-w-md text-base text-muted-foreground">
-            Inscripciones, zonas, partidos y llaves. Todo en un solo lugar,
-            pensado para organizadores.
+          <p className="mx-auto mt-5 max-w-xl text-base text-muted-foreground">
+            Organizá torneos o encontrá con quién jugar. Elegí por dónde entrar.
           </p>
-          <div className="mt-9 flex flex-wrap gap-3">
-            <Link
-              href="/register"
-              className={cn(
-                buttonVariants({ size: 'lg' }),
-                'font-display h-12 px-6 text-base'
-              )}
-            >
-              Crear cuenta →
-            </Link>
-            <Link
-              href="/login"
-              className={cn(
-                buttonVariants({ variant: 'outline', size: 'lg' }),
-                'h-12 px-6 text-base'
-              )}
-            >
-              Ya tengo cuenta
-            </Link>
+        </div>
+
+        <div className="mt-10 grid gap-4 md:grid-cols-2">
+          {/* Puerta 1 — Torneos (organizadores) */}
+          <div className="elevate-lg flex flex-col rounded-2xl border border-border bg-card p-6 sm:p-8">
+            <div className="flex items-center gap-3">
+              <span className="flex size-11 items-center justify-center rounded-xl bg-volt/10 text-volt">
+                <TrophyIcon className="h-6 w-6" />
+              </span>
+              <h2 className="font-display text-2xl text-foreground sm:text-3xl">
+                Torneos
+              </h2>
+            </div>
+            <p className="mt-4 text-sm text-muted-foreground">
+              Para organizadores. Gestioná tus torneos de principio a fin:
+              inscripciones, zonas, resultados y llaves.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link
+                href="/register"
+                className={cn(
+                  buttonVariants({ size: 'lg' }),
+                  'font-display h-12 px-6 text-base'
+                )}
+              >
+                Crear cuenta →
+              </Link>
+              <Link
+                href="/login"
+                className={cn(
+                  buttonVariants({ variant: 'outline', size: 'lg' }),
+                  'h-12 px-6 text-base'
+                )}
+              >
+                Ya tengo cuenta
+              </Link>
+            </div>
+          </div>
+
+          {/* Puerta 2 — Turnos (jugadores, sin login) */}
+          <div className="elevate-lg flex flex-col rounded-2xl border border-volt/30 bg-volt/5 p-6 sm:p-8">
+            <div className="flex items-center gap-3">
+              <span className="flex size-11 items-center justify-center rounded-xl bg-volt/15 text-volt">
+                <UsersIcon className="h-6 w-6" />
+              </span>
+              <h2 className="font-display text-2xl text-foreground sm:text-3xl">
+                Turnos
+              </h2>
+              <span className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-volt px-2.5 py-1 text-[0.6rem] font-semibold uppercase tracking-[0.14em] text-volt-foreground">
+                <span
+                  className="size-1.5 animate-pulse rounded-full bg-volt-foreground"
+                  aria-hidden
+                />
+                Ya disponible
+              </span>
+            </div>
+            <p className="mt-4 text-sm text-muted-foreground">
+              Para jugadores, sin cuenta. ¿Te falta gente para completar la
+              cancha? Publicá el turno y que te encuentren.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link
+                href="/turnos"
+                className={cn(
+                  buttonVariants({ size: 'lg' }),
+                  'font-display h-12 px-6 text-base'
+                )}
+              >
+                Ver el tablero →
+              </Link>
+              <Link
+                href="/turnos/nuevo"
+                className={cn(
+                  buttonVariants({ variant: 'outline', size: 'lg' }),
+                  'h-12 px-6 text-base'
+                )}
+              >
+                Publicar turno
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ============================ ORGANIZADORES ============================ */}
+      <section className="mt-6 border-t border-border pt-14 pb-4">
+        <div className="grid items-center gap-10 lg:grid-cols-2">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-volt">
+              Para organizadores
+            </p>
+            <h2 className="font-display mt-3 text-[clamp(1.75rem,4vw,2.75rem)] text-foreground">
+              Un torneo, de principio a fin
+            </h2>
+            <p className="mt-3 max-w-xl text-sm text-muted-foreground">
+              Inscripciones, zonas, partidos y llaves. Todo en un solo lugar,
+              pensado para organizadores.
+            </p>
+          </div>
+          {/* Vistazo al producto */}
+          <div className="w-full max-w-sm justify-self-center lg:justify-self-end">
+            <ShowcaseCarousel />
           </div>
         </div>
 
-        {/* Visual: carousel del producto (llaves, posiciones, calendario, campeón) */}
-        <ShowcaseCarousel />
-      </div>
-
-      {/* Lo que hacés hoy */}
-      <section className="pb-4">
-        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-volt">
-          Lo que hacés hoy
-        </p>
-        <h2 className="font-display mt-3 text-[clamp(1.75rem,4vw,2.75rem)] text-foreground">
-          Un torneo, de principio a fin
-        </h2>
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <FeatureCard
             title="Inscripciones"
             desc="Las parejas se anotan solas; vos aceptás o rechazás."
@@ -129,6 +210,59 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ============================== JUGADORES ============================== */}
+      <section className="mt-6 border-t border-border pt-14 pb-4">
+        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-volt">
+          Para jugadores
+        </p>
+        <h2 className="font-display mt-3 text-[clamp(1.75rem,4vw,2.75rem)] text-foreground">
+          Encontrá con quién jugar
+        </h2>
+        <p className="mt-3 max-w-xl text-sm text-muted-foreground">
+          El tablero de turnos vive donde ya están los jugadores: tu grupo de
+          WhatsApp. Sin cuenta, sin instalar nada.
+        </p>
+
+        <div className="mt-8 grid gap-4 sm:grid-cols-3">
+          <StepCard
+            n={1}
+            title="Publicás sin cuenta"
+            desc="Cargás cancha, día, hora y cuántos faltan. Treinta segundos."
+          />
+          <StepCard
+            n={2}
+            title="Compartís el link"
+            desc="Lo tirás en tu grupo de WhatsApp con un toque."
+          />
+          <StepCard
+            n={3}
+            title="Te contactan"
+            desc="Quien tenga ganas te escribe directo por WhatsApp."
+          />
+        </div>
+
+        <div className="mt-6 flex flex-wrap gap-3">
+          <Link
+            href="/turnos"
+            className={cn(
+              buttonVariants({ size: 'lg' }),
+              'font-display h-12 px-6 text-base'
+            )}
+          >
+            Ver el tablero →
+          </Link>
+          <Link
+            href="/turnos/nuevo"
+            className={cn(
+              buttonVariants({ variant: 'outline', size: 'lg' }),
+              'h-12 px-6 text-base'
+            )}
+          >
+            Publicar turno
+          </Link>
+        </div>
+      </section>
+
       {/* Próximamente */}
       <section className="mt-14 border-t border-border py-14">
         <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
@@ -157,53 +291,40 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Tablero de turnos — sección viva para jugadores (sin login) */}
-      <section className="mt-4 pb-2">
-        <div className="elevate flex flex-col items-start gap-4 rounded-2xl border border-volt/30 bg-volt/5 px-6 py-7 sm:flex-row sm:items-center sm:justify-between sm:px-8">
-          <div>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-volt px-2.5 py-1 text-[0.6rem] font-semibold uppercase tracking-[0.14em] text-volt-foreground">
-              <span className="size-1.5 animate-pulse rounded-full bg-volt-foreground" aria-hidden />
-              Ya disponible
-            </span>
-            <h2 className="font-display mt-3 text-[clamp(1.4rem,3vw,2rem)] text-foreground">
-              Tablero de turnos
-            </h2>
-            <p className="mt-2 max-w-lg text-sm text-muted-foreground">
-              ¿Tenés una cancha reservada y te faltan jugadores? Publicalo sin
-              cuenta y que te encuentren. Para jugadores, gratis.
-            </p>
-          </div>
-          <Link
-            href="/turnos"
-            className={cn(
-              buttonVariants({ variant: 'outline', size: 'lg' }),
-              'font-display h-12 shrink-0 px-6 text-base'
-            )}
-          >
-            Ver el tablero →
-          </Link>
-        </div>
-      </section>
-
-      {/* CTA de cierre */}
-      <section className="pb-12">
-        <div className="elevate-lg flex flex-col items-start gap-5 rounded-2xl border border-border bg-card px-6 py-10 sm:flex-row sm:items-center sm:justify-between sm:px-10">
-          <div>
-            <h2 className="font-display text-[clamp(1.75rem,4vw,2.5rem)] text-foreground">
-              Armá tu próximo torneo
-            </h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Gratis para empezar. Sin planillas ni grupos de WhatsApp.
-            </p>
-          </div>
+      {/* CTA de cierre — doble, una por audiencia */}
+      <section className="grid gap-4 pb-12 md:grid-cols-2">
+        <div className="elevate-lg flex flex-col rounded-2xl border border-border bg-card px-6 py-8 sm:px-8">
+          <h2 className="font-display text-[clamp(1.5rem,3vw,2rem)] text-foreground">
+            Armá tu próximo torneo
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Gratis para empezar. Sin planillas ni grupos de WhatsApp.
+          </p>
           <Link
             href="/register"
             className={cn(
               buttonVariants({ size: 'lg' }),
-              'font-display h-12 shrink-0 px-6 text-base'
+              'font-display mt-5 h-12 w-fit px-6 text-base'
             )}
           >
             Empezar gratis →
+          </Link>
+        </div>
+        <div className="elevate-lg flex flex-col rounded-2xl border border-volt/30 bg-volt/5 px-6 py-8 sm:px-8">
+          <h2 className="font-display text-[clamp(1.5rem,3vw,2rem)] text-foreground">
+            ¿Te falta un jugador?
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Publicá tu turno y encontrá compañeros. Sin cuenta, gratis.
+          </p>
+          <Link
+            href="/turnos"
+            className={cn(
+              buttonVariants({ variant: 'outline', size: 'lg' }),
+              'font-display mt-5 h-12 w-fit px-6 text-base'
+            )}
+          >
+            Ver el tablero →
           </Link>
         </div>
       </section>
@@ -237,6 +358,19 @@ function FeatureCard({
   return (
     <div className="elevate rounded-2xl border border-border bg-card p-5">
       <span className="text-volt">{icon}</span>
+      <h3 className="mt-3 text-sm font-bold text-foreground">{title}</h3>
+      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{desc}</p>
+    </div>
+  )
+}
+
+/** Paso numerado del "cómo funciona" del tablero de turnos. */
+function StepCard({ n, title, desc }: { n: number; title: string; desc: string }) {
+  return (
+    <div className="elevate rounded-2xl border border-border bg-card p-5">
+      <span className="font-display flex size-8 items-center justify-center rounded-full bg-volt/10 text-sm text-volt tnum">
+        {n}
+      </span>
       <h3 className="mt-3 text-sm font-bold text-foreground">{title}</h3>
       <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{desc}</p>
     </div>
@@ -346,6 +480,25 @@ function CalendarIcon({ className = 'h-5 w-5' }: { className?: string }) {
     >
       <rect x="3" y="4" width="18" height="18" rx="2" />
       <path d="M16 2v4M8 2v4M3 10h18" />
+    </svg>
+  )
+}
+
+function UsersIcon({ className = 'h-5 w-5' }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
     </svg>
   )
 }

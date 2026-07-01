@@ -98,8 +98,8 @@ open ──→ full     (el creador lo marca manualmente)
 ```
 
 Los turnos `full` se muestran al final de la lista, opacados (pueden reabrirse). Los turnos
-`closed` no se muestran. Los expirados no se muestran ni se borran automáticamente (cleanup
-manual o tarea batch futura).
+`closed` no se muestran. Los expirados no se muestran (read-filter) y **se borran
+automáticamente** vía `pg_cron` — ver "Auto-cierre y limpieza automática".
 
 ---
 
@@ -278,12 +278,46 @@ src/app/turnos/
 
 ---
 
+## Auto-cierre y limpieza automática (decidido 2026-07-01)
+
+**Regla de producto:** un turno se considera **cerrado en cuanto pasó su horario** (con la misma
+gracia de 30 min que ya usa la lista), y **todos los turnos cerrados se borran automáticamente**.
+Así el tablero queda siempre limpio, sin intervención manual.
+
+**Enfoque óptimo: `pg_cron` en Supabase** (no Edge Function, ni Cron Trigger de Cloudflare, ni
+cleanup on-read). Por qué:
+- Corre **en la base**, independiente del tráfico web: los expirados se van aunque nadie visite
+  `/turnos`. Un cleanup on-read no corre si no hay visitas y mete `DELETE`s en el path de lectura.
+- **Cero código de app/worker** y cero superficie de auth: es SQL puro agendado.
+- Nativo de Supabase (extensión `pg_cron`), sin infra extra.
+
+**Implementación:**
+- Migración `00NN_shifts_cleanup.sql`: `create extension if not exists pg_cron;` +
+  `select cron.schedule('shifts_cleanup', '0 * * * *', $$ ... $$);` (cada hora; el timing exacto
+  no es visible al usuario porque la lista ya oculta expirados por read-filter).
+- El job borra en **una sola sentencia** todo lo que ya no sirve — expirados **y** cerrados:
+  ```sql
+  delete from shifts
+  where status = 'closed'
+     or start_time < now() - interval '30 minutes';
+  ```
+- **No hace falta un `UPDATE` intermedio a `closed`** para los expirados: la lista ya los oculta
+  por el read-filter (`start_time >= now() - interval '30 min'`), así que "expirado" se comporta
+  como "cerrado" para el usuario y el job los elimina físicamente. El estado `closed` en DB queda
+  solo para el cierre manual del creador (que este mismo job después borra).
+- Se **mantiene el read-filter lazy** como belt-and-suspenders: UX instantánea entre corridas del
+  cron (un turno recién expirado no se ve aunque el job todavía no haya corrido).
+
+**Si en el futuro se quiere que `closed` sea observable antes de borrarse** (mostrar "cerrado" un
+rato, o auditar), se parte en dos sentencias: `UPDATE ... set status='closed'` para los expirados
++ `DELETE ... where status='closed' and <gracia>`.
+
+---
+
 ## Pendientes futuros (fuera de scope ahora)
 
 - **Contador de "Me uno":** en vez de marcar manual como "completo", decrementar `slots_needed`
   al clickear el botón de contacto (llegaría a 0 → auto-full).
-- **Cleanup de turnos expirados:** tarea batch (Edge Function o script) para borrar registros
-  con `start_time < NOW() - INTERVAL '7 days'`.
 - **Push notifications:** avisar al creador cuando alguien clickea "Contactar" (requiere Web
   Push / VAPID, ya contemplado como Fase 2 de la PWA).
 - **Filtro por zona/barrio:** requeriría un campo estructurado de ubicación, hoy es texto libre.

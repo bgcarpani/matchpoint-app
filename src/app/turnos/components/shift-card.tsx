@@ -1,10 +1,12 @@
 'use client'
 
 import Link from 'next/link'
+import { Share2 } from 'lucide-react'
 import {
   formatShiftWhen,
   slotsLabel,
   whatsappLink,
+  shareWhatsappLink,
   instagramLink,
   type PublicShift,
 } from '@/lib/domain/shift'
@@ -76,6 +78,21 @@ export function ShiftCard({ shift }: { shift: PublicShift }) {
             Instagram
           </a>
         )}
+        <button
+          type="button"
+          onClick={() =>
+            window.open(
+              shareWhatsappLink(shift, `${window.location.origin}/turnos`),
+              '_blank',
+              'noopener,noreferrer'
+            )
+          }
+          title="Compartir en WhatsApp"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3.5 py-2 text-sm font-medium text-foreground transition-colors hover:border-volt/50"
+        >
+          <Share2 className="size-4" />
+          Compartir
+        </button>
         <span className="ml-auto text-xs text-muted-foreground">
           {shift.creator_name}
         </span>

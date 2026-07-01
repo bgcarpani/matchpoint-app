@@ -2,7 +2,9 @@
 
 import { useEffect, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { Share2 } from 'lucide-react'
 import type { ShiftStatus } from '@/lib/types/database'
+import { shareWhatsappLink } from '@/lib/domain/shift'
 import {
   updateShift,
   setShiftStatus,
@@ -120,6 +122,25 @@ function EditShiftFormInner({
     })
   }
 
+  function onShare() {
+    const start = new Date(`${state.date}T${state.time}`)
+    const shareShift = {
+      ...shift,
+      court_name: state.court_name,
+      start_time: Number.isNaN(start.getTime())
+        ? shift.start_time
+        : start.toISOString(),
+      slots_needed: state.slots,
+      category: state.category.trim() || null,
+      creator_name: state.creator_name,
+    }
+    window.open(
+      shareWhatsappLink(shareShift, `${window.location.origin}/turnos`),
+      '_blank',
+      'noopener,noreferrer'
+    )
+  }
+
   function onDelete() {
     if (
       !window.confirm(
@@ -144,12 +165,20 @@ function EditShiftFormInner({
       {justCreated && (
         <div className="elevate mb-6 rounded-2xl border border-volt/30 bg-volt/5 p-5">
           <p className="font-display text-lg text-foreground">
-            ¡Turno publicado! 🎾
+            ¡Turno publicado!
           </p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Ya aparece en el tablero. Guardá esta página para volver a
-            editarlo, o compartí el link del tablero con tu grupo.
+            Ya aparece en el tablero. Compartilo en tu grupo de WhatsApp para
+            que se sumen; guardá esta página para volver a editarlo.
           </p>
+          <button
+            type="button"
+            onClick={onShare}
+            className="font-display mt-4 inline-flex items-center gap-2 rounded-lg bg-volt px-4 py-2.5 text-sm text-volt-foreground transition-transform active:scale-[0.98] hover:brightness-105"
+          >
+            <Share2 className="size-4" />
+            Compartir en WhatsApp
+          </button>
         </div>
       )}
 
@@ -192,6 +221,14 @@ function EditShiftFormInner({
 
       {/* Acciones de estado */}
       <div className="mt-6 space-y-3">
+        <button
+          type="button"
+          onClick={onShare}
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-volt/40 bg-volt/10 px-4 py-3 text-sm font-medium text-volt transition-colors hover:bg-volt/15"
+        >
+          <Share2 className="size-4" />
+          Compartir en WhatsApp
+        </button>
         {status === 'full' ? (
           <ActionButton onClick={() => changeStatus('open')} disabled={pending}>
             Reabrir turno

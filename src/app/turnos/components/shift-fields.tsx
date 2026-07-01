@@ -1,6 +1,7 @@
 'use client'
 
 import { DateField } from '@/components/form/date-field'
+import { TimeField } from '@/components/form/time-field'
 import { Segmented } from '@/components/form/segmented'
 
 /** Estado del formulario de turno (fecha y hora separadas para los pickers). */
@@ -70,23 +71,18 @@ export function ShiftFields({
         />
       </label>
 
-      <div className="grid grid-cols-[1fr_auto] items-start gap-3">
+      <div className="grid grid-cols-[1fr_7.5rem] items-start gap-3">
         <DateField
           label="Fecha"
           value={state.date}
           onChange={(v) => onChange({ date: v })}
           fromToday
         />
-        <label className="block">
-          <Label>Hora</Label>
-          <input
-            type="time"
-            value={state.time}
-            onChange={(e) => onChange({ time: e.target.value })}
-            required
-            className="mt-2 rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-volt focus:ring-1 focus:ring-volt"
-          />
-        </label>
+        <TimeField
+          label="Hora"
+          value={state.time}
+          onChange={(v) => onChange({ time: v })}
+        />
       </div>
 
       <div>

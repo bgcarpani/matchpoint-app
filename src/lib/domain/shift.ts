@@ -59,15 +59,30 @@ export function slotsLabel(slots: number): string {
 }
 
 /**
- * Deep link a WhatsApp con mensaje pre-llenado. El número se guarda sin prefijo;
- * `wa.me` requiere el internacional completo → se antepone `549` (Argentina móvil).
+ * Deep link a WhatsApp para CONTACTAR al creador, con mensaje corto pre-llenado.
+ * El número se guarda sin prefijo; `wa.me` requiere el internacional completo →
+ * se antepone `549` (Argentina móvil).
  */
 export function whatsappLink(shift: PublicShift): string {
   const when = formatShiftWhen(shift.start_time)
-  const text =
-    `Hola ${shift.creator_name}, vi tu turno en Matchpoint para el ${when} ` +
-    `en ${shift.court_name}. ¿Sigue disponible?`
+  const text = `Hola ${shift.creator_name}! Vi tu turno (${when}). ¿Sigue libre?`
   return `https://wa.me/549${shift.whatsapp}?text=${encodeURIComponent(text)}`
+}
+
+/**
+ * Link para COMPARTIR el turno (el creador lo manda a un grupo). Sin número:
+ * `wa.me/?text=` abre el selector de chat/grupo de WhatsApp. Incluye un link al
+ * tablero para que quien lo vea pueda entrar y contactar.
+ */
+export function shareWhatsappLink(shift: PublicShift, boardUrl: string): string {
+  const when = formatShiftWhen(shift.start_time)
+  const cat = shift.category ? ` - ${shift.category}` : ''
+  const text =
+    `${slotsLabel(shift.slots_needed)} para jugar\n` +
+    `${shift.court_name}\n` +
+    `${when}${cat}\n` +
+    `Sumate: ${boardUrl}`
+  return `https://wa.me/?text=${encodeURIComponent(text)}`
 }
 
 /** Perfil de Instagram del creador (abre el DM manualmente). */
