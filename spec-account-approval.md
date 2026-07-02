@@ -9,6 +9,12 @@
 > base pero el código en prod es el viejo: un registro nuevo en prod queda `pending`, entra
 > al dashboard viejo (sin `/pending`) y las escrituras le fallan por RLS con error crudo.
 >
+> **Deployado a producción (2026-07-02)**, junto con `/turnos` (que ya estaba commiteado de una
+> sesión previa — la nota de "pendiente de commit" en versiones viejas de este doc estaba
+> desactualizada). Commit `361a13d`, Version ID `671e64c8-9583-453e-af34-ef5cb6de4c6a`. Smoke test
+> post-deploy OK (`/`, `/login`, `/register` → 200; `/admin` → 307 sin sesión, esperado).
+> `ADMIN_USER_IDS` en prod (`wrangler.jsonc` → Cloudflare `vars`) sólo tiene el id real del dueño.
+>
 > Deltas de implementación vs. el plan de abajo: (a) el helper se llama
 > `requireApprovedOrganizer()` y vive en `src/lib/supabase/auth.ts` junto a `requireUser()`;
 > como no hay layout compartido del área organizer, se usa en las **9 páginas** del área

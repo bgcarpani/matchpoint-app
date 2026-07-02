@@ -18,17 +18,16 @@ Las primeras versiones son organizer-first.
   `feature/organizer-branding` quedó mergeada a `master` (no borrada).
 - `spec-turnos.md` — especificación del **Tablero de turnos** (`/turnos`): sección pública para
   jugadores (sin login) donde publicar turnos con lugares vacíos y encontrar compañeros.
-  **Implementada y verificada e2e (2026-07-01)**; pendiente de commit/deploy — ver estado abajo.
+  **Implementada, verificada e2e y deployada a producción** (commit `4da01e5`, ya en `master`
+  antes de esta sesión).
 - `spec-account-approval.md` — especificación del **gate de aprobación de cuentas de organizador**:
   el registro pasa a requerir aprobación manual del dueño (solicitud → `pending` → aprobar). Alcance:
-  solo el registro de organizador (turnos y páginas públicas quedan igual). **Fase 1 implementada y
-  verificada e2e (2026-07-01)**: migración `0023` aplicada a la base real (backfill: existentes →
-  `approved`), helper `requireApprovedOrganizer()` en las 9 páginas del área organizer, página
-  `/pending`, copy de registro. **Además se adelantó el `/admin` mínimo de Fase 2** (mismo día):
-  lista de pendientes + Aprobar/Rechazar, restringido por env `ADMIN_USER_IDS` (`.env.local` dev /
-  `vars` de `wrangler.jsonc` prod; no-admins reciben 404). Se entra por URL directa, sin link en nav.
-  **Pendiente: commit + deploy** — ⚠️ el gate RLS ya está vivo en la base; hasta deployar, un registro
-  nuevo en prod entra al dashboard viejo y sus escrituras fallan por RLS (ver deltas en la spec).
+  solo el registro de organizador (turnos y páginas públicas quedan igual). **Implementada, verificada
+  e2e y deployada a producción (2026-07-02)**: migración `0023` aplicada a la base real (backfill:
+  existentes → `approved`), helper `requireApprovedOrganizer()` en las 9 páginas del área organizer,
+  página `/pending`, copy de registro, y **`/admin`** (lista de pendientes + Aprobar/Rechazar,
+  restringido por env `ADMIN_USER_IDS` — sólo el dueño en prod; no-admins reciben 404, sin link en nav).
+  Commit `361a13d`, Version ID `671e64c8-9583-453e-af34-ef5cb6de4c6a`.
 - `DESIGN.md` — **sistema visual "Court Side" (tema claro)**: tokens, tipografía y reglas. Fuente de
   verdad del diseño; consultarlo antes de tocar UI.
 - `PRODUCT.md` — documento de producto/estrategia (audiencia, personalidad de marca, principios de diseño).
@@ -220,10 +219,12 @@ landing. Verificado con `tsc`/`eslint` limpios y flujo real vía dev server: alt
 un turno de prueba a propósito en la tabla `shifts` de la base real (creador "Bruno", Padel God) para
 seguir probando manualmente. **Pendiente: deploy** (no está en `master`/producción todavía).
 
-## Estado de master y deploy (2026-06-22) — leer al abrir sesión nueva
+## Estado de master y deploy (2026-07-02) — leer al abrir sesión nueva
 **El código en `master` está deployado en producción** (`https://app.match-point.workers.dev`).
-`master` == `origin/master` == lo deployado (merge `e595e7c`, Version ID `413331bd`; smoke test OK:
-home/login/register 200, `/settings` 307→login). **Último deploy: v3.2 (branding + landing), 2026-06-22.**
+`master` == `origin/master` == lo deployado (commit `361a13d`, Version ID
+`671e64c8-9583-453e-af34-ef5cb6de4c6a`; smoke test OK: home/login/register 200, `/admin` 307→login
+sin sesión). **Último deploy: tablero de turnos (`/turnos`) + gate de aprobación de organizadores
+(`/admin`), 2026-07-02.**
 - **Rediseño visual "Court Side" (UI) HECHO y deployado (2026-06-20).** Tema claro azul real, fondo frío
   (Opción B), home nuevo ("Gestioná tu organización" + cuadro de llaves de ejemplo + features), dashboard
   con barra de nav + KPIs (activos/parejas/pendientes/canchas) + tabla de torneos, y tarjetas de partido
@@ -252,12 +253,12 @@ home/login/register 200, `/settings` 307→login). **Último deploy: v3.2 (brand
      (`start_time < now() - interval '30 min'`). Vive en la base, no depende del deploy de Cloudflare.
      Reversible con `select cron.unschedule('shifts_cleanup');`. Ver `spec-turnos.md` → "Auto-cierre y
      limpieza automática".
-  5. **Gate de aprobación de organizadores vivo en la base** (migración `0023_organizer_approval.sql`,
-     aplicada 2026-07-01): `organizers.status` default `'pending'` + `is_approved_organizer()` en el
-     `with check` de `courts_all_own`/`tournaments_all_own`. ⚠️ Hasta deployar el código nuevo, un
-     registro en prod crea una cuenta `pending` que entra al dashboard viejo pero cuyas escrituras
-     rechaza RLS con error crudo (sin pantalla `/pending`). Aprobar: `update organizers set
-     status='approved' where email='…'` (ver `spec-account-approval.md`).
+  5. **Gate de aprobación de organizadores vivo en la base y deployado** (migración
+     `0023_organizer_approval.sql`, aplicada 2026-07-01; código en prod desde 2026-07-02):
+     `organizers.status` default `'pending'` + `is_approved_organizer()` en el `with check` de
+     `courts_all_own`/`tournaments_all_own`. Aprobar desde `/admin` (sólo el dueño; env
+     `ADMIN_USER_IDS`) o por SQL: `update organizers set status='approved' where email='…'`
+     (ver `spec-account-approval.md`).
 
 ## Convenciones de implementación (v1)
 > No revertir sin discusión; reflejan decisiones ya validadas en código y verificadas e2e.
