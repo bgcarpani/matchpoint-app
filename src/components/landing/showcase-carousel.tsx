@@ -192,7 +192,7 @@ function CalendarSlide() {
           actualiza solo.
         </p>
         <span className="mt-3 inline-flex rounded-md bg-volt/10 px-2.5 py-1 text-xs font-medium text-volt ring-1 ring-volt/30">
-          match-point/o/tu-club
+          matchup/o/tu-club
         </span>
       </div>
     </div>

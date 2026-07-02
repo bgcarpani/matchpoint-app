@@ -224,11 +224,20 @@ un turno de prueba a propósito en la tabla `shifts` de la base real (creador "B
 seguir probando manualmente. **Pendiente: deploy** (no está en `master`/producción todavía).
 
 ## Estado de master y deploy (2026-07-02) — leer al abrir sesión nueva
-**El código en `master` está deployado en producción** (`https://app.match-point.workers.dev`).
-`master` == `origin/master` == lo deployado (commit `361a13d`, Version ID
-`671e64c8-9583-453e-af34-ef5cb6de4c6a`; smoke test OK: home/login/register 200, `/admin` 307→login
-sin sesión). **Último deploy: tablero de turnos (`/turnos`) + gate de aprobación de organizadores
-(`/admin`), 2026-07-02.**
+**El código en `master` está deployado en producción** (`https://app.matchup.workers.dev`).
+`master` == `origin/master` == lo deployado (commit `a43cda4`, Version ID
+`b2fa6992-ae6e-4d2b-9932-6cbd95417caa`; smoke test OK: home/login/register 200, `/admin` 307→login
+sin sesión). **Último deploy: rebrand Matchpoint → MatchUp (título/favicon/wordmark/emails) +
+tablero de turnos (`/turnos`) + gate de aprobación de organizadores (`/admin`), 2026-07-02.**
+- **Rebrand Matchpoint → MatchUp (2026-07-02).** Cambio de nombre de marca en toda la app
+  (metadata, manifest, wordmark, emails, textos de compartir, favicon) — ver commits `542328f` y
+  `a43cda4`. El dominio de prod pasó de `match-point.workers.dev` a **`matchup.workers.dev`**: el
+  usuario renombró el subdominio de cuenta de Cloudflare a mano desde el dashboard (la Management
+  API lo sigue rechazando, error `10036`, ver nota más abajo); como el subdominio es **de cuenta**
+  (no por worker), la URL vieja quedó **muerta** (no resuelve DNS). Se actualizó en el mismo momento
+  `site_url`/`uri_allow_list` de Supabase Auth al dominio nuevo (Management API) para no romper
+  confirmación de mail / reset de contraseña. Carpeta del repo, `package.json` (`name:
+  "matchpoint-app"`) y nombre del worker (`app`) quedaron sin cambiar (decisión consciente).
 - **Rediseño visual "Court Side" (UI) HECHO y deployado (2026-06-20).** Tema claro azul real, fondo frío
   (Opción B), home nuevo ("Gestioná tu organización" + cuadro de llaves de ejemplo + features), dashboard
   con barra de nav + KPIs (activos/parejas/pendientes/canchas) + tabla de torneos, y tarjetas de partido
@@ -299,13 +308,13 @@ requiere app nativa y ni así da link clickeable, por eso se mantiene el flujo a
 La app se despliega a **Cloudflare Workers** con `@opennextjs/cloudflare` (no "Pages": el adapter
 viejo no soporta Next 16). Corre en el runtime de Workers (`nodejs_compat`), **no edge**.
 
-> **Cómo deployar a producción** (`https://app.match-point.workers.dev`):
+> **Cómo deployar a producción** (`https://app.matchup.workers.dev`):
 > 1. `git checkout master` — pará en la rama que represente prod. **El deploy usa el working tree en
 >    disco, no git**, y pisa la **única** producción (un solo worker `app`, sin staging). Revisá
 >    `git status` para saber qué cambios sin commitear se van a colar.
 > 2. `rm -rf .open-next` — (Windows) evita el error `EPERM` por lock de la carpeta de build.
 > 3. `npm run deploy` — buildea (`next build --webpack`) + sube el worker.
-> 4. Verificá: `curl -s -o /dev/null -w "%{http_code}\n" https://app.match-point.workers.dev/` → `200`.
+> 4. Verificá: `curl -s -o /dev/null -w "%{http_code}\n" https://app.matchup.workers.dev/` → `200`.
 >
 > No hace falta re-cargar secrets (persisten en el worker entre deploys). Requiere `wrangler login`
 > hecho una vez (auth OAuth guardada local). Si cambiás de **dominio/subdominio**: redeploy + actualizar
@@ -326,7 +335,7 @@ viejo no soporta Next 16). Corre en el runtime de Workers (`nodejs_compat`), **n
   el deploy real (Workers Builds, corre en Linux) no se ve afectado. Validado e2e igual en workerd
   local (2026-06-19): home/login/register 200, redirect de auth, y las 3 OG renderizan PNG.
 - **LIVE (2026-06-19)**: worker `app` deployado vía `npm run deploy` (local, `wrangler login`) en
-  **`https://app.match-point.workers.dev`**. Smoke test e2e en prod OK: home/login/register 200,
+  **`https://app.matchup.workers.dev`**. Smoke test e2e en prod OK: home/login/register 200,
   redirect de auth, OG/story PNG. Secrets de runtime seteados con `wrangler secret put`
   (`SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`, `EMAIL_FROM`). Supabase Auth: `site_url` =
   prod + `uri_allow_list` = local + prod (`/**`). `NEXT_PUBLIC_SITE_URL` se deja en localhost: en prod

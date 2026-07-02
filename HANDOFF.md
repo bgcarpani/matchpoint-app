@@ -5,7 +5,7 @@
 
 ## Estado actual (verificado, no asumir que cambió sin chequear)
 - **`master` == `origin/master` == producción.** Commit `daa5e9f` (docs) sobre `361a13d` (feature).
-  Deployado en `https://app.match-point.workers.dev`, Version ID `671e64c8-9583-453e-af34-ef5cb6de4c6a`.
+  Deployado en `https://app.matchup.workers.dev`, Version ID `671e64c8-9583-453e-af34-ef5cb6de4c6a`.
 - Esta sesión deployó **dos cosas juntas**: el tablero de turnos (`/turnos`, ya estaba commiteado de
   una sesión anterior pero nunca deployado) y el **gate de aprobación de cuentas de organizador**
   (`/admin`, migración `0023` aplicada a la base real).
