@@ -1,8 +1,8 @@
 import Link from 'next/link'
 import { headers } from 'next/headers'
-import { notFound, redirect } from 'next/navigation'
+import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
-import { createClient } from '@/lib/supabase/server'
+import { requireApprovedOrganizer } from '@/lib/supabase/auth'
 import { OrganizerHeader } from '@/components/organizer/organizer-header'
 import { TournamentStatusBadge } from '@/components/tournaments/tournament-status-badge'
 import { LifecycleControls } from '@/components/tournaments/lifecycle-controls'
@@ -26,11 +26,7 @@ export default async function TournamentDetailPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const { supabase, user } = await requireApprovedOrganizer()
 
   const [{ data: organizer }, { data: t }] = await Promise.all([
     supabase

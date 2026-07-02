@@ -1,17 +1,12 @@
-import { redirect } from 'next/navigation'
 import type { Metadata } from 'next'
-import { createClient } from '@/lib/supabase/server'
+import { requireApprovedOrganizer } from '@/lib/supabase/auth'
 import { OrganizerHeader } from '@/components/organizer/organizer-header'
 import { SettingsForm } from '@/components/organizer/settings-form'
 
 export const metadata: Metadata = { title: 'Configuración — Matchpoint' }
 
 export default async function SettingsPage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const { supabase, user } = await requireApprovedOrganizer()
 
   const { data: organizer } = await supabase
     .from('organizers')

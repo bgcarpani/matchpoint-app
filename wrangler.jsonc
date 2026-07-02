@@ -11,5 +11,10 @@
   "services": [
     { "binding": "WORKER_SELF_REFERENCE", "service": "app" }
   ],
-  "images": { "binding": "IMAGES" }
+  "images": { "binding": "IMAGES" },
+  // User ids (separados por coma) que pueden entrar a /admin. No es secreto:
+  // sin la sesión de ese usuario el id no sirve de nada.
+  "vars": {
+    "ADMIN_USER_IDS": "c0574a8b-0a53-4b35-a480-36b8253ef9fd"
+  }
 }

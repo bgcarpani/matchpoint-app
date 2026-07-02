@@ -1,6 +1,24 @@
 # Spec — Aprobación de cuentas de organizador (gate de registro)
 
-> **Handoff para nueva sesión.** Planificado 2026-07-01, sin implementar todavía.
+> **FASE 1 IMPLEMENTADA Y VERIFICADA E2E (2026-07-01).** Migración `0023` **aplicada a la
+> base real** (backfill OK: todas las cuentas existentes quedaron `approved`). Flujo probado
+> vía dev server: registro → cuenta nace `pending` → login aterriza en `/pending` →
+> `/dashboard` rebota a `/pending` → aprobar por SQL → dashboard entra normal → un aprobado
+> que visita `/pending` rebota a `/dashboard` → logout desde `/pending` OK. `tsc` + `eslint`
+> limpios. **Pendiente: commit + deploy.** ⚠️ Hasta deployar, el gate RLS ya está vivo en la
+> base pero el código en prod es el viejo: un registro nuevo en prod queda `pending`, entra
+> al dashboard viejo (sin `/pending`) y las escrituras le fallan por RLS con error crudo.
+>
+> Deltas de implementación vs. el plan de abajo: (a) el helper se llama
+> `requireApprovedOrganizer()` y vive en `src/lib/supabase/auth.ts` junto a `requireUser()`;
+> como no hay layout compartido del área organizer, se usa en las **9 páginas** del área
+> (dashboard, courts, settings, tournaments new/detail/edit/zones/bracket/registrations),
+> reemplazando el chequeo inline de `getUser()`. (b) `/pending` vive en el route group
+> `(auth)` (`src/app/(auth)/pending/page.tsx`) para heredar la tarjeta centrada; reusa la
+> action `signOut` existente. (c) El middleware NO necesitó cambios: `/pending` no está en
+> `PROTECTED_PREFIXES` ni en `AUTH_ROUTES`, así que pasa sin rebote. (d) Se agregó
+> `OrganizerStatus` + columnas `status`/`reviewed_at` a los tipos de `database.ts`.
+>
 > Objetivo: que la creación de cuentas de organizador requiera **aprobación manual del
 > dueño de la plataforma** (Bruno), para que no entren "usuarios random". Hoy el registro
 > es autoservicio abierto.
@@ -72,11 +90,26 @@ from organizers where status = 'pending';
 update organizers set status = 'approved' where email = 'xxx@yyy';
 ```
 
-## Fase 2 (diferida — construir cuando el volumen lo pida)
+## Fase 2 — página `/admin`: IMPLEMENTADA (2026-07-01, mismo día que Fase 1)
+> El dueño necesitaba aprobar desde la app; se adelantó la versión mínima del `/admin`
+> (sin los emails). Verificada e2e vía dev server: cuenta pendiente aparece listada →
+> botón Aprobar la pasa a `approved` en la base → esa cuenta entra al dashboard; un
+> organizador aprobado que NO es admin recibe **404** en `/admin`.
+- **`src/app/admin/page.tsx`**: lista las solicitudes `pending` (con **admin client** — la RLS
+  de `organizers` es owner-only) + botones Aprobar/Rechazar por fila (forms con server action
+  `reviewOrganizer` bindeada). Sin link en la nav: se entra por URL directa.
+- **`src/app/admin/actions.ts`** → `reviewOrganizer(id, decision)`: `requireUser()` +
+  `isPlatformAdmin()` y update con admin client (`status` + `reviewed_at`), `revalidatePath('/admin')`.
+- **`src/lib/admin.ts`** → `isPlatformAdmin(userId)`: chequea contra env `ADMIN_USER_IDS`
+  (ids coma-separados, server-only). Config: `.env.local` en dev, **`vars` de `wrangler.jsonc`**
+  en prod (no es secreto: sin la sesión del dueño el id no sirve). Id del dueño:
+  `c0574a8b-0a53-4b35-a480-36b8253ef9fd`.
+- `/admin` agregado a `PROTECTED_PREFIXES` del middleware; la página además devuelve `notFound()`
+  a cualquier logueado no-admin (no revela que la ruta existe).
+
+## Fase 2 restante (diferida — construir cuando el volumen lo pida)
 - **Email de aviso al dueño** cuando entra una solicitud (Resend, ya hay infra + `EMAIL_FROM`).
 - **Email al organizador** cuando se aprueba ("ya podés entrar", con link).
-- **Página `/admin`** restringida a `user.id` del dueño (env `ADMIN_USER_IDS`): lista de
-  pendientes + botones Aprobar/Rechazar → server action con admin client (`update status`).
 - (Opcional) mover el estado a `app_metadata` del usuario para que el middleware lo lea del JWT
   sin query por request. Si no, el gate vive en RLS + layout (suficiente).
 

@@ -1,7 +1,7 @@
 import Link from 'next/link'
-import { notFound, redirect } from 'next/navigation'
+import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
-import { createClient } from '@/lib/supabase/server'
+import { requireApprovedOrganizer } from '@/lib/supabase/auth'
 import { getBaseUrl } from '@/lib/url'
 import { categoryLabel, GENDER_LABELS } from '@/lib/domain/tournament'
 import { OrganizerHeader } from '@/components/organizer/organizer-header'
@@ -18,11 +18,7 @@ export default async function BracketPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const { supabase, user } = await requireApprovedOrganizer()
 
   const [{ data: organizer }, { data: tournament }, baseUrl] = await Promise.all([
     supabase

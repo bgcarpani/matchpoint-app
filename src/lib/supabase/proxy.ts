@@ -13,7 +13,13 @@ import { NextResponse, type NextRequest } from 'next/server'
 import type { Database } from '@/lib/types/database'
 
 // Prefijos que requieren sesión de organizador.
-const PROTECTED_PREFIXES = ['/dashboard', '/courts', '/tournaments', '/settings']
+const PROTECTED_PREFIXES = [
+  '/dashboard',
+  '/courts',
+  '/tournaments',
+  '/settings',
+  '/admin',
+]
 
 // Rutas de auth: si ya hay sesión, redirigir al dashboard.
 const AUTH_ROUTES = ['/login', '/register']

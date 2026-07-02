@@ -21,8 +21,14 @@ Las primeras versiones son organizer-first.
   **Implementada y verificada e2e (2026-07-01)**; pendiente de commit/deploy — ver estado abajo.
 - `spec-account-approval.md` — especificación del **gate de aprobación de cuentas de organizador**:
   el registro pasa a requerir aprobación manual del dueño (solicitud → `pending` → aprobar). Alcance:
-  solo el registro de organizador (turnos y páginas públicas quedan igual). **Planificado 2026-07-01,
-  sin implementar todavía** — handoff listo para arrancar.
+  solo el registro de organizador (turnos y páginas públicas quedan igual). **Fase 1 implementada y
+  verificada e2e (2026-07-01)**: migración `0023` aplicada a la base real (backfill: existentes →
+  `approved`), helper `requireApprovedOrganizer()` en las 9 páginas del área organizer, página
+  `/pending`, copy de registro. **Además se adelantó el `/admin` mínimo de Fase 2** (mismo día):
+  lista de pendientes + Aprobar/Rechazar, restringido por env `ADMIN_USER_IDS` (`.env.local` dev /
+  `vars` de `wrangler.jsonc` prod; no-admins reciben 404). Se entra por URL directa, sin link en nav.
+  **Pendiente: commit + deploy** — ⚠️ el gate RLS ya está vivo en la base; hasta deployar, un registro
+  nuevo en prod entra al dashboard viejo y sus escrituras fallan por RLS (ver deltas en la spec).
 - `DESIGN.md` — **sistema visual "Court Side" (tema claro)**: tokens, tipografía y reglas. Fuente de
   verdad del diseño; consultarlo antes de tocar UI.
 - `PRODUCT.md` — documento de producto/estrategia (audiencia, personalidad de marca, principios de diseño).
@@ -246,6 +252,12 @@ home/login/register 200, `/settings` 307→login). **Último deploy: v3.2 (brand
      (`start_time < now() - interval '30 min'`). Vive en la base, no depende del deploy de Cloudflare.
      Reversible con `select cron.unschedule('shifts_cleanup');`. Ver `spec-turnos.md` → "Auto-cierre y
      limpieza automática".
+  5. **Gate de aprobación de organizadores vivo en la base** (migración `0023_organizer_approval.sql`,
+     aplicada 2026-07-01): `organizers.status` default `'pending'` + `is_approved_organizer()` en el
+     `with check` de `courts_all_own`/`tournaments_all_own`. ⚠️ Hasta deployar el código nuevo, un
+     registro en prod crea una cuenta `pending` que entra al dashboard viejo pero cuyas escrituras
+     rechaza RLS con error crudo (sin pantalla `/pending`). Aprobar: `update organizers set
+     status='approved' where email='…'` (ver `spec-account-approval.md`).
 
 ## Convenciones de implementación (v1)
 > No revertir sin discusión; reflejan decisiones ya validadas en código y verificadas e2e.

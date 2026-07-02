@@ -1,8 +1,7 @@
 import Link from 'next/link'
 import { headers } from 'next/headers'
-import { redirect } from 'next/navigation'
 import type { Metadata } from 'next'
-import { createClient } from '@/lib/supabase/server'
+import { requireApprovedOrganizer } from '@/lib/supabase/auth'
 import { OrganizerHeader } from '@/components/organizer/organizer-header'
 import { CalendarSharePanel } from '@/components/organizer/calendar-share-panel'
 import {
@@ -20,13 +19,9 @@ export const metadata: Metadata = { title: 'Panel — Matchpoint' }
 const ACTIVE_STATUSES = new Set(['registration_open', 'in_progress'])
 
 export default async function DashboardPage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  // Defensa real (el proxy es sólo optimista, ver docs Next 16).
-  if (!user) redirect('/login')
+  // Defensa real (el proxy es sólo optimista, ver docs Next 16); además exige
+  // cuenta aprobada (→ /pending).
+  const { supabase, user } = await requireApprovedOrganizer()
 
   // Lecturas en paralelo. `pairs` y `courts` vuelven filtrados por RLS al owner,
   // así que las cuentas son del organizer sin filtro extra.

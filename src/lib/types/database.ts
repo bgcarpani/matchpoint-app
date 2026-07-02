@@ -36,6 +36,8 @@ export type TeamSlot = 'team1' | 'team2'
 
 export type ShiftStatus = 'open' | 'full' | 'closed'
 
+export type OrganizerStatus = 'pending' | 'approved' | 'rejected'
+
 // Helper: una columna con default puede omitirse en Insert.
 type WithDefaults<Row, OptionalKeys extends keyof Row> = Omit<Row, OptionalKeys> &
   Partial<Pick<Row, OptionalKeys>>
@@ -54,6 +56,8 @@ export interface Database {
           address: string | null
           maps_url: string | null
           theme_key: string
+          status: OrganizerStatus
+          reviewed_at: string | null
           created_at: string
         }
         Insert: WithDefaults<
@@ -63,6 +67,8 @@ export interface Database {
           | 'address'
           | 'maps_url'
           | 'theme_key'
+          | 'status'
+          | 'reviewed_at'
           | 'created_at'
         >
         Update: Partial<Database['public']['Tables']['organizers']['Row']>

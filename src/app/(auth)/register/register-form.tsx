@@ -31,14 +31,15 @@ export function RegisterForm() {
     return (
       <div className="rounded-lg border border-volt/30 bg-volt/5 px-4 py-5 text-sm">
         <p className="font-display text-base text-foreground">
-          Revisá tu email
+          Tu solicitud quedó registrada
         </p>
         <p className="mt-2 text-muted-foreground">
-          Te enviamos un link para confirmar tu cuenta. Abrilo desde este
-          dispositivo y vas a quedar logueado automáticamente.
+          Te enviamos un link para confirmar tu email — abrilo para validar tu
+          casilla. Las cuentas nuevas se revisan de forma manual: te avisamos
+          cuando aprobemos la tuya.
         </p>
         <p className="mt-2 text-muted-foreground">
-          ¿No te llegó? Revisá spam o esperá unos minutos.
+          ¿No te llegó el mail? Revisá spam o esperá unos minutos.
         </p>
       </div>
     )
