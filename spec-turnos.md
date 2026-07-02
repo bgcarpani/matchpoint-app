@@ -1,4 +1,4 @@
-# Matchpoint App — Spec: Tablero de turnos
+# MatchUp App — Spec: Tablero de turnos
 
 ## Alcance
 
@@ -136,7 +136,7 @@ automáticamente** vía `pg_cron` — ver "Auto-cierre y limpieza automática".
 - El botón Instagram solo aparece si `instagram` no es null.
 
 **Deep links:**
-- WhatsApp: `https://wa.me/549${whatsapp}?text=Hola%20${creator_name}%2C%20vi%20tu%20turno%20en%20Matchpoint%20para%20el%20[fecha]%20en%20[cancha].%20%C2%BFSigue%20disponible%3F`
+- WhatsApp: `https://wa.me/549${whatsapp}?text=Hola%20${creator_name}%2C%20vi%20tu%20turno%20en%20MatchUp%20para%20el%20[fecha]%20en%20[cancha].%20%C2%BFSigue%20disponible%3F`
   - El número se muestra con prefijo `+54 9` en la tarjeta pero el link usa dígitos crudos.
   - El mensaje es pre-llenado sugerido; el usuario puede editarlo en WhatsApp antes de enviar.
 - Instagram: `https://instagram.com/${instagram}` (abre perfil; el usuario inicia el DM).

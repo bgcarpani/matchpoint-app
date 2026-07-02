@@ -11,7 +11,7 @@ import {
 } from '@/components/tournaments/registration-table'
 import { AddPairForm } from '@/components/tournaments/add-pair-form'
 
-export const metadata: Metadata = { title: 'Inscripciones — Matchpoint' }
+export const metadata: Metadata = { title: 'Inscripciones — MatchUp' }
 
 export default async function RegistrationsPage({
   params,

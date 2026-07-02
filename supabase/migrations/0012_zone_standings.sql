@@ -1,4 +1,4 @@
--- Matchpoint App — v2 Slice 4 (núcleo): Standings de zona + groundwork de formatos
+-- MatchUp App — v2 Slice 4 (núcleo): Standings de zona + groundwork de formatos
 -- Ref: spec-v2.md "Feature 4 — Formatos de partido por zona + standings"
 --
 -- Cubre el NÚCLEO del slice 4:

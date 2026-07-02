@@ -262,7 +262,7 @@ export function BracketBoard({
           <div className="no-print mt-4 flex flex-wrap items-start justify-center gap-2">
             <ShareButtons
               url={shareUrl}
-              text={`🏆 Campeón ${categoryGender} — ${champion} se consagró en ${tournamentName}. Mirá las llaves en Matchpoint:`}
+              text={`🏆 Campeón ${categoryGender} — ${champion} se consagró en ${tournamentName}. Mirá las llaves en MatchUp:`}
             />
             {published && storyUrl ? (
               <ChampionStoryShare

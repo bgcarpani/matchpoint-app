@@ -1,4 +1,4 @@
--- Matchpoint App — v2 mejora: eliminar un torneo en cualquier estado.
+-- MatchUp App — v2 mejora: eliminar un torneo en cualquier estado.
 --
 -- Antes el borrado se permitía solo en 'draft' y corría como un DELETE directo,
 -- que por las FKs deja players huérfanos (pairs → tournament es ON DELETE

@@ -2,7 +2,7 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import { LoginForm } from './login-form'
 
-export const metadata: Metadata = { title: 'Ingresar — Matchpoint' }
+export const metadata: Metadata = { title: 'Ingresar — MatchUp' }
 
 export default async function LoginPage({
   searchParams,

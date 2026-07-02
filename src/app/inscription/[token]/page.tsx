@@ -4,7 +4,7 @@ import type { Metadata } from 'next'
 import { getInscriptionByToken } from '@/lib/public/inscription'
 import { InscriptionStatusCard } from '@/components/public/inscription-status-card'
 
-export const metadata: Metadata = { title: 'Estado de inscripción — Matchpoint' }
+export const metadata: Metadata = { title: 'Estado de inscripción — MatchUp' }
 
 export default async function InscriptionPage({
   params,
@@ -19,7 +19,7 @@ export default async function InscriptionPage({
     <main className="relative z-[2] mx-auto w-full max-w-xl px-5 pb-24 sm:px-8">
       <header className="flex items-center justify-between py-6">
         <Link href="/" className="font-display text-lg text-foreground">
-          Match<span className="text-volt">point</span>
+          Match<span className="text-volt">Up</span>
         </Link>
       </header>
 

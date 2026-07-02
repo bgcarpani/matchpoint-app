@@ -1,4 +1,4 @@
--- Matchpoint App — fix de seguridad: restringir EXECUTE de las RPC.
+-- MatchUp App — fix de seguridad: restringir EXECUTE de las RPC.
 --
 -- Supabase otorga EXECUTE sobre las funciones de `public` a los roles anon /
 -- authenticated vía DEFAULT PRIVILEGES, por lo que `revoke ... from public` (en

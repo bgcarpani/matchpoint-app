@@ -1,4 +1,4 @@
--- Matchpoint App — v1 (MVP) Zonas y partidos (Zones & Matches)
+-- MatchUp App — v1 (MVP) Zonas y partidos (Zones & Matches)
 -- Ref: spec.md "Gestión de zonas" + "Asignación de canchas a partidos"
 --
 -- Estrategia (coherente con 0002/0004):

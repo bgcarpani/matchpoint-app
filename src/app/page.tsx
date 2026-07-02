@@ -9,7 +9,7 @@ export default function HomePage() {
     <main className="relative z-[2] mx-auto flex min-h-dvh w-full max-w-6xl flex-col px-5 sm:px-8">
       <header className="flex items-center justify-between py-6">
         <span className="font-display text-lg text-foreground">
-          Match<span className="text-volt">point</span>
+          Match<span className="text-volt">Up</span>
         </span>
         <nav className="flex items-center gap-5 text-sm">
           <Link
@@ -329,7 +329,7 @@ export default function HomePage() {
           </span>
         </div>
         <p className="mt-3 max-w-xl text-sm text-muted-foreground">
-          Matchpoint arranca por los organizadores, pero el norte es la
+          MatchUp arranca por los organizadores, pero el norte es la
           comunidad. Esto es lo que estamos construyendo.
         </p>
         <ul className="mt-8 divide-y divide-border border-y border-border">
@@ -379,10 +379,10 @@ export default function HomePage() {
       <footer className="mt-auto border-t border-border py-8">
         <div className="flex flex-col items-start justify-between gap-2 text-xs text-muted-foreground sm:flex-row sm:items-center">
           <span className="font-display text-sm text-foreground">
-            Match<span className="text-volt">point</span>
+            Match<span className="text-volt">Up</span>
           </span>
           <span>
-            © {year} Matchpoint · Hecho para la comunidad de pádel.
+            © {year} MatchUp · Hecho para la comunidad de pádel.
           </span>
         </div>
       </footer>

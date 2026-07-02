@@ -8,7 +8,7 @@
 import { headers } from 'next/headers'
 
 /**
- * URL base absoluta (ej. `https://matchpoint.app` o `http://localhost:3000`).
+ * URL base absoluta (ej. `https://matchup.app` o `http://localhost:3000`).
  *
  * Prioriza los headers del request entrante (proto/host reales detrás del
  * proxy de Cloudflare). Cae a `NEXT_PUBLIC_SITE_URL` cuando no hay request

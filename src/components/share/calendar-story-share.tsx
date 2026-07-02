@@ -77,7 +77,7 @@ export function CalendarStoryShare({
 
       const res = await fetch(styledUrl)
       const blob = await res.blob()
-      const file = new File([blob], 'matchpoint-historia.png', {
+      const file = new File([blob], 'matchup-historia.png', {
         type: blob.type || 'image/png',
       })
 
@@ -87,7 +87,7 @@ export function CalendarStoryShare({
         const href = URL.createObjectURL(blob)
         const a = document.createElement('a')
         a.href = href
-        a.download = 'matchpoint-historia.png'
+        a.download = 'matchup-historia.png'
         document.body.appendChild(a)
         a.click()
         a.remove()

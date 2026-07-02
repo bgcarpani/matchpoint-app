@@ -1,4 +1,4 @@
--- Matchpoint App — v2 Slice 5: fase de llaves / bracket
+-- MatchUp App — v2 Slice 5: fase de llaves / bracket
 -- Ref: spec-v2.md "Feature 5 — Fase de llaves / bracket"
 --
 -- Delta sobre v1/v2-previo:

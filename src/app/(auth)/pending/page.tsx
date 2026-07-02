@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { signOut } from '../actions'
 
-export const metadata: Metadata = { title: 'Cuenta en revisión — Matchpoint' }
+export const metadata: Metadata = { title: 'Cuenta en revisión — MatchUp' }
 
 export default async function PendingPage() {
   const supabase = await createClient()
@@ -26,7 +26,7 @@ export default async function PendingPage() {
         Tu cuenta está en revisión
       </h1>
       <p className="mt-3 text-sm text-muted-foreground">
-        Recibimos tu solicitud para gestionar torneos en Matchpoint. Estamos
+        Recibimos tu solicitud para gestionar torneos en MatchUp. Estamos
         revisando las cuentas nuevas de forma manual: te avisamos por email
         apenas la aprobemos.
       </p>

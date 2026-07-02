@@ -1,4 +1,4 @@
-# Matchpoint App — Spec v1
+# MatchUp App — Spec v1
 
 ## Alcance
 Este documento cubre exclusivamente la **versión 1 (MVP)**. Todo lo que no esté listado aquí está fuera de scope, aunque el modelo de datos se diseña para soportar versiones futuras sin migraciones costosas.

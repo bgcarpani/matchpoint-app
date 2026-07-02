@@ -1,4 +1,4 @@
--- Matchpoint App — Aprobación de cuentas de organizador (gate de registro)
+-- MatchUp App — Aprobación de cuentas de organizador (gate de registro)
 -- Ref: spec-account-approval.md — Fase 1
 --
 -- El registro sigue siendo autoservicio (lead gen), pero la cuenta nace

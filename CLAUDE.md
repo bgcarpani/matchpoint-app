@@ -1,4 +1,4 @@
-# Matchpoint App
+# MatchUp App
 
 ## Proyecto
 Plataforma web para la comunidad de padel orientada a organizadores y jugadores.
@@ -181,7 +181,7 @@ insertados y borrados en la DB sólo para el test) y mes real de 1 torneo — am
 **Landing (`src/app/page.tsx`) — ajustes (2026-06-26).** Se quitó el "Crear cuenta" duplicado: el CTA de
 cierre dice **"Empezar gratis"** (el hero sigue "Crear cuenta"). Se sumó una **promo de marca** ("Tu
 identidad en cada torneo": logo + colores + dirección de `/settings`, con muestra de las 6 paletas) entre
-las features y "Próximamente", y un **footer** con `© <año> Matchpoint`. Copyright: en AR/Berna el derecho
+las features y "Próximamente", y un **footer** con `© <año> MatchUp`. Copyright: en AR/Berna el derecho
 es automático al crear la obra; el aviso © es buena práctica (no obligatorio) y registrar en DNDA es
 opcional.
 

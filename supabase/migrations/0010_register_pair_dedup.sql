@@ -1,4 +1,4 @@
--- Matchpoint App — v2 (Feature 2) Anti-duplicado de inscripción por email
+-- MatchUp App — v2 (Feature 2) Anti-duplicado de inscripción por email
 -- Ref: spec-v2.md "Feature 2 — Anti-duplicado de inscripción por email"
 --
 -- Delta sobre 0004/0005: `register_pair` rechaza la inscripción si el email de

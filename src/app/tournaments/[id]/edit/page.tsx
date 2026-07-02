@@ -5,7 +5,7 @@ import { requireApprovedOrganizer } from '@/lib/supabase/auth'
 import { OrganizerHeader } from '@/components/organizer/organizer-header'
 import { TournamentForm } from '@/components/tournaments/tournament-form'
 
-export const metadata: Metadata = { title: 'Editar torneo — Matchpoint' }
+export const metadata: Metadata = { title: 'Editar torneo — MatchUp' }
 
 export default async function EditTournamentPage({
   params,

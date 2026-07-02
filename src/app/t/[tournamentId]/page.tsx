@@ -72,7 +72,7 @@ export default async function PublicTournamentPage({
       <header className="flex items-center justify-between py-6">
         <div className="flex items-center gap-5">
           <span className="font-display text-lg text-foreground">
-            Match<span className="text-volt">point</span>
+            Match<span className="text-volt">Up</span>
           </span>
           <a
             href="/turnos"

@@ -3,7 +3,7 @@ import { requireApprovedOrganizer } from '@/lib/supabase/auth'
 import { OrganizerHeader } from '@/components/organizer/organizer-header'
 import { CourtsManager } from '@/components/courts/courts-manager'
 
-export const metadata: Metadata = { title: 'Canchas — Matchpoint' }
+export const metadata: Metadata = { title: 'Canchas — MatchUp' }
 
 export default async function CourtsPage() {
   const { supabase, user } = await requireApprovedOrganizer()

@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { formatDateTime } from '@/lib/format'
 import { reviewOrganizer } from './actions'
 
-export const metadata: Metadata = { title: 'Solicitudes — Matchpoint' }
+export const metadata: Metadata = { title: 'Solicitudes — MatchUp' }
 
 export default async function AdminPage() {
   const { supabase, user } = await requireApprovedOrganizer()

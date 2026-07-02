@@ -68,12 +68,12 @@ export function ShareRegistrationLink({
         </a>
         <ShareButtons
           url={url}
-          text={`🎾 Torneo ${categoryGender} — ${tournamentName}. ¡Inscribite en Matchpoint!`}
+          text={`🎾 Torneo ${categoryGender} — ${tournamentName}. ¡Inscribite en MatchUp!`}
         />
         <TournamentStoryShare
           storyUrl={`${url}/og/story`}
           url={url}
-          text={`🎾 Torneo ${categoryGender} — ${tournamentName}. ¡Inscribite en Matchpoint!`}
+          text={`🎾 Torneo ${categoryGender} — ${tournamentName}. ¡Inscribite en MatchUp!`}
         />
       </div>
 

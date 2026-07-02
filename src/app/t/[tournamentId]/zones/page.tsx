@@ -6,7 +6,7 @@ import { PublicZonesView } from '@/components/zones/public-zones-view'
 import { ThemeStyle } from '@/components/branding/theme-style'
 import { logoPublicUrl } from '@/lib/branding/logo'
 
-export const metadata: Metadata = { title: 'Zonas y partidos — Matchpoint' }
+export const metadata: Metadata = { title: 'Zonas y partidos — MatchUp' }
 
 export default async function PublicZonesPage({
   params,
@@ -27,7 +27,7 @@ export default async function PublicZonesPage({
       <ThemeStyle themeKey={tournament?.theme_key} />
       <header className="flex items-center justify-between py-6">
         <span className="font-display text-lg text-foreground">
-          Match<span className="text-volt">point</span>
+          Match<span className="text-volt">Up</span>
         </span>
         {tournament && (
           <span className="flex items-center gap-2.5 text-xs uppercase tracking-[0.2em] text-muted-foreground">

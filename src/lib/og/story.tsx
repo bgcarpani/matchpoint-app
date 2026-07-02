@@ -107,7 +107,7 @@ export function loadFonts(): LoadedFont[] {
 }
 
 /**
- * Wordmark "Matchpoint" o, si hay logo, el logo del club. Lo usan las piezas en
+ * Wordmark "MatchUp" o, si hay logo, el logo del club. Lo usan las piezas en
  * las que el nombre del club es el TÍTULO héroe (calendario): el logo identifica
  * arriba y el nombre no se duplica (a diferencia de `BrandLockup`, que imprime
  * logo + nombre juntos para torneo/campeón, donde el héroe es otro dato).
@@ -142,7 +142,7 @@ export function Brand({
       }}
     >
       <span>Match</span>
-      <span style={{ color: accent }}>point</span>
+      <span style={{ color: accent }}>Up</span>
     </div>
   )
   return (

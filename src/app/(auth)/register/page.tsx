@@ -2,7 +2,7 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import { RegisterForm } from './register-form'
 
-export const metadata: Metadata = { title: 'Crear cuenta — Matchpoint' }
+export const metadata: Metadata = { title: 'Crear cuenta — MatchUp' }
 
 export default function RegisterPage() {
   return (

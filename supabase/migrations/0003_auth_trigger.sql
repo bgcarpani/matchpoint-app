@@ -1,4 +1,4 @@
--- Matchpoint App — v1: alta automática de Organizer al registrarse en Auth
+-- MatchUp App — v1: alta automática de Organizer al registrarse en Auth
 --
 -- Al hacer signUp, Supabase crea una fila en auth.users. Este trigger crea la
 -- fila correspondiente en public.organizers, leyendo full_name y

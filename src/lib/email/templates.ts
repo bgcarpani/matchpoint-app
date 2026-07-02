@@ -3,7 +3,7 @@
  *
  * Sin `react-email` para no sumar dependencias. Cada función devuelve
  * `{ subject, html }` listo para `sendEmail`. Layout común con branding de
- * Matchpoint (tema azul noche + acento volt), pensado para clientes de correo
+ * MatchUp (tema azul noche + acento volt), pensado para clientes de correo
  * (estilos inline, tabla-friendly, sin CSS externo).
  */
 
@@ -60,7 +60,7 @@ function layout({ title, body, cta }: LayoutInput): string {
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:${C.card};border:1px solid ${C.border};border-radius:16px;overflow:hidden;">
           <tr>
             <td style="padding:28px 32px 20px;border-bottom:1px solid ${C.border};">
-              <span style="font-family:Arial,Helvetica,sans-serif;font-size:20px;font-weight:bold;color:${C.ink};letter-spacing:-0.02em;">Match<span style="color:${C.volt};">point</span></span>
+              <span style="font-family:Arial,Helvetica,sans-serif;font-size:20px;font-weight:bold;color:${C.ink};letter-spacing:-0.02em;">Match<span style="color:${C.volt};">Up</span></span>
             </td>
           </tr>
           <tr>
@@ -71,7 +71,7 @@ function layout({ title, body, cta }: LayoutInput): string {
           </tr>
           <tr>
             <td style="padding:18px 32px 26px;border-top:1px solid ${C.border};font-family:Arial,Helvetica,sans-serif;font-size:12px;color:${C.muted};">
-              Este es un correo automático de Matchpoint. No respondas a este mensaje.
+              Este es un correo automático de MatchUp. No respondas a este mensaje.
             </td>
           </tr>
         </table>

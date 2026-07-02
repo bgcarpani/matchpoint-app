@@ -1,4 +1,4 @@
--- Matchpoint App — v2 (Feature 3) Resultados / scoring de partidos
+-- MatchUp App — v2 (Feature 3) Resultados / scoring de partidos
 -- Ref: spec-v2.md "Feature 3 — Resultados / scoring de partidos"
 --
 -- Delta sobre v1:

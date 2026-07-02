@@ -3,7 +3,7 @@ import { requireApprovedOrganizer } from '@/lib/supabase/auth'
 import { OrganizerHeader } from '@/components/organizer/organizer-header'
 import { SettingsForm } from '@/components/organizer/settings-form'
 
-export const metadata: Metadata = { title: 'Configuración — Matchpoint' }
+export const metadata: Metadata = { title: 'Configuración — MatchUp' }
 
 export default async function SettingsPage() {
   const { supabase, user } = await requireApprovedOrganizer()

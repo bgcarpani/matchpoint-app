@@ -24,7 +24,7 @@ export async function generateMetadata({
   return {
     title: organizer
       ? `${organizer.establishment_name} — Torneos`
-      : 'Calendario de torneos — Matchpoint',
+      : 'Calendario de torneos — MatchUp',
   }
 }
 
@@ -47,7 +47,7 @@ export default async function PublicCalendarPage({
       {/* Top bar */}
       <header className="flex items-center justify-between py-6">
         <span className="font-display text-lg text-foreground">
-          Match<span className="text-volt">point</span>
+          Match<span className="text-volt">Up</span>
         </span>
         <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
           Calendario de torneos

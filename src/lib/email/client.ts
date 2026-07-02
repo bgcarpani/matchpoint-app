@@ -12,5 +12,5 @@ const apiKey = process.env.RESEND_API_KEY
 
 export const resend = apiKey ? new Resend(apiKey) : null
 
-/** Remitente por defecto (ej. `Matchpoint <noreply@tudominio>`). */
-export const EMAIL_FROM = process.env.EMAIL_FROM ?? 'Matchpoint <onboarding@resend.dev>'
+/** Remitente por defecto (ej. `MatchUp <noreply@tudominio>`). */
+export const EMAIL_FROM = process.env.EMAIL_FROM ?? 'MatchUp <onboarding@resend.dev>'

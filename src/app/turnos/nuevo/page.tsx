@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { NewShiftForm } from '../components/new-shift-form'
 
 export const metadata = {
-  title: 'Publicar turno — Matchpoint',
+  title: 'Publicar turno — MatchUp',
 }
 
 export default function NuevoTurnoPage() {

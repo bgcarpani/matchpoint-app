@@ -6,7 +6,7 @@ import { PublicBracketView } from '@/components/bracket/public-bracket-view'
 import { ThemeStyle } from '@/components/branding/theme-style'
 import { logoPublicUrl } from '@/lib/branding/logo'
 
-export const metadata: Metadata = { title: 'Llaves — Matchpoint' }
+export const metadata: Metadata = { title: 'Llaves — MatchUp' }
 
 export default async function PublicBracketPage({
   params,
@@ -27,7 +27,7 @@ export default async function PublicBracketPage({
       <ThemeStyle themeKey={tournament?.theme_key} />
       <header className="flex items-center justify-between py-6">
         <span className="font-display text-lg text-foreground">
-          Match<span className="text-volt">point</span>
+          Match<span className="text-volt">Up</span>
         </span>
         {tournament && (
           <span className="flex items-center gap-2.5 text-xs uppercase tracking-[0.2em] text-muted-foreground">

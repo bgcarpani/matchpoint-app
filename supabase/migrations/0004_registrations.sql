@@ -1,4 +1,4 @@
--- Matchpoint App — v1 (MVP) Inscripciones (Registrations)
+-- MatchUp App — v1 (MVP) Inscripciones (Registrations)
 -- Ref: spec.md "Gestión de inscripciones"
 --
 -- Estrategia (coherente con 0002):

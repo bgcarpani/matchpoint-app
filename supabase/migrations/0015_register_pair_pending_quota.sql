@@ -1,4 +1,4 @@
--- Matchpoint App — v2 mejora: el cupo de solicitudes cuenta SOLO pendientes.
+-- MatchUp App — v2 mejora: el cupo de solicitudes cuenta SOLO pendientes.
 --
 -- Cambio de semántica pedido por el organizador: `max_pair_requests` era una
 -- lista de espera que contaba `pending + accepted`, así que aceptar una pareja

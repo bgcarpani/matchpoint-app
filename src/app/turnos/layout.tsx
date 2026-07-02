@@ -2,7 +2,7 @@ import Link from 'next/link'
 
 /**
  * Layout mínimo del Tablero de turnos — sección pública de jugadores, sin
- * `OrganizerHeader` ni área autenticada. Solo el wordmark de Matchpoint.
+ * `OrganizerHeader` ni área autenticada. Solo el wordmark de MatchUp.
  */
 export default function TurnosLayout({
   children,
@@ -16,7 +16,7 @@ export default function TurnosLayout({
           href="/"
           className="font-display text-lg text-foreground transition-opacity hover:opacity-80"
         >
-          Match<span className="text-volt">point</span>
+          Match<span className="text-volt">Up</span>
         </Link>
         <Link
           href="/turnos"

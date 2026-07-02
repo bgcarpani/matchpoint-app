@@ -1,4 +1,4 @@
--- Matchpoint App — fix: generación de lookup_token en register_pair
+-- MatchUp App — fix: generación de lookup_token en register_pair
 --
 -- `gen_random_bytes` (pgcrypto) vive en el schema `extensions` de Supabase y no
 -- es visible con `search_path = public`. Generamos el token con gen_random_uuid()

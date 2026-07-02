@@ -1,4 +1,4 @@
--- Matchpoint App — v2 Slice 4b: formatos de partido por zona
+-- MatchUp App — v2 Slice 4b: formatos de partido por zona
 -- Ref: spec-v2.md "Feature 4 — Formatos de partido por zona + standings"
 --
 -- Completa la Feature 4 sumando los formatos winner_vs_loser y manual al núcleo

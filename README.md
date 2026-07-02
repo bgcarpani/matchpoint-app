@@ -1,10 +1,10 @@
-# Matchpoint App
+# MatchUp App
 
 Plataforma web para la comunidad de padel orientada a organizadores y jugadores, con enfoque inicial en auto-gestión de torneos.
 
 ## Visión
 
-Matchpoint es una plataforma diseñada para que los dueños de establecimientos de padel puedan:
+MatchUp es una plataforma diseñada para que los dueños de establecimientos de padel puedan:
 - Crear y gestionar torneos completos
 - Administrar inscripciones de parejas
 - Organizar zonas (grupos) de competencia

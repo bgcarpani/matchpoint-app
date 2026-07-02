@@ -11,7 +11,7 @@ export default function AuthLayout({
         href="/"
         className="font-display mb-8 text-2xl text-foreground transition-opacity hover:opacity-80"
       >
-        Match<span className="text-volt">point</span>
+        Match<span className="text-volt">Up</span>
       </Link>
       <div className="w-full max-w-md rounded-2xl border border-border bg-card/50 p-7 sm:p-9">
         {children}

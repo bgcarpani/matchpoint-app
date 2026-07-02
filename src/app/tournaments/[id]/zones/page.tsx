@@ -9,7 +9,7 @@ import {
   type ZoneView,
 } from '@/components/zones/zone-manager'
 
-export const metadata: Metadata = { title: 'Zonas y partidos — Matchpoint' }
+export const metadata: Metadata = { title: 'Zonas y partidos — MatchUp' }
 
 export default async function ZonesPage({
   params,

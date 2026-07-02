@@ -1,4 +1,4 @@
--- Matchpoint App — v2 mejora: cancha en la vista pública de llaves.
+-- MatchUp App — v2 mejora: cancha en la vista pública de llaves.
 --
 -- El organizador ahora asigna cancha a los partidos de bracket (igual que en
 -- zonas). Para mostrarla en la superficie pública agregamos `court_id` a

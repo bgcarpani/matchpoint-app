@@ -14,7 +14,7 @@ import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { ACTIVE_CALENDAR_STATUSES } from '@/lib/domain/tournament'
 
-export const metadata: Metadata = { title: 'Panel — Matchpoint' }
+export const metadata: Metadata = { title: 'Panel — MatchUp' }
 
 const ACTIVE_STATUSES = new Set(['registration_open', 'in_progress'])
 

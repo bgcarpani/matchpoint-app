@@ -1,4 +1,4 @@
-# Matchpoint App — Spec v3
+# MatchUp App — Spec v3
 
 ## Alcance
 Este documento cubre la **versión 3** completa y es **autosuficiente** para arrancar la
@@ -165,7 +165,7 @@ Se separan dos cosas distintas que conviene no confundir:
   la imagen de historia (ver Slice 4: la historia se ve desde el mismo celular, el QR no aplica).
 - **Variables de entorno nuevas** (`.env.local` + `.env.example`):
   - `RESEND_API_KEY` — API key de Resend (server-only).
-  - `EMAIL_FROM` — remitente, ej. `Matchpoint <noreply@tudominio>`.
+  - `EMAIL_FROM` — remitente, ej. `MatchUp <noreply@tudominio>`.
   - `NEXT_PUBLIC_SITE_URL` — fallback para construir URLs absolutas donde no hay request headers.
 
 > **Prerrequisito manual (fuera de código):** verificar un **dominio remitente** en Resend (o usar
@@ -189,7 +189,7 @@ dispara (inscripción, accept/reject).
 - **`src/lib/email/send.ts`** — wrapper `sendEmail({ to, subject, html })` que envuelve todo en
   `try/catch`, **no lanza**, loguea el error y devuelve `{ ok: boolean }`.
 - **`src/lib/email/templates.ts`** — funciones que devuelven HTML es-AR por tipo de mail (pending,
-  accepted, rejected), con un layout común (header Matchpoint, estilos inline, tema oscuro). Sin
+  accepted, rejected), con un layout común (header MatchUp, estilos inline, tema oscuro). Sin
   `react-email` para no sumar dependencias.
 - **`src/lib/url.ts`** — helper `getBaseUrl()` que usa `headers()` (mismo patrón proto/host ya presente
   en `src/app/tournaments/[id]/page.tsx` y `src/app/dashboard/page.tsx`), con fallback a
@@ -198,7 +198,7 @@ dispara (inscripción, accept/reject).
 ### Criterios de aceptación
 - [ ] `sendEmail` envía vía Resend y, ante error, devuelve `{ ok: false }` sin lanzar.
 - [ ] `getBaseUrl()` resuelve la URL absoluta correcta en local y producción.
-- [ ] Las plantillas renderizan HTML válido es-AR con el branding de Matchpoint.
+- [ ] Las plantillas renderizan HTML válido es-AR con el branding de MatchUp.
 
 ---
 

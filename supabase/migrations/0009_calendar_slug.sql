@@ -1,4 +1,4 @@
--- Matchpoint App — v2 (Feature 1) Calendario público del organizador
+-- MatchUp App — v2 (Feature 1) Calendario público del organizador
 -- Ref: spec-v2.md "Feature 1 — Calendario público (link estático + QR)"
 --
 -- Delta sobre v1:

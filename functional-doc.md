@@ -1,4 +1,4 @@
-# Matchpoint App — Documento Funcional
+# MatchUp App — Documento Funcional
 
 ## Visión del producto
 Plataforma para la comunidad de padel orientada tanto a **organizadores** como a **jugadores**. El objetivo a largo plazo es que cada jugador tenga un perfil propio con su historial, stats y rankings. Las primeras versiones priorizan la gestión de torneos para organizadores como base sobre la cual construir la experiencia del jugador.

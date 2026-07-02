@@ -177,7 +177,7 @@ Las rutas OG/story (`/o/[slug]/og/story`, `/t/[tournamentId]/bracket/og/story`,
 - **Logo en la imagen:** si el organizador tiene `logo_path`, incrustarlo en la historia (fetch de
   la URL pública del CDN de Storage — funciona en Workers; el gotcha era con assets *bundleados*
   vía `import.meta.url`, no con URLs HTTPS). Posición: esquina/encabezado de la pieza. Si no hay
-  logo, cae al wordmark "MATCHPOINT" como hoy.
+  logo, cae al wordmark "MATCHUP" como hoy.
 
 ### A.6 UI — página de configuración
 

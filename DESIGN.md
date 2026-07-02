@@ -1,5 +1,5 @@
 ---
-name: Matchpoint
+name: MatchUp
 description: Scoreboard atlético con craft de SaaS — gestión de torneos de pádel.
 colors:
   primary: "#2D52E8"
@@ -110,13 +110,13 @@ components:
     padding: "10px 12px"
 ---
 
-# Design System: Matchpoint
+# Design System: MatchUp
 
 ## 1. Overview
 
 **Creative North Star: "El Scoreboard Limpio"**
 
-Matchpoint se ve como un buen tablero de resultados deportivo ejecutado por un equipo de
+MatchUp se ve como un buen tablero de resultados deportivo ejecutado por un equipo de
 producto que se obsesiona con el detalle. La energía es atlética —titulares grandes y
 expandidos, números de marcador, estados vivos— pero la ejecución es de SaaS moderno:
 alineación perfecta, ritmo de espaciado deliberado, superficies blancas limpias sobre un

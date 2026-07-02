@@ -1,4 +1,4 @@
--- Matchpoint App — v1 (MVP) Row Level Security
+-- MatchUp App — v1 (MVP) Row Level Security
 -- Ref: spec.md "Reglas de negocio"
 --
 -- Estrategia:

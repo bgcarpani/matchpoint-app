@@ -3,7 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { EditShiftForm } from '../../components/edit-shift-form'
 
 export const metadata = {
-  title: 'Gestionar turno — Matchpoint',
+  title: 'Gestionar turno — MatchUp',
 }
 
 export default async function EditarTurnoPage({

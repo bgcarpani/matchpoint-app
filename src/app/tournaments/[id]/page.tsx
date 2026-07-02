@@ -18,7 +18,7 @@ import { SCORING_MODE_LABELS } from '@/lib/domain/match'
 import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
-export const metadata: Metadata = { title: 'Torneo — Matchpoint' }
+export const metadata: Metadata = { title: 'Torneo — MatchUp' }
 
 export default async function TournamentDetailPage({
   params,

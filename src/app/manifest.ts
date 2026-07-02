@@ -11,8 +11,8 @@ import type { MetadataRoute } from 'next'
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Matchpoint — Torneos de pádel',
-    short_name: 'Matchpoint',
+    name: 'MatchUp — Torneos de pádel',
+    short_name: 'MatchUp',
     description:
       'Gestión y descubrimiento de torneos de pádel para la comunidad: inscribí tu pareja y seguí las zonas.',
     start_url: '/',

@@ -1,4 +1,4 @@
-# Matchpoint App — Spec v2
+# MatchUp App — Spec v2
 
 ## Alcance
 Este documento cubre la **versión 2** completa y es **autosuficiente** para arrancar la

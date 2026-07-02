@@ -44,7 +44,7 @@ export function CalendarSharePanel({
     const href = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = href
-    a.download = `calendario-${establishmentName ? slugify(establishmentName) : 'matchpoint'}.svg`
+    a.download = `calendario-${establishmentName ? slugify(establishmentName) : 'matchup'}.svg`
     document.body.appendChild(a)
     a.click()
     a.remove()
@@ -96,8 +96,8 @@ export function CalendarSharePanel({
               url={url}
               text={
                 establishmentName
-                  ? `Mirá los torneos de ${establishmentName} en Matchpoint:`
-                  : 'Mirá los torneos en Matchpoint:'
+                  ? `Mirá los torneos de ${establishmentName} en MatchUp:`
+                  : 'Mirá los torneos en MatchUp:'
               }
             />
             <CalendarStoryShare
@@ -106,8 +106,8 @@ export function CalendarSharePanel({
               months={months}
               text={
                 establishmentName
-                  ? `Mirá los torneos de ${establishmentName} en Matchpoint:`
-                  : 'Mirá los torneos en Matchpoint:'
+                  ? `Mirá los torneos de ${establishmentName} en MatchUp:`
+                  : 'Mirá los torneos en MatchUp:'
               }
             />
           </div>
@@ -135,6 +135,6 @@ function slugify(s: string): string {
       // quita marcas diacríticas combinantes (U+0300–U+036F)
       .replace(/[̀-ͯ]/g, '')
       .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '') || 'matchpoint'
+      .replace(/^-+|-+$/g, '') || 'matchup'
   )
 }

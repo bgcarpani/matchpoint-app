@@ -94,7 +94,7 @@ export function OrganizerHeader({
             href="/dashboard"
             className="font-display shrink-0 text-lg tracking-tight text-foreground"
           >
-            Match<span className="text-volt">point</span>
+            Match<span className="text-volt">Up</span>
           </Link>
           <nav className="hidden items-center gap-1 @xl:flex">
             {NAV.map((item) => {

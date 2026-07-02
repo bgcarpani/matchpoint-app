@@ -19,14 +19,14 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Matchpoint — Torneos de pádel",
+  title: "MatchUp — Torneos de pádel",
   description:
     "Gestión y descubrimiento de torneos de pádel para la comunidad: inscribí tu pareja y seguí las zonas.",
-  applicationName: "Matchpoint",
+  applicationName: "MatchUp",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Matchpoint",
+    title: "MatchUp",
   },
 };
 

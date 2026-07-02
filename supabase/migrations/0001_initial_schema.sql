@@ -1,4 +1,4 @@
--- Matchpoint App — v1 (MVP) initial schema
+-- MatchUp App — v1 (MVP) initial schema
 -- Ref: spec.md "Modelo de datos"
 --
 -- Convenciones:

@@ -10,7 +10,7 @@ import {
   type BracketMatchView,
 } from '@/components/bracket/bracket-board'
 
-export const metadata: Metadata = { title: 'Llaves — Matchpoint' }
+export const metadata: Metadata = { title: 'Llaves — MatchUp' }
 
 export default async function BracketPage({
   params,
