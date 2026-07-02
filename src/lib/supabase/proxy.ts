@@ -13,7 +13,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import type { Database } from '@/lib/types/database'
 
 // Prefijos que requieren sesión de organizador.
-const PROTECTED_PREFIXES = ['/dashboard', '/courts', '/tournaments']
+const PROTECTED_PREFIXES = ['/dashboard', '/courts', '/tournaments', '/settings']
 
 // Rutas de auth: si ya hay sesión, redirigir al dashboard.
 const AUTH_ROUTES = ['/login', '/register']
@@ -27,6 +27,22 @@ export async function updateSession(request: NextRequest) {
     !process.env.NEXT_PUBLIC_SUPABASE_URL ||
     !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   ) {
+    return response
+  }
+
+  const { pathname } = request.nextUrl
+
+  const isProtected = PROTECTED_PREFIXES.some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`)
+  )
+  const isAuthRoute = AUTH_ROUTES.includes(pathname)
+
+  // Rutas públicas (landing, /turnos, /t/*, /o/*): no usan la sesión, así que
+  // evitamos el round-trip a Supabase Auth (`getUser()`) en cada request — con
+  // sesión activa agregaba cientos de ms a páginas que no la necesitan. El
+  // refresh del token queda a cargo de las rutas protegidas/de auth (la
+  // protección real sigue siendo RLS + requireUser() en cada página).
+  if (!isProtected && !isAuthRoute) {
     return response
   }
 
@@ -55,13 +71,6 @@ export async function updateSession(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser()
-
-  const { pathname } = request.nextUrl
-
-  const isProtected = PROTECTED_PREFIXES.some(
-    (p) => pathname === p || pathname.startsWith(`${p}/`)
-  )
-  const isAuthRoute = AUTH_ROUTES.includes(pathname)
 
   if (!user && isProtected) {
     const url = request.nextUrl.clone()

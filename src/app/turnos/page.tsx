@@ -8,7 +8,9 @@ import {
 import { ShiftCard } from './components/shift-card'
 import { ShiftFilters, type DateFilter } from './components/shift-filters'
 
-export const revalidate = 60
+// La página es dinámica (lee `searchParams`), así que cada request consulta la
+// base: el tablero se ve siempre al día. No usar `revalidate` acá — con render
+// dinámico Next lo ignora y sólo confunde.
 
 /** Rango [desde, hasta) sobre `start_time` según el filtro de fecha. */
 function dateRange(filter: DateFilter, now: Date): { from: string; to?: string } {

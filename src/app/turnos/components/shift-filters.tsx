@@ -1,6 +1,8 @@
 'use client'
 
+import { useState, useTransition } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { Spinner } from '@/components/ui/spinner'
 
 export type DateFilter = 'hoy' | 'manana' | 'semana'
 
@@ -16,23 +18,36 @@ const SLOT_OPTIONS = ['1', '2', '3', '4']
  * Filtros del tablero como chips que reescriben los query params (`?date=&slots=`).
  * El server component re-consulta con los nuevos filtros. `date` default 'hoy';
  * `slots` es opcional (toggle: volver a clickear el activo lo limpia).
+ *
+ * La navegación va dentro de una transición: el chip clickeado se marca activo
+ * al instante (params optimistas locales) y un spinner indica que el tablero
+ * se está actualizando, en vez de dejar la UI congelada durante el round-trip.
  */
 export function ShiftFilters() {
   const router = useRouter()
-  const params = useSearchParams()
+  const realParams = useSearchParams()
+  const [isPending, startTransition] = useTransition()
+  const [optimistic, setOptimistic] = useState<URLSearchParams | null>(null)
+
+  // Mientras la transición está en vuelo mostramos los params optimistas;
+  // al completarse (isPending=false) volvemos a la URL real.
+  const params = isPending && optimistic ? optimistic : realParams
   const date = (params.get('date') as DateFilter) || 'hoy'
   const slots = params.get('slots')
 
   function setParam(key: string, value: string | null) {
-    const next = new URLSearchParams(params.toString())
+    const next = new URLSearchParams(realParams.toString())
     if (value === null) next.delete(key)
     else next.set(key, value)
-    router.push(`/turnos?${next.toString()}`, { scroll: false })
+    setOptimistic(next)
+    startTransition(() => {
+      router.push(`/turnos?${next.toString()}`, { scroll: false })
+    })
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap gap-2">
+    <div className="flex flex-col gap-3" aria-busy={isPending}>
+      <div className="flex flex-wrap items-center gap-2">
         {DATE_OPTIONS.map((o) => (
           <Chip
             key={o.value}
@@ -42,6 +57,7 @@ export function ShiftFilters() {
             {o.label}
           </Chip>
         ))}
+        {isPending && <Spinner className="ml-1 size-4 text-volt" />}
       </div>
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-xs uppercase tracking-wide text-muted-foreground">
