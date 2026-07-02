@@ -201,6 +201,33 @@ open ──→ full     (manual por creador)
 
 ---
 
+## Aprobación de cuentas de organizador — Feature transversal (control de acceso)
+
+El registro de organizador sigue siendo autoservicio (sirve como puerta de entrada / lead gen),
+pero la cuenta nace **inerte**: no puede crear canchas ni torneos hasta que el dueño de la
+plataforma la revisa y aprueba. El objetivo es evitar que entren "usuarios random" a medida que
+el registro se abre más ampliamente.
+
+### Qué hace
+- Al registrarse, la cuenta queda en estado **pendiente**. La persona puede loguearse, pero ve una
+  pantalla de "tu cuenta está en revisión" en vez del panel.
+- El dueño de la plataforma revisa las solicitudes desde una pantalla de administración (**Aprobar
+  / Rechazar**) o directamente en la base de datos.
+- Al aprobar, la cuenta queda operativa de inmediato — sin necesidad de que la persona vuelva a
+  loguearse.
+- El alcance es sólo el registro de organizador: el tablero de turnos y las páginas públicas de
+  torneo no requieren aprobación (siguen sin login).
+
+### Integración en la app
+- No hay indicios públicos de este control: el registro se ve igual que antes, sólo cambia el
+  mensaje de confirmación.
+- La pantalla de administración no está enlazada desde ningún menú (se accede por URL directa),
+  reservada al dueño de la plataforma.
+
+> Detalle de implementación en `spec-account-approval.md`.
+
+---
+
 ## Versión 4 — Perfiles de jugador, stats y **rankings**
 Esta versión marca el punto donde el jugador se convierte en usuario pleno de la plataforma, y su
 **objetivo central son los rankings**: el norte de largo plazo del producto (ver "Visión del

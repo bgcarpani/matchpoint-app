@@ -7,6 +7,10 @@ Las primeras versiones son organizer-first.
 
 **Versión actual en desarrollo:** v1 — MVP (auto gestión de torneos)
 
+> **`HANDOFF.md`** — punch list priorizado de lo pendiente ahora mismo (escrito 2026-07-02, al
+> cierre de la sesión que deployó el gate de aprobación + `/admin`). Leerlo primero al abrir una
+> sesión nueva; actualizarlo o borrarlo cuando se resuelvan sus puntos.
+
 ## Documentos de referencia
 - `functional-doc.md` — análisis funcional completo (todas las versiones)
 - `spec.md` — especificación detallada de implementación de v1

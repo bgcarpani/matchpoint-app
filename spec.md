@@ -231,6 +231,8 @@ created_at      timestamp
 - [x] El organizer puede registrarse con email, contraseña y nombre del establecimiento
 - [x] El organizer puede iniciar y cerrar sesión
 - [x] Las rutas del área de organizer redirigen a `/login` si no hay sesión activa
+- [x] **(post-v1, 2026-07-02)** La cuenta nace `pending` y no puede crear canchas/torneos hasta que
+  el dueño de la plataforma la aprueba desde `/admin` (o por SQL). Detalle en `spec-account-approval.md`.
 
 ### Gestión de canchas ✅
 - [x] El organizer puede crear canchas con nombre y tipo (al aire libre / techada)
